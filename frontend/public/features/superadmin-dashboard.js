@@ -681,11 +681,6 @@ function App() {
                   <button onClick=${adminLogin} disabled=${busy} className="btn-success rounded-xl auth-submit">
                     ${busy ? "Please wait..." : "Sign In"}
                   </button>
-                  <p className="mt-3 text-sm text-slate-300">
-                    Standard admin? Use
-                    <a className="text-emerald-300 ml-1 underline" href=${ALTERNATE_PORTAL_PATH}>${ALTERNATE_PORTAL_PATH}</a>.
-                  </p>
-
                   ${showForgotHelp
                     ? html`
                         <div className="mt-3 rounded-xl border border-slate-700 bg-slate-900/50 p-3">
