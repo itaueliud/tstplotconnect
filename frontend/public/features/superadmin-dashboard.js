@@ -3,15 +3,12 @@ import { createRoot } from "https://esm.sh/react-dom@18.2.0/client";
 import htm from "https://esm.sh/htm@3.1.1";
 
 const html = htm.bind(React.createElement);
-const DEFAULT_API_BASE = "http://localhost:3000";
+const DEFAULT_API_BASE = "https://tstplotconnect-2.onrender.com";
 const DEFAULT_SUPER_ADMIN_PHONE = "0700000000";
 const PORTAL_ROLE = "superadmin";
 const ALTERNATE_PORTAL_PATH = "/admin";
 
 function inferApiBase() {
-  if (window.location.protocol === "http:" || window.location.protocol === "https:") {
-    return window.location.origin;
-  }
   const saved = localStorage.getItem("apiBase");
   return saved || DEFAULT_API_BASE;
 }
