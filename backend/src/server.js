@@ -17,7 +17,6 @@ const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || "";
 const REQUIRE_HTTPS_ADMIN = (process.env.REQUIRE_HTTPS_ADMIN || "false").toLowerCase() === "true";
 const ADMIN_MAX_LOGIN_ATTEMPTS = Number(process.env.ADMIN_MAX_LOGIN_ATTEMPTS || 5);
 const ADMIN_LOCK_MINUTES = Number(process.env.ADMIN_LOCK_MINUTES || 15);
-const FRONTEND_PUBLIC_DIR = path.join(__dirname, "..", "..", "frontend", "public");
 
 app.use(cors({
   origin: [
@@ -31,7 +30,6 @@ app.use(cors({
 }));
 app.options("*", cors());
 app.use(express.json());
-app.use(express.static(FRONTEND_PUBLIC_DIR));
 
 function usersCol() {
   return getDb().collection("users");
@@ -1122,30 +1120,6 @@ app.get("/api/admin/analytics", requireSecureAdmin, requireAuth, requireAdmin, a
       pendingCount: Number(paymentTotals.pendingCount || 0)
     }
   });
-});
-
-app.get("/", (_req, res) => {
-  res.sendFile(path.join(FRONTEND_PUBLIC_DIR, "index.html"));
-});
-
-app.get("/admin", (_req, res) => {
-  res.sendFile(path.join(FRONTEND_PUBLIC_DIR, "admin.html"));
-});
-
-app.get("/superadmin", (_req, res) => {
-  res.sendFile(path.join(FRONTEND_PUBLIC_DIR, "superadmin.html"));
-});
-
-app.get("/plotconnect.html", (_req, res) => {
-  return res.sendFile(path.join(FRONTEND_PUBLIC_DIR, "index.html"));
-});
-
-app.get("/TSTPLOTCONNECTadmin.html", (_req, res) => {
-  return res.sendFile(path.join(FRONTEND_PUBLIC_DIR, "admin.html"));
-});
-
-app.get("/TSTPLOTCONNECTsuperadmin.html", (_req, res) => {
-  return res.sendFile(path.join(FRONTEND_PUBLIC_DIR, "superadmin.html"));
 });
 
 async function start() {
