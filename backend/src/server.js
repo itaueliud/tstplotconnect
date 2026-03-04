@@ -227,6 +227,10 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
 
+app.get("/", (_req, res) => {
+  res.json({ ok: true, message: "API only. Use /api/* routes." });
+});
+
 app.get("/api/public/config", (_req, res) => {
   res.json({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY
