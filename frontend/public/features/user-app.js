@@ -4,6 +4,9 @@ import htm from "https://esm.sh/htm@3.1.1";
 
 const html = htm.bind(React.createElement);
 const DEFAULT_API_BASE = "https://tstplotconnect-2.onrender.com";
+const API = (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_API_URL)
+  || (typeof window !== "undefined" && window.NEXT_PUBLIC_API_URL)
+  || DEFAULT_API_BASE;
 const DEFAULT_MAP_CENTER = [37.9062, -0.0236]; // [lng, lat]
 const SUPPORTED_COUNTRIES = ["Kenya", "Uganda", "Tanzania", "Rwanda"];
 const COUNTRY_COORDS = {
@@ -182,7 +185,7 @@ function MapLibreMap({ centerLngLat, markerLabel, enableFocusZoom = false }) {
 
 function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
-  const [apiBase, setApiBase] = useState(DEFAULT_API_BASE);
+  const [apiBase, setApiBase] = useState(API);
   const [msg, setMsg] = useState({ text: "", error: false });
   const [phone, setPhone] = useState("");
   const [token, setToken] = useState("");
