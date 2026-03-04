@@ -104,7 +104,7 @@ function add3DBuildings(map) {
   }
 }
 
-function MapLibreMap({ centerLngLat, markerLabel }) {
+function MapLibreMap({ centerLngLat, markerLabel, enableFocusZoom = false }) {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -124,7 +124,7 @@ function MapLibreMap({ centerLngLat, markerLabel }) {
           container: mapContainerRef.current,
           style: "https://tiles.openfreemap.org/styles/liberty",
           center: [lng, lat],
-          zoom: 16,
+          zoom: 6,
           minZoom: 3,
           maxZoom: 22,
           pitch: 58,
@@ -163,7 +163,8 @@ function MapLibreMap({ centerLngLat, markerLabel }) {
   useEffect(() => {
     if (!mapRef.current) return;
     const [lng, lat] = centerLngLat || DEFAULT_MAP_CENTER;
-    mapRef.current.easeTo({ center: [lng, lat], zoom: 18, pitch: 58, bearing: -18, duration: 900 });
+    const targetZoom = enableFocusZoom ? 18 : mapRef.current.getZoom();
+    mapRef.current.easeTo({ center: [lng, lat], zoom: targetZoom, pitch: 58, bearing: -18, duration: 900 });
 
     if (markerRef.current) {
       markerRef.current.setLngLat([lng, lat]);
@@ -171,7 +172,7 @@ function MapLibreMap({ centerLngLat, markerLabel }) {
         new window.maplibregl.Popup({ offset: 16 }).setText(markerLabel || "Selected Plot")
       );
     }
-  }, [centerLngLat, markerLabel]);
+  }, [centerLngLat, markerLabel, enableFocusZoom]);
 
   if (mapError) {
     return html`<div className="map-container rounded-2xl p-4 text-red-300">${mapError}</div>`;
@@ -608,6 +609,7 @@ function App() {
         <${MapLibreMap}
           centerLngLat=${selectedCoords}
           markerLabel=${selectedLabel}
+          enableFocusZoom=${!!selectedPlotId}
         />
       </section>
 
