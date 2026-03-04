@@ -20,7 +20,12 @@ const ADMIN_LOCK_MINUTES = Number(process.env.ADMIN_LOCK_MINUTES || 15);
 const FRONTEND_PUBLIC_DIR = path.join(__dirname, "..", "..", "frontend", "public");
 
 app.use(cors({
-  origin: ["https://tstplotconnect.vercel.app"],
+  origin: [
+    "https://tstplotconnect.vercel.app",
+    "https://tst-plotconnect.com",
+    "https://www.tst-plotconnect.com"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
 app.use(express.json());
