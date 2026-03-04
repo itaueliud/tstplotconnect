@@ -3,7 +3,7 @@ import { createRoot } from "https://esm.sh/react-dom@18.2.0/client";
 import htm from "https://esm.sh/htm@3.1.1";
 
 const html = htm.bind(React.createElement);
-const DEFAULT_API_BASE = "http://localhost:3000";
+const DEFAULT_API_BASE = "https://tstplotconnect-2.onrender.com";
 const DEFAULT_MAP_CENTER = [37.9062, -0.0236]; // [lng, lat]
 const SUPPORTED_COUNTRIES = ["Kenya", "Uganda", "Tanzania", "Rwanda"];
 const COUNTRY_COORDS = {
@@ -181,7 +181,7 @@ function MapLibreMap({ centerLngLat, markerLabel }) {
 
 function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
-  const [apiBase, setApiBase] = useState(window.location.origin || DEFAULT_API_BASE);
+  const [apiBase, setApiBase] = useState(DEFAULT_API_BASE);
   const [msg, setMsg] = useState({ text: "", error: false });
   const [phone, setPhone] = useState("");
   const [token, setToken] = useState("");
@@ -271,12 +271,12 @@ function App() {
     return DEFAULT_MAP_CENTER;
   }
 
-  async function api(path, options = {}) {
+  async function api(path, options = {}, authToken = null) {
     const url = `${apiBase.replace(/\/+$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
     const res = await fetch(url, {
       headers: {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...((authToken || token) ? { Authorization: `Bearer ${authToken || token}` } : {}),
         ...(options.headers || {})
       },
       ...options
@@ -337,16 +337,18 @@ function App() {
       });
       setToken(data.token);
       showMessage("Session started. You can now activate account.");
-      await loadStatus();
+      await loadStatus(data.token);
       await loadPlots();
+      return data.token;
     } catch (err) {
       showMessage(err.message, true);
+      return "";
     }
   }
 
-  async function waitForActivation(maxSeconds = 120) {
+  async function waitForActivation(maxSeconds = 120, authToken = null) {
     for (let i = 0; i < maxSeconds; i += 1) {
-      const s = await api("/api/user/status");
+      const s = await api("/api/user/status", {}, authToken);
       setStatus(s);
       if (s.active) {
         await loadPlots();
@@ -360,19 +362,21 @@ function App() {
 
   async function pay() {
     try {
-      if (!token) throw new Error("Enter phone and tap Continue first.");
       if (!phone.trim()) throw new Error("Enter your phone number first.");
       if (!window.confirm("Proceed to pay Ksh 50 to unlock contacts for 24 hours?")) return;
+
+      const authToken = token || await startUserSession();
+      if (!authToken) return;
 
       const data = await api("/api/pay", {
         method: "POST",
         body: JSON.stringify({ phone: phone.trim() })
-      });
+      }, authToken);
       showMessage(data.message || "Payment initiated.");
       addPaymentLog("Pending", data.message || "Payment initiated.");
-      await loadStatus();
+      await loadStatus(authToken);
       if (data.mode === "daraja") {
-        const confirmed = await waitForActivation(120);
+        const confirmed = await waitForActivation(120, authToken);
         if (!confirmed) {
           showMessage("STK sent. Complete payment on your phone; contacts unlock after confirmation.");
         } else {
@@ -392,13 +396,13 @@ function App() {
     await pay();
   }
 
-  async function loadStatus() {
-    if (!token) {
+  async function loadStatus(authToken = null) {
+    if (!authToken && !token) {
       setStatus(null);
       return;
     }
     try {
-      const data = await api("/api/user/status");
+      const data = await api("/api/user/status", {}, authToken);
       setStatus(data);
     } catch (_err) {}
   }
@@ -512,10 +516,9 @@ function App() {
       <section id="user-access" className="glass section-card mb-5">
         <p className="section-kicker">Access</p>
         <h2 className="section-title">Unlock Contacts</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <input className="input-modern p-3 rounded-xl" placeholder="Phone e.g. 0700..." value=${phone} onInput=${(e) => setPhone(e.target.value)} />
-          <button className="btn-success rounded-xl p-3" onClick=${startUserSession}>Continue</button>
-          <button className="btn-success rounded-xl p-3" onClick=${pay} disabled=${!token}>Pay Ksh 50</button>
+          <button className="btn-success rounded-xl p-3" onClick=${pay} disabled=${!phone.trim()}>Pay Ksh 50</button>
         </div>
         ${msg.text ? html`<p className=${`mt-3 text-sm ${msg.error ? "text-red-300" : "text-emerald-300"}`}>${msg.text}</p>` : null}
         ${status
@@ -588,7 +591,7 @@ function App() {
                     ${mediaUnlocked ? null : html`<p className="media-lock-note">Activate account</p>`}
                     <h3 className="text-lg font-semibold leading-tight">${plot.title}</h3>
                     <p className="plot-meta mt-1">${plot.country || "Kenya"} | ${plot.county || plot.town || "-"} | ${plot.area}</p>
-                    <p className=${`mt-2 font-bold text-lg ${mediaUnlocked ? "" : "media-locked"}`}>Ksh ${plot.price}</p>
+                    <p className="mt-2 font-bold text-lg">Ksh ${plot.price}</p>
                     <p className="mt-2 text-sm text-slate-300">${plot.description || "No description added yet."}</p>
                     <p className="mt-2 text-sm">Caretaker: ${plot.caretaker}</p>
                     <p className="text-sm">WhatsApp: ${plot.whatsapp}</p>
@@ -682,7 +685,7 @@ function App() {
           </div>
           <div>
             <p className="footer-heading">Contact</p>
-            <p className="footer-note">support@tstplotconnect.com</p>
+            <p className="footer-note">support@tst-plotconnect.com</p>
             <p className="footer-note">+254 700 000 000</p>
             <div className="footer-social" aria-label="Social links">
               <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="Facebook">
