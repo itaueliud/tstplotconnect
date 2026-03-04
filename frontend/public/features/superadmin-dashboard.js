@@ -634,7 +634,6 @@ function App() {
                 <div className="glass auth-card">
                   <p className="hero-kicker">ADMIN ACCESS</p>
                   <h2 className="auth-title">Please fill in your details to log in</h2>
-                  <p className="text-sm text-muted auth-subtitle">Default admin: 0700000000 / admin1234</p>
 
                   <label className="auth-label" for="admin-phone-input">Username</label>
                   <input
