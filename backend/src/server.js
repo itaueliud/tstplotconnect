@@ -1151,7 +1151,6 @@ async function start() {
 
   app.listen(PORT, () => {
     console.log(`TST PlotConnect running on http://localhost:${PORT}`);
-    console.log("Admin default login: 0700000000 / admin1234");
     console.log(`Payment mode: ${PAYMENT_MODE}`);
     if (PAYMENT_MODE === "daraja") {
       console.log(`Daraja config loaded: ${isDarajaConfigured() ? "yes" : "no"}`);

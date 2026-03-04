@@ -4,11 +4,15 @@ import htm from "https://esm.sh/htm@3.1.1";
 
 const html = htm.bind(React.createElement);
 const DEFAULT_API_BASE = "http://localhost:3000";
+const API = (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_API_URL)
+  || (typeof window !== "undefined" && window.NEXT_PUBLIC_API_URL)
+  || DEFAULT_API_BASE;
 const DEFAULT_SUPER_ADMIN_PHONE = "0700000000";
 const PORTAL_ROLE = "superadmin";
 const ALTERNATE_PORTAL_PATH = "/admin";
 
 function inferApiBase() {
+  if (API) return API;
   if (window.location.protocol === "http:" || window.location.protocol === "https:") {
     return window.location.origin;
   }
@@ -154,7 +158,7 @@ function App() {
       ? window.location.origin
       : "";
     const saved = localStorage.getItem("apiBase") || "";
-    const candidates = [apiBaseInput, current, saved, DEFAULT_API_BASE, "http://127.0.0.1:3000"]
+    const candidates = [apiBaseInput, current, saved, API, "http://127.0.0.1:3000"]
       .map((x) => String(x || "").trim())
       .filter(Boolean)
       .filter((v, i, a) => a.indexOf(v) === i);

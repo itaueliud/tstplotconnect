@@ -16,6 +16,11 @@
 <body>
   <div id="app"></div>
   <script>
+    if (window.location.protocol === "http:") {
+      window.location.replace(`https://${window.location.host}${window.location.pathname}${window.location.search}${window.location.hash}`);
+    }
+  </script>
+  <script>
     window.NEXT_PUBLIC_API_URL = "https://tstplotconnect-2.onrender.com";
   </script>
   <script type="module" src="/features/user-app.js"></script>
