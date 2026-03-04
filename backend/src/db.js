@@ -256,8 +256,8 @@ async function syncUsersFromPayments() {
 }
 
 async function seedAdminUser() {
-  const adminPhone = "0700000000";
-  const adminPassword = "admin1234";
+  const adminPhone = "0796675724";
+  const adminPassword = "55-0608A";
   const hash = bcrypt.hashSync(adminPassword, 10);
 
   const exists = await db.collection("users").findOne({ phone: adminPhone });
