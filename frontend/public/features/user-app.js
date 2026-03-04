@@ -662,10 +662,6 @@ function App() {
             <p className="faq-q">What if payment is delayed?</p>
             <p className="faq-a">Wait for STK confirmation on your phone. The status will update automatically.</p>
           </div>
-          <div className="faq-item">
-            <p className="faq-q">Need help quickly?</p>
-            <p className="faq-a">Email support@tstplotconnect.com or call +254 700 000 000.</p>
-          </div>
         </div>
       </section>
 
@@ -686,7 +682,7 @@ function App() {
           <div>
             <p className="footer-heading">Contact</p>
             <p className="footer-note">support@tst-plotconnect.com</p>
-            <p className="footer-note">+254 700 000 000</p>
+            <p className="footer-note">+254 796 675 724</p>
             <div className="footer-social" aria-label="Social links">
               <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="Facebook">
                 <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
