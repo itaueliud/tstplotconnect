@@ -19,7 +19,10 @@ const ADMIN_MAX_LOGIN_ATTEMPTS = Number(process.env.ADMIN_MAX_LOGIN_ATTEMPTS || 
 const ADMIN_LOCK_MINUTES = Number(process.env.ADMIN_LOCK_MINUTES || 15);
 const FRONTEND_PUBLIC_DIR = path.join(__dirname, "..", "..", "frontend", "public");
 
-app.use(cors());
+app.use(cors({
+  origin: ["https://tstplotconnect.vercel.app"],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.static(FRONTEND_PUBLIC_DIR));
 
