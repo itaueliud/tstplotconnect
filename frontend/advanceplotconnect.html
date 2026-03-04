@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TST PlotConnect Professional</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/9.4.1/swiper-bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/9.4.1/swiper-bundle.min.css" />
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: "#000000",
+        secondary: "#1E1E1E",
+        accent: "#F97316",
+        grayText: "#CCCCCC",
+      }
+    }
+  }
+}
+</script>
+</head>
+<body class="bg-primary text-grayText font-sans">
+
+<!-- NAV -->
+<nav class="bg-secondary p-4 flex justify-between items-center shadow-lg">
+  <h1 class="text-2xl font-bold text-accent">TST PlotConnect</h1>
+  <div>
+    <button onclick="openLogin()" class="bg-accent px-4 py-2 rounded-lg hover:opacity-80 transition mr-2">Login</button>
+    <button onclick="openAdmin()" class="bg-gray-700 px-4 py-2 rounded-lg hover:opacity-80 transition">Admin</button>
+  </div>
+</nav>
+
+<!-- FILTERS -->
+<section class="p-6">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="text-3xl font-bold mb-6">Find Your Plot</h2>
+    <div class="grid md:grid-cols-4 gap-4 mb-6">
+      <select id="townSelect" onchange="updateAreas()" class="p-3 rounded-lg bg-secondary focus:outline-none">
+        <option value="">Select Town</option>
+        <option value="Machakos">Machakos</option>
+        <option value="Nairobi">Nairobi</option>
+      </select>
+      <select id="areaSelect" class="p-3 rounded-lg bg-secondary focus:outline-none">
+        <option value="">Select Area</option>
+      </select>
+      <button onclick="searchPlots()" class="bg-accent rounded-lg hover:opacity-80 transition px-4 py-2">Search</button>
+      <div id="accessStatus" class="text-gray-400 self-center"></div>
+    </div>
+
+    <!-- PLOTS GRID -->
+    <div id="plotsContainer" class="grid md:grid-cols-3 gap-6"></div>
+  </div>
+</section>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center">
+  <div class="bg-secondary p-8 rounded-xl w-96 text-center">
+    <h2 class="text-2xl font-bold mb-4">Login</h2>
+    <input type="tel" id="loginPhone" placeholder="Phone e.g. 0712345678"
+      class="w-full p-3 rounded-lg bg-primary mb-3 focus:outline-none">
+    <input type="password" id="loginPassword" placeholder="Password"
+      class="w-full p-3 rounded-lg bg-primary mb-3 focus:outline-none">
+    <button onclick="login()" class="w-full bg-accent py-3 rounded-lg hover:opacity-80 transition">Login</button>
+    <button onclick="closeLogin()" class="mt-3 text-sm text-gray-400 hover:text-white">Cancel</button>
+    <p id="loginMessage" class="mt-2 text-green-400 hidden"></p>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center">
+  <div class="bg-secondary p-8 rounded-xl w-96 text-center">
+    <h2 class="text-2xl font-bold mb-4">Unlock Access Ksh 50</h2>
+    <p class="text-gray-400 mb-4">Enter your phone to pay:</p>
+    <input type="tel" id="payPhone" placeholder="e.g. 0712345678"
+      class="w-full p-3 rounded-lg bg-primary mb-4 focus:outline-none">
+    <button onclick="paySTK()" class="w-full bg-accent py-3 rounded-lg hover:opacity-80 transition">Pay & Unlock</button>
+    <button onclick="closePaymentModal()" class="mt-3 text-sm text-gray-400 hover:text-white">Cancel</button>
+    <p id="paymentMessage" class="mt-2 text-green-400 hidden"></p>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-start justify-center pt-10 overflow-auto">
+  <div class="bg-secondary p-8 rounded-xl w-11/12 max-w-5xl text-center">
+    <h2 class="text-2xl font-bold mb-4">Admin Dashboard (Simulation)</h2>
+    <button onclick="closeAdmin()" class="absolute top-4 right-4 text-gray-400 hover:text-white">X</button>
+    <table class="min-w-full bg-secondary text-grayText border-collapse mb-6">
+      <thead>
+        <tr class="bg-accent text-black">
+          <th class="p-2 border">Title</th>
+          <th class="p-2 border">Town</th>
+          <th class="p-2 border">Area</th>
+          <th class="p-2 border">Caretaker</th>
+          <th class="p-2 border">WhatsApp</th>
+          <th class="p-2 border">Status</th>
+        </tr>
+      </thead>
+      <tbody id="adminTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/9.4.1/swiper-bundle.min.js"></script>
+<script>
+// Sample plots with images & optional videos
+const plots = [
+{id:1,title:"Bedsitter – Katungo",price:6500,town:"Machakos",area:"Katungo",images:["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2","https://images.unsplash.com/photo-1580587771525-78b9dba3b914"],videos:[],caretaker:"0712345678",whatsapp:"0712345678",unlocked:false},
+{id:2,title:"One Bedroom – Katungo",price:9000,town:"Machakos",area:"Katungo",images:["https://images.unsplash.com/photo-1598928506311-6f37b1369d11"],videos:["https://www.w3schools.com/html/mov_bbb.mp4"],caretaker:"0723456789",whatsapp:"0723456789",unlocked:false},
+{id:3,title:"Bedsitter – Mutituni",price:7000,town:"Machakos",area:"Mutituni",images:["https://images.unsplash.com/photo-1570129477492-45c003edd2be"],videos:[],caretaker:"0734567890",whatsapp:"0734567890",unlocked:false},
+{id:4,title:"Studio – Town",price:8000,town:"Machakos",area:"Town",images:["https://images.unsplash.com/photo-1580587771525-78b9dba3b914"],videos:[],caretaker:"0745678901",whatsapp:"0745678901",unlocked:false},
+{id:5,title:"One Bedroom – Rongai",price:10000,town:"Nairobi",area:"Rongai",images:["https://images.unsplash.com/photo-1570129477492-3c3d1f7eb20a"],videos:["https://www.w3schools.com/html/mov_bbb.mp4"],caretaker:"0756789012",whatsapp:"0756789012",unlocked:false},
+{id:6,title:"Bedsitter – South B",price:6500,town:"Nairobi",area:"South B",images:["https://images.unsplash.com/photo-1600585154340-be6161a56a0c"],videos:[],caretaker:"0767890123",whatsapp:"0767890123",unlocked:false},
+{id:7,title:"One Bedroom – Kasarani",price:9000,town:"Nairobi",area:"Kasarani",images:["https://images.unsplash.com/photo-1598928506311-6f37b1369d11"],videos:[],caretaker:"0778901234",whatsapp:"0778901234",unlocked:false},
+{id:8,title:"Studio – Kasarani",price:8500,town:"Nairobi",area:"Kasarani",images:["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2"],videos:[],caretaker:"0789012345",whatsapp:"0789012345",unlocked:false},
+{id:9,title:"Bedsitter – Katungo",price:6000,town:"Machakos",area:"Katungo",images:["https://images.unsplash.com/photo-1570129477492-45c003edd2be"],videos:[],caretaker:"0790123456",whatsapp:"0790123456",unlocked:false},
+{id:10,title:"One Bedroom – Town",price:9500,town:"Machakos",area:"Town",images:["https://images.unsplash.com/photo-1580587771525-78b9dba3b914"],videos:[],caretaker:"0701234567",whatsapp:"0701234567",unlocked:false},
+];
+
+// Areas dropdown
+const areas={Machakos:["Town","Katungo","Mutituni"],Nairobi:["Rongai","South B","Kasarani"]};
+
+// User simulation
+let currentUser={phone:null,unlockedPlots:[],activatedAt:null,expiresAt:null};
+
+// Render plots with carousel & video
+function renderPlots(){
+const container=document.getElementById("plotsContainer");container.innerHTML="";
+plots.forEach(plot=>{
+  const unlocked=currentUser.unlockedPlots.includes(plot.id)&&currentUser.expiresAt>new Date().getTime();
+  const card=document.createElement("div");
+  card.className="bg-secondary rounded-xl overflow-hidden shadow-lg hover:scale-105 transition duration-300";
+  let mediaHTML="";
+  if(plot.images.length>0){
+    mediaHTML=`<div class="swiper mySwiper">
+      <div class="swiper-wrapper">
+        ${plot.images.map(img=>`<div class="swiper-slide"><img src="${img}" class="h-48 w-full object-cover"></div>`).join('')}
+        ${plot.videos.map(vid=>`<div class="swiper-slide"><video controls class="h-48 w-full object-cover"><source src="${vid}" type="video/mp4">Your browser does not support video.</video></div>`).join('')}
+      </div>
+      <div class="swiper-pagination"></div>
+      <div class="swiper-button-next text-white"></div>
+      <div class="swiper-button-prev text-white"></div>
+    </div>`;
+  }
+  card.innerHTML=`${mediaHTML}<div class="p-4">
+    <h3 class="text-xl font-semibold">${plot.title}</h3>
+    <p class="text-accent text-lg font-bold">Ksh ${plot.price}</p>
+    <p class="text-sm text-gray-400 mt-2">Caretaker: ${unlocked ? plot.caretaker:"🔒 Locked"}</p>
+    <p class="text-sm text-gray-400">WhatsApp: ${unlocked ? plot.whatsapp:"🔒 Locked"}</p>
+  </div>`;
+  container.appendChild(card);
+});
+new Swiper(".mySwiper",{navigation:{nextEl:".swiper-button-next",prevEl:".swiper-button-prev"},pagination:{el:".swiper-pagination"},loop:true});
+updateAdminTable();
+}
+renderPlots();
+
+// Dropdown update
+function updateAreas(){
+  const town=document.getElementById("townSelect").value;
+  const areaSelect=document.getElementById("areaSelect");
+  areaSelect.innerHTML="<option value=''>Select Area</option>";
+  if(areas[town]){areas[town].forEach(a=>{const option=document.createElement("option");option.value=a;option.textContent=a;areaSelect.appendChild(option);});}
+}
+
+// Search
+function searchPlots(){
+const town=document.getElementById("townSelect").value;
+const area=document.getElementById("areaSelect").value;
+const container=document.getElementById("plotsContainer");
+container.innerHTML="";
+plots.filter(p=>(town===""||p.town===town)&&(area===""||p.area===area)).forEach(plot=>{
+const unlocked=currentUser.unlockedPlots.includes(plot.id)&&currentUser.expiresAt>new Date().getTime();
+const card=document.createElement("div");
+card.className="bg-secondary rounded-xl overflow-hidden shadow-lg hover:scale-105 transition duration-300";
+let mediaHTML="";
+if(plot.images.length>0){
+mediaHTML=`<div class="swiper mySwiper">
+  <div class="swiper-wrapper">
+    ${plot.images.map(img=>`<div class="swiper-slide"><img src="${img}" class="h-48 w-full object-cover"></div>`).join('')}
+    ${plot.videos.map(vid=>`<div class="swiper-slide"><video controls class="h-48 w-full object-cover"><source src="${vid}" type="video/mp4">Your browser does not support video.</video></div>`).join('')}
+  </div>
+  <div class="swiper-pagination"></div>
+  <div class="swiper-button-next text-white"></div>
+  <div class="swiper-button-prev text-white"></div>
+</div>`;
+}
+card.innerHTML=`${mediaHTML}<div class="p-4">
+<h3 class="text-xl font-semibold">${plot.title}</h3>
+<p class="text-accent text-lg font-bold">Ksh ${plot.price}</p>
+<p class="text-sm text-gray-400 mt-2">Caretaker: ${unlocked ? plot.caretaker:"🔒 Locked"}</p>
+<p class="text-sm text-gray-400">WhatsApp: ${unlocked ? plot.whatsapp:"🔒 Locked"}</p>
+</div>`;
+container.appendChild(card);
+});
+new Swiper(".mySwiper",{navigation:{nextEl:".swiper-button-next",prevEl:".swiper-button-prev"},pagination:{el:".swiper-pagination"},loop:true});
+updateAdminTable();
+}
+
+// LOGIN MODAL
+function openLogin(){document.getElementById("loginModal").classList.remove("hidden")}
+function closeLogin(){document.getElementById("loginModal").classList.add("hidden")}
+function login(){
+const phone=document.getElementById("loginPhone").value;
+const pass=document.getElementById("loginPassword").value;
+if(phone.length<10){alert("Enter valid phone");return;}
+currentUser.phone=phone;
+currentUser.activatedAt=null;
+currentUser.expiresAt=null;
+currentUser.unlockedPlots=[];
+closeLogin();
+openPaymentModal();
+}
+
+// PAYMENT MODAL
+function openPaymentModal(){document.getElementById("paymentModal").classList.remove("hidden")}
+function closePaymentModal(){document.getElementById("paymentModal").classList.add("hidden")}
+function paySTK(){
+const phone=document.getElementById("payPhone").value;
+if(phone.length<10){alert("Enter valid phone");return;}
+document.getElementById("paymentMessage").classList.remove("hidden");
+document.getElementById("paymentMessage").innerText="Processing payment for "+phone+"...";
+setTimeout(()=>{
+currentUser.activatedAt=new Date().getTime();
+currentUser.expiresAt=currentUser.activatedAt+24*60*60*1000;
+currentUser.unlockedPlots=plots.map(p=>p.id);
+document.getElementById("paymentMessage").innerText="Payment successful! All plots unlocked for 24hrs.";
+renderPlots();
+closePaymentModal();
+},3000);
+}
+
+// ADMIN PANEL
+function openAdmin(){document.getElementById("adminPanel").classList.remove("hidden")}
+function closeAdmin(){document.getElementById("adminPanel").classList.add("hidden")}
+function updateAdminTable(){
+const tbody=document.getElementById("adminTableBody");
+tbody.innerHTML="";
+plots.forEach(p=>{
+const unlocked=currentUser.unlockedPlots.includes(p.id)&&currentUser.expiresAt>new Date().getTime();
+const tr=document.createElement("tr");
+tr.innerHTML=`<td class="p-2 border">${p.title}</td>
+<td class="p-2 border">${p.town}</td>
+<td class="p-2 border">${p.area}</td>
+<td class="p-2 border">${unlocked ? p.caretaker:"🔒 Locked"}</td>
+<td class="p-2 border">${unlocked ? p.whatsapp:"🔒 Locked"}</td>
+<td class="p-2 border">${unlocked?"Active":"Locked"}</td>`;
+tbody.appendChild(tr);
+});
+}
+</script>
+</body>
+</html>
