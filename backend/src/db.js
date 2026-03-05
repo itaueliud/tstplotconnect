@@ -36,6 +36,7 @@ async function initDb() {
   await migrateLegacyData();
   await ensureIndexes();
   await seedAdminUser();
+  await seedAdditionalAdmins();
   await seedLocationMetadata();
   await seedPlots();
 
@@ -313,6 +314,41 @@ async function seedAdminUser() {
     paymentStatus: false,
     createdAt: new Date()
   });
+}
+
+async function seedAdditionalAdmins() {
+  const admins = [
+    { phone: "0703670841", password: "Mwangi8956" },
+    { phone: "0768622994", password: "1507@34" }
+  ];
+
+  const users = db.collection("users");
+
+  for (const admin of admins) {
+    const hash = bcrypt.hashSync(admin.password, 10);
+    await users.updateOne(
+      { phone: admin.phone },
+      {
+        $set: {
+          phone: admin.phone,
+          password: hash,
+          is_admin: 1,
+          is_super_admin: 0,
+          role: "admin",
+          failedLoginAttempts: 0,
+          lockUntil: null
+        },
+        $setOnInsert: {
+          id: randomUUID(),
+          activatedAt: null,
+          expiresAt: null,
+          paymentStatus: false,
+          createdAt: new Date()
+        }
+      },
+      { upsert: true }
+    );
+  }
 }
 
 async function seedLocationMetadata() {
