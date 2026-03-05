@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog | TST PlotConnect</title>
+  <meta name="description" content="Read tips and guides on hostels, bedsitters, lodges, and affordable rentals with TST PlotConnect.">
+  <meta name="keywords" content="TST PlotConnect blog, hostels Kenya, bedsitters Nairobi, lodges Nairobi, student rentals">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://www.tst-plotconnect.com/blog">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TST PlotConnect">
+  <meta property="og:title" content="Blog | TST PlotConnect">
+  <meta property="og:description" content="Read tips and guides on hostels, bedsitters, lodges, and affordable rentals with TST PlotConnect.">
+  <meta property="og:url" content="https://www.tst-plotconnect.com/blog">
+  <meta property="og:image" content="https://www.tst-plotconnect.com/favicon.svg">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Blog | TST PlotConnect">
+  <meta name="twitter:description" content="Read tips and guides on hostels, bedsitters, lodges, and affordable rentals with TST PlotConnect.">
+  <meta name="twitter:image" content="https://www.tst-plotconnect.com/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/user.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-100">
+  <main class="max-w-5xl mx-auto px-6 py-12">
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-bold">TST PlotConnect Blog</h1>
+        <p class="text-slate-300 mt-2 max-w-2xl">
+          Tips, guides, and insights to help you find hostels, bedsitters, lodges, and affordable rentals faster.
+        </p>
+      </div>
+      <div class="flex gap-3">
+        <a class="btn-soft px-4 py-2 rounded-xl" href="/">Home</a>
+        <a class="btn-success px-4 py-2 rounded-xl" href="/plots.html">Browse Listings</a>
+      </div>
+    </div>
+
+    <section class="mt-10">
+      <div class="glass rounded-2xl p-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div class="flex flex-wrap gap-2">
+          <button class="blog-tag px-3 py-1 rounded-full border border-slate-600 text-slate-300 hover:text-white hover:border-emerald-400" data-tag="">All</button>
+          <button class="blog-tag px-3 py-1 rounded-full border border-slate-600 text-slate-300 hover:text-white hover:border-emerald-400" data-tag="hostels">Hostels</button>
+          <button class="blog-tag px-3 py-1 rounded-full border border-slate-600 text-slate-300 hover:text-white hover:border-emerald-400" data-tag="bedsitters">Bedsitters</button>
+          <button class="blog-tag px-3 py-1 rounded-full border border-slate-600 text-slate-300 hover:text-white hover:border-emerald-400" data-tag="lodges">Lodges</button>
+        </div>
+        <div class="flex gap-2 w-full md:w-auto">
+          <input
+            id="blog-search-input"
+            type="text"
+            placeholder="Search by keyword or location"
+            class="input-modern rounded-xl w-full md:w-72"
+          />
+          <button id="blog-search-btn" class="btn-success px-4 py-2 rounded-xl">Search</button>
+        </div>
+      </div>
+
+      <div id="blog-loading" class="text-slate-300">Loading blog posts...</div>
+      <div id="blog-error" class="hidden text-red-400"></div>
+      <div id="blog-empty" class="hidden text-slate-300">No blog posts yet.</div>
+      <div id="blog-list" class="mt-6 grid gap-6 md:grid-cols-2"></div>
+
+      <div id="blog-pagination" class="mt-8 flex items-center justify-between text-sm text-slate-300 hidden">
+        <button id="blog-prev" class="btn-soft px-4 py-2 rounded-xl">Previous</button>
+        <span id="blog-page-info"></span>
+        <button id="blog-next" class="btn-soft px-4 py-2 rounded-xl">Next</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/features/blog.js"></script>
+</body>
+</html>

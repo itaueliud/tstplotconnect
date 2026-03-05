@@ -46,6 +46,10 @@ function paymentsCol() {
   return getDb().collection("payments");
 }
 
+function blogsCol() {
+  return getDb().collection("blogs");
+}
+
 function locationMetadataCol() {
   return getDb().collection("location_metadata");
 }
@@ -200,6 +204,16 @@ function canonicalPhone(phoneInput) {
   const variants = getPhoneVariants(phoneInput);
   const normalized = variants.find((p) => /^254\d{9}$/.test(p));
   return normalized || variants[0] || String(phoneInput || "").trim();
+}
+
+function slugify(input) {
+  return String(input || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 async function createUserIfMissing(phone) {
@@ -568,6 +582,172 @@ app.get("/api/plot/:id", async (req, res) => {
   }
   const unlocked = await getUnlockedFromRequest(req);
   return res.json(mapPlot(row, unlocked));
+});
+
+app.get("/api/blog", async (req, res) => {
+  const pageInput = Number(req.query.page || 1);
+  const limitInput = Number(req.query.limit || 10);
+  const page = Number.isFinite(pageInput) ? Math.max(1, pageInput) : 1;
+  const limit = Number.isFinite(limitInput) ? Math.min(Math.max(limitInput, 1), 20) : 10;
+  const search = String(req.query.q || "").trim();
+  const tag = String(req.query.tag || "").trim();
+
+  const filter = {};
+  if (tag) {
+    filter.tags = tag;
+  }
+  if (search) {
+    const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    filter.$or = [{ title: regex }, { excerpt: regex }, { content: regex }];
+  }
+
+  const total = await blogsCol().countDocuments(filter);
+  const pages = Math.max(1, Math.ceil(total / limit));
+  const rows = await blogsCol()
+    .find(filter, { projection: { _id: 0, content: 0 } })
+    .sort({ createdAt: -1, _id: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .toArray();
+
+  return res.json({ items: rows, page, pages, total });
+});
+
+app.get("/api/blog/:slug", async (req, res) => {
+  const slug = String(req.params.slug || "").trim();
+  if (!slug) {
+    return res.status(400).json({ error: "Blog slug is required" });
+  }
+  const post = await blogsCol().findOne(
+    { slug },
+    { projection: { _id: 0 } }
+  );
+  if (!post) {
+    return res.status(404).json({ error: "Blog not found" });
+  }
+  return res.json(post);
+});
+
+app.get("/api/admin/blog", requireSecureAdmin, requireAuth, requireAdmin, async (req, res) => {
+  const pageInput = Number(req.query.page || 1);
+  const limitInput = Number(req.query.limit || 10);
+  const page = Number.isFinite(pageInput) ? Math.max(1, pageInput) : 1;
+  const limit = Number.isFinite(limitInput) ? Math.min(Math.max(limitInput, 1), 50) : 10;
+  const search = String(req.query.q || "").trim();
+  const tag = String(req.query.tag || "").trim();
+
+  const filter = {};
+  if (tag) {
+    filter.tags = tag;
+  }
+  if (search) {
+    const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    filter.$or = [{ title: regex }, { excerpt: regex }, { content: regex }];
+  }
+
+  const total = await blogsCol().countDocuments(filter);
+  const pages = Math.max(1, Math.ceil(total / limit));
+  const rows = await blogsCol()
+    .find(filter, { projection: { _id: 0 } })
+    .sort({ createdAt: -1, _id: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .toArray();
+
+  return res.json({ items: rows, page, pages, total });
+});
+
+app.post("/api/admin/blog", requireSecureAdmin, requireAuth, requireAdmin, async (req, res) => {
+  const { title, slug, content, author, excerpt, tags } = req.body || {};
+  if (!title || !content) {
+    return res.status(400).json({ error: "Title and content are required" });
+  }
+
+  const finalSlug = slugify(slug || title);
+  if (!finalSlug) {
+    return res.status(400).json({ error: "Valid slug is required" });
+  }
+
+  const existing = await blogsCol().findOne({ slug: finalSlug }, { projection: { _id: 1 } });
+  if (existing) {
+    return res.status(409).json({ error: "Slug already exists" });
+  }
+
+  const now = new Date();
+  const doc = {
+    id: randomUUID(),
+    title: String(title).trim(),
+    slug: finalSlug,
+    excerpt: String(excerpt || "").trim() || String(content).trim().slice(0, 180),
+    content: String(content).trim(),
+    author: String(author || "").trim() || "TST PlotConnect",
+    tags: Array.isArray(tags)
+      ? tags.filter(Boolean).map((t) => String(t).trim().toLowerCase())
+      : [],
+    createdAt: now,
+    updatedAt: now
+  };
+
+  await blogsCol().insertOne(doc);
+  return res.status(201).json(doc);
+});
+
+app.put("/api/admin/blog/:id", requireSecureAdmin, requireAuth, requireAdmin, async (req, res) => {
+  const id = String(req.params.id || "").trim();
+  if (!id) {
+    return res.status(400).json({ error: "Blog id is required" });
+  }
+  const existing = await blogsCol().findOne({ id }, { projection: { _id: 0 } });
+  if (!existing) {
+    return res.status(404).json({ error: "Blog not found" });
+  }
+
+  const {
+    title = existing.title,
+    slug = existing.slug,
+    content = existing.content,
+    author = existing.author,
+    excerpt = existing.excerpt,
+    tags = existing.tags
+  } = req.body || {};
+
+  const finalSlug = slugify(slug || title);
+  if (!finalSlug) {
+    return res.status(400).json({ error: "Valid slug is required" });
+  }
+
+  const slugOwner = await blogsCol().findOne({ slug: finalSlug }, { projection: { id: 1, _id: 0 } });
+  if (slugOwner && slugOwner.id !== id) {
+    return res.status(409).json({ error: "Slug already exists" });
+  }
+
+  const updated = {
+    title: String(title).trim(),
+    slug: finalSlug,
+    excerpt: String(excerpt || "").trim() || String(content).trim().slice(0, 180),
+    content: String(content).trim(),
+    author: String(author || "").trim() || "TST PlotConnect",
+    tags: Array.isArray(tags)
+      ? tags.filter(Boolean).map((t) => String(t).trim().toLowerCase())
+      : [],
+    updatedAt: new Date()
+  };
+
+  await blogsCol().updateOne({ id }, { $set: updated });
+  const saved = await blogsCol().findOne({ id }, { projection: { _id: 0 } });
+  return res.json(saved);
+});
+
+app.delete("/api/admin/blog/:id", requireSecureAdmin, requireAuth, requireAdmin, async (req, res) => {
+  const id = String(req.params.id || "").trim();
+  if (!id) {
+    return res.status(400).json({ error: "Blog id is required" });
+  }
+  const result = await blogsCol().deleteOne({ id });
+  if (!result.deletedCount) {
+    return res.status(404).json({ error: "Blog not found" });
+  }
+  return res.status(204).send();
 });
 
 app.get("/api/metadata/locations", async (_req, res) => {

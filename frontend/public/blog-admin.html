@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog Admin | TST PlotConnect</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/user.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-100">
+  <main class="max-w-6xl mx-auto px-6 py-10">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold">Blog Admin</h1>
+      <a class="btn-soft px-4 py-2 rounded-xl" href="/">Home</a>
+    </div>
+
+    <section id="admin-login" class="mt-8 glass rounded-2xl p-6 max-w-xl">
+      <h2 class="text-lg font-semibold mb-3">Admin Login</h2>
+      <label class="text-sm text-slate-300" for="admin-phone">Phone</label>
+      <input id="admin-phone" type="tel" class="input-modern rounded-xl w-full mt-2 mb-4" placeholder="07xxxxxxxx" />
+      <label class="text-sm text-slate-300" for="admin-password">Password</label>
+      <input id="admin-password" type="password" class="input-modern rounded-xl w-full mt-2 mb-4" placeholder="Password" />
+      <button id="admin-login-btn" class="btn-success px-4 py-2 rounded-xl">Sign In</button>
+      <p id="admin-login-error" class="hidden text-red-400 mt-3"></p>
+    </section>
+
+    <section id="blog-dashboard" class="hidden mt-8">
+      <div class="glass rounded-2xl p-6">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <h2 class="text-lg font-semibold">Manage Posts</h2>
+          <div class="flex gap-2">
+            <input id="admin-search" type="text" class="input-modern rounded-xl w-full md:w-64" placeholder="Search posts" />
+            <button id="admin-search-btn" class="btn-soft px-4 py-2 rounded-xl">Search</button>
+          </div>
+        </div>
+        <div id="admin-posts" class="mt-6 grid gap-4 md:grid-cols-2"></div>
+      </div>
+
+      <div class="glass rounded-2xl p-6 mt-8">
+        <h2 class="text-lg font-semibold mb-4">Create / Edit Post</h2>
+        <input id="post-id" type="hidden" />
+        <div class="grid gap-4 md:grid-cols-2">
+          <div>
+            <label class="text-sm text-slate-300">Title</label>
+            <input id="post-title" type="text" class="input-modern rounded-xl w-full mt-2" />
+          </div>
+          <div>
+            <label class="text-sm text-slate-300">Slug</label>
+            <input id="post-slug" type="text" class="input-modern rounded-xl w-full mt-2" placeholder="auto-generated if empty" />
+          </div>
+          <div>
+            <label class="text-sm text-slate-300">Author</label>
+            <input id="post-author" type="text" class="input-modern rounded-xl w-full mt-2" />
+          </div>
+          <div>
+            <label class="text-sm text-slate-300">Tags (comma separated)</label>
+            <input id="post-tags" type="text" class="input-modern rounded-xl w-full mt-2" placeholder="hostels, bedsitters, lodges" />
+          </div>
+        </div>
+        <div class="mt-4">
+          <label class="text-sm text-slate-300">Excerpt</label>
+          <textarea id="post-excerpt" class="input-modern rounded-xl w-full mt-2 h-20"></textarea>
+        </div>
+        <div class="mt-4">
+          <label class="text-sm text-slate-300">Content</label>
+          <textarea id="post-content" class="input-modern rounded-xl w-full mt-2 h-48"></textarea>
+        </div>
+        <div class="flex gap-2 mt-4">
+          <button id="post-save" class="btn-success px-4 py-2 rounded-xl">Save</button>
+          <button id="post-reset" class="btn-soft px-4 py-2 rounded-xl">Clear</button>
+        </div>
+        <p id="post-message" class="mt-3 text-sm"></p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/features/blog-admin.js"></script>
+</body>
+</html>

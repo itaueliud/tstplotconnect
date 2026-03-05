@@ -38,6 +38,7 @@ async function initDb() {
   await seedAdminUser();
   await seedAdditionalAdmins();
   await seedLocationMetadata();
+  await seedBlogPosts();
   await seedPlots();
 
   return db;
@@ -61,7 +62,7 @@ async function closeDb() {
 
 async function ensureCollections() {
   const names = new Set((await db.listCollections({}, { nameOnly: true }).toArray()).map((c) => c.name));
-  const needed = ["users", "plots", "payments", "location_metadata"];
+  const needed = ["users", "plots", "payments", "location_metadata", "blogs"];
   for (const name of needed) {
     if (!names.has(name)) {
       await db.createCollection(name);
@@ -79,6 +80,9 @@ async function ensureIndexes() {
   await db.collection("payments").createIndex({ userId: 1, timestamp: -1 });
   await db.collection("payments").createIndex({ mpesaReceipt: 1 });
   await db.collection("location_metadata").createIndex({ key: 1 }, { unique: true });
+  await db.collection("blogs").createIndex({ id: 1 }, { unique: true });
+  await db.collection("blogs").createIndex({ slug: 1 }, { unique: true });
+  await db.collection("blogs").createIndex({ createdAt: -1 });
 }
 
 async function migrateLegacyData() {
@@ -388,6 +392,96 @@ async function seedLocationMetadata() {
     createdAt: new Date(),
     updatedAt: new Date()
   });
+}
+
+async function seedBlogPosts() {
+  const blogs = db.collection("blogs");
+  const existingCount = await blogs.countDocuments();
+  if (existingCount > 0) {
+    return;
+  }
+
+  const now = new Date();
+  const posts = [
+    {
+      title: "Best Student Hostels Near University of Nairobi",
+      slug: "best-student-hostels-near-university-of-nairobi",
+      excerpt: "Find affordable and safe student hostels near the University of Nairobi with verified options.",
+      author: "TST PlotConnect",
+      tags: ["hostels", "nairobi", "students"],
+      content: [
+        "Finding affordable and safe student hostels near the University of Nairobi can be challenging. With rising demand, students often struggle to secure convenient accommodation close to campus.",
+        "Top hostels near the University of Nairobi include Nairobi Sun View Hostel (affordable rates and walking distance to campus), Campus View Hostels (secure and student-friendly), Westlands Student Residence (modern facilities), and Kilimani Student Hostels (budget-friendly shared facilities).",
+        "TST PlotConnect helps students instantly locate verified hostels near the University of Nairobi, ensuring safety and affordability.",
+        "Whether you’re a first-year student or returning for another semester, finding the right hostel is easier with TST PlotConnect."
+      ].join("\n\n")
+    },
+    {
+      title: "Affordable Bedsitters in Nairobi for Students",
+      slug: "affordable-bedsitters-in-nairobi-for-students",
+      excerpt: "Bedsitters balance privacy and affordability for students; explore top areas and tips.",
+      author: "TST PlotConnect",
+      tags: ["bedsitters", "nairobi", "students"],
+      content: [
+        "Bedsitters are a popular choice for students in Nairobi because they balance privacy and affordability.",
+        "Best areas for bedsitters include Kasarani (affordable and close to universities), Thika Road (convenient for commuting), and Westlands (slightly higher rent but modern facilities).",
+        "Tips for students: compare prices across neighborhoods and use trusted platforms like TST PlotConnect to avoid scams.",
+        "Affordable bedsitters are available across Nairobi, and TST PlotConnect makes finding them quick and safe."
+      ].join("\n\n")
+    },
+    {
+      title: "How to Find a Lodge for One Night in Nairobi",
+      slug: "how-to-find-a-lodge-for-one-night-in-nairobi",
+      excerpt: "Need a one-night stay? Here are affordable Nairobi lodge options and how to book safely.",
+      author: "TST PlotConnect",
+      tags: ["lodges", "nairobi", "short-stay"],
+      content: [
+        "Travelers, workers, and students often need short-term accommodation in Nairobi. Lodges provide affordable options for one-night stays.",
+        "Recommended lodges include CBD Budget Lodge (close to transport hubs), Westlands Guest House (safe and convenient), and Kasarani Short-Stay Lodge (affordable for students).",
+        "With verified listings, you can book a lodge instantly without worrying about safety or hidden costs using TST PlotConnect.",
+        "Finding a one-night lodge in Nairobi is simple with TST PlotConnect’s fast and secure platform."
+      ].join("\n\n")
+    },
+    {
+      title: "Safe Student Accommodation in Kenya",
+      slug: "safe-student-accommodation-in-kenya",
+      excerpt: "Safety tips for students choosing housing and how verified listings reduce risk.",
+      author: "TST PlotConnect",
+      tags: ["safety", "students", "kenya"],
+      content: [
+        "Safety is a top priority for students when choosing accommodation in Kenya.",
+        "Tips for safe housing: always verify landlords, choose hostels with security features, and read reviews from other students.",
+        "All listings on TST PlotConnect are verified, ensuring students find safe and reliable accommodation.",
+        "With TST PlotConnect, students can focus on their studies while enjoying peace of mind in secure housing."
+      ].join("\n\n")
+    },
+    {
+      title: "Tips for Finding Cheap Rentals Near Campus",
+      slug: "tips-for-finding-cheap-rentals-near-campus",
+      excerpt: "Smart ways to save on rent near campus without sacrificing safety or convenience.",
+      author: "TST PlotConnect",
+      tags: ["rentals", "students", "campus"],
+      content: [
+        "Rent costs are rising, but students can still find affordable options near campus.",
+        "Tips for students: start searching early before demand spikes, compare different neighborhoods, and use apps like TST PlotConnect for instant updates.",
+        "Cheap rentals are possible with the right strategy. TST PlotConnect makes the search faster, safer, and more convenient."
+      ].join("\n\n")
+    }
+  ];
+
+  const docs = posts.map((post) => ({
+    id: randomUUID(),
+    title: post.title,
+    slug: post.slug,
+    excerpt: post.excerpt,
+    content: post.content,
+    author: post.author,
+    tags: post.tags,
+    createdAt: now,
+    updatedAt: now
+  }));
+
+  await blogs.insertMany(docs);
 }
 
 async function seedPlots() {
