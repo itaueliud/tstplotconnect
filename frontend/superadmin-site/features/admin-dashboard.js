@@ -637,8 +637,6 @@ function App() {
                 <div className="glass auth-card">
                   <p className="hero-kicker">ADMIN ACCESS</p>
                   <h2 className="auth-title">Please fill in your details to log in</h2>
-                  <p className="text-sm text-muted auth-subtitle">Default admin: 0700000000 / admin1234</p>
-
                   <label className="auth-label" for="admin-phone-input">Username</label>
                   <input
                     id="admin-phone-input"
@@ -684,11 +682,6 @@ function App() {
                   <button onClick=${adminLogin} disabled=${busy} className="btn-success rounded-xl auth-submit">
                     ${busy ? "Please wait..." : "Sign In"}
                   </button>
-                  <p className="mt-3 text-sm text-slate-300">
-                    Super admin? Use
-                    <a className="text-emerald-300 ml-1 underline" href=${ALTERNATE_PORTAL_PATH}>${ALTERNATE_PORTAL_PATH}</a>.
-                  </p>
-
                   ${showForgotHelp
                     ? html`
                         <div className="mt-3 rounded-xl border border-slate-700 bg-slate-900/50 p-3">
@@ -1049,3 +1042,4 @@ function App() {
 }
 
 createRoot(document.getElementById("app")).render(html`<${App} />`);
+
