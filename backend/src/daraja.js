@@ -103,8 +103,8 @@ async function initiateStkPush({ phone, amount }) {
     PartyB: partyB,
     PhoneNumber: phone,
     CallBackURL: cfg.callbackUrl,
-    AccountReference: "TST PlotConnect",
-    TransactionDesc: "Plot access activation"
+    AccountReference: "TstPlotconnect",
+    TransactionDesc: "Pay 50 to TstPlotconnect to activate account"
   };
 
   const res = await fetch(`${cfg.baseUrl}/mpesa/stkpush/v1/processrequest`, {
