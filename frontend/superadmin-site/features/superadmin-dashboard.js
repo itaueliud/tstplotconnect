@@ -627,7 +627,7 @@ function App() {
           <span>TST PlotConnect Super Admin</span>
         </h1>
         <div className="flex gap-2">
-          <a href="${apiBase.replace(/\/+$/, "")}/plotconnect.html" className="btn-soft px-4 py-2 rounded-xl">User Site</a>
+          <a href="https://www.tst-plotconnect.com/" className="btn-soft px-4 py-2 rounded-xl">User Site</a>
         </div>
       </nav>
 
@@ -683,11 +683,6 @@ function App() {
                   <button onClick=${adminLogin} disabled=${busy} className="btn-success rounded-xl auth-submit">
                     ${busy ? "Please wait..." : "Sign In"}
                   </button>
-                  <p className="mt-3 text-sm text-slate-300">
-                    Standard admin? Use
-                    <a className="text-emerald-300 ml-1 underline" href=${ALTERNATE_PORTAL_PATH}>${ALTERNATE_PORTAL_PATH}</a>.
-                  </p>
-
                   ${showForgotHelp
                     ? html`
                         <div className="mt-3 rounded-xl border border-slate-700 bg-slate-900/50 p-3">
@@ -1048,4 +1043,11 @@ function App() {
 }
 
 createRoot(document.getElementById("app")).render(html`<${App} />`);
+
+
+
+
+
+
+
 

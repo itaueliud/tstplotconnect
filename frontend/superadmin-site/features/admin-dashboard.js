@@ -626,7 +626,7 @@ function App() {
           <span>TST PlotConnect Admin</span>
         </h1>
         <div className="flex gap-2">
-          <a href="${apiBase.replace(/\/+$/, "")}/plotconnect.html" className="btn-soft px-4 py-2 rounded-xl">User Site</a>
+          <a href="https://www.tst-plotconnect.com/" className="btn-soft px-4 py-2 rounded-xl">User Site</a>
         </div>
       </nav>
 
@@ -1042,4 +1042,11 @@ function App() {
 }
 
 createRoot(document.getElementById("app")).render(html`<${App} />`);
+
+
+
+
+
+
+
 
