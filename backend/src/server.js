@@ -10,7 +10,8 @@ const { signToken, requireAuth, requireAdmin, requireSuperAdmin } = require("./a
 const { normalizePhone, initiateStkPush, isDarajaConfigured } = require("./daraja");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 10000;
+const HOST = process.env.HOST || "0.0.0.0";
 const JWT_SECRET = process.env.JWT_SECRET || "tstplotconnect-dev-secret";
 const PAYMENT_MODE = (process.env.PAYMENT_MODE || "mock").toLowerCase();
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || "";
@@ -21,6 +22,8 @@ const ADMIN_LOCK_MINUTES = Number(process.env.ADMIN_LOCK_MINUTES || 15);
 app.use(cors({
   origin: [
     "https://tstplotconnect.vercel.app",
+    "https://tstplotconnect-admin.vercel.app",
+    "https://tstplotconnect-84rw.vercel.app",
     "https://tst-plotconnect.com",
     "https://www.tst-plotconnect.com"
   ],
@@ -1129,8 +1132,8 @@ app.get("/api/admin/analytics", requireSecureAdmin, requireAuth, requireAdmin, a
 async function start() {
   await initDb();
 
-  app.listen(PORT, () => {
-    console.log(`TST PlotConnect running on http://localhost:${PORT}`);
+  app.listen(PORT, HOST, () => {
+    console.log(`TST PlotConnect running on http://${HOST}:${PORT}`);
     console.log(`Payment mode: ${PAYMENT_MODE}`);
     if (PAYMENT_MODE === "daraja") {
       console.log(`Daraja config loaded: ${isDarajaConfigured() ? "yes" : "no"}`);
