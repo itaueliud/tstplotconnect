@@ -1,63 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>About TST PlotConnect | Verified Land & Rental Listings</title>
-  <meta name="description" content="Learn about TST PlotConnect and how we help people discover verified land and rental listings across Kenya.">
-  <meta name="keywords" content="about TST PlotConnect, verified plots Kenya, land listings Kenya, rental listings Kenya">
-  <meta name="robots" content="index,follow">
-  <link rel="canonical" href="https://www.tst-plotconnect.com/about">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="TST PlotConnect">
-  <meta property="og:title" content="About TST PlotConnect">
-  <meta property="og:description" content="We help people discover verified land and rental listings across Kenya.">
-  <meta property="og:url" content="https://www.tst-plotconnect.com/about">
-  <meta property="og:image" content="https://www.tst-plotconnect.com/favicon.svg">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="stylesheet" href="/css/user.css">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About TST PlotConnect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background: #f9fafb;
+      color: #333;
+      line-height: 1.6;
+    }
+    header {
+      background: linear-gradient(135deg, #2e7d32, #66bb6a);
+      color: white;
+      padding: 4rem 2rem;
+      text-align: center;
+      animation: fadeInDown 1s ease-out;
+    }
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    header p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+    section {
+      max-width: 900px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      transform: translateY(30px);
+      opacity: 0;
+      animation: fadeUp 1s forwards;
+    }
+    .card:nth-child(2) { animation-delay: 0.3s; }
+    .card:nth-child(3) { animation-delay: 0.6s; }
+    .card:nth-child(4) { animation-delay: 0.9s; }
+    h2 {
+      margin-top: 0;
+      color: #2e7d32;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    ul li::before {
+      content: "✔️";
+      margin-right: 0.5rem;
+      color: #2e7d32;
+    }
+    footer {
+      text-align: center;
+      padding: 2rem;
+      background: #f1f1f1;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    /* Animations */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
-<body class="min-h-screen bg-slate-900 text-slate-100">
-  <main class="max-w-4xl mx-auto px-6 py-12">
-    <h1 class="text-3xl md:text-4xl font-bold mb-4">About TST PlotConnect</h1>
-    <p class="text-slate-300 mb-4">
-      TST PlotConnect is a verified listings platform built to make land and rental discovery faster, safer,
-      and more transparent across Kenya. We bring together vetted plots, clear locations, and direct contact
-      access so buyers and renters can make confident decisions.
-    </p>
-    <p class="text-slate-300 mb-6">
-      From Machakos to Nairobi and growing counties, you can filter by area, compare listings, and view
-      locations on the map. Our mission is to reduce fraud, save time, and connect people to trusted property
-      opportunities.
-    </p>
-    <div class="grid gap-4 md:grid-cols-2 mb-6">
-      <div class="glass rounded-2xl p-6">
-        <h2 class="text-lg font-semibold mb-2">What TST PlotConnect offers</h2>
-        <ul class="list-disc list-inside text-slate-300 space-y-1">
-          <li>Verified plot and rental listings</li>
-          <li>Location filters by country, county, and area</li>
-          <li>Map-based browsing with pinned locations</li>
-          <li>Secure contact access after activation</li>
-        </ul>
-      </div>
-      <div class="glass rounded-2xl p-6">
-        <h2 class="text-lg font-semibold mb-2">Why people use us</h2>
-        <ul class="list-disc list-inside text-slate-300 space-y-1">
-          <li>Reduce the risk of fake listings</li>
-          <li>Save time with clear, searchable locations</li>
-          <li>Compare prices and listing details quickly</li>
-          <li>Talk directly to caretakers and owners</li>
-        </ul>
-      </div>
+<body>
+  <header>
+    <h1>About TST PlotConnect</h1>
+    <p>Discover verified rentals faster, safer, and smarter.</p>
+  </header>
+
+  <section>
+    <div class="card">
+      <h2>Who We Are</h2>
+      <p>TST PlotConnect is a verified listings platform built to make land and rental discovery faster, safer, and more transparent across Kenya. We bring together vetted plots, clear locations, and direct contact access so buyers and renters can make confident decisions.</p>
     </div>
-    <div class="glass rounded-2xl p-6 flex flex-col gap-2">
-      <h2 class="text-lg font-semibold">Our focus</h2>
-      <p class="text-slate-300">
-        We prioritize verified data, responsive support, and a smooth mobile-first experience.
-        TST PlotConnect is built for students, families, and investors who want trusted property options.
-      </p>
+
+    <div class="card">
+      <h2>What We Offer</h2>
+      <ul>
+        <li>Verified plot and rental listings</li>
+        <li>Location filters by country, county, and area</li>
+        <li>Map-based browsing with pinned locations</li>
+        <li>Secure contact access after activation</li>
+      </ul>
     </div>
-  </main>
+
+    <div class="card">
+      <h2>Why People Use Us</h2>
+      <ul>
+        <li>Reduce the risk of fake listings</li>
+        <li>Save time with clear, searchable locations</li>
+        <li>Compare prices and listing details quickly</li>
+        <li>Talk directly to caretakers and owners</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Our Focus</h2>
+      <p>We prioritize verified data, responsive support, and a smooth mobile-first experience. TST PlotConnect is built for students, families, and investors who want trusted property options.</p>
+    </div>
+  </section>
+
+  <footer>
+    &copy; 2026 TST PlotConnect. All rights reserved.
+  </footer>
 </body>
 </html>
