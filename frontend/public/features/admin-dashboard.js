@@ -222,6 +222,9 @@ function App() {
       setIsAdminAuthenticated(false);
       setIsSuperAdmin(false);
       setToken("");
+      setAdminPhone("");
+      setAdminPassword("");
+      localStorage.removeItem("adminLoginPhone");
       if (err.data && err.data.showForgotPassword) {
         setShowForgotHelp(true);
         setForgotPhone(adminPhone.trim() || DEFAULT_SUPER_ADMIN_PHONE);
@@ -345,6 +348,9 @@ function App() {
     setToken("");
     setIsAdminAuthenticated(false);
     setIsSuperAdmin(false);
+    setAdminPhone("");
+    setAdminPassword("");
+    localStorage.removeItem("adminLoginPhone");
     setPlots([]);
     setUsers([]);
     setPayments([]);
