@@ -472,7 +472,7 @@ function App() {
     { id: "user-payments", label: "My Payments" },
     { id: "user-map", label: "Map" },
     { id: "user-support", label: "Support / FAQ" },
-    { id: "about-page", label: "About Page", href: "https://www.tst-plotconnect.com/about" }
+    { id: "about-page", label: "About Page", href: "https://www.tst-plotconnect.com/about.html" }
   ];
 
   return html`
