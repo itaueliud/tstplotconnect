@@ -479,7 +479,7 @@ function App() {
     <div className="page-shell">
       <nav className="glass hero-nav mb-5">
         <h1 className="brand-title">TST PlotConnect</h1>
-        <p className="brand-subtitle">Discover Verified Rentals Faster</p>
+        <p className="brand-subtitle">Find your ideal accommodation</p>
       </nav>
 
       <main className="user-main">
