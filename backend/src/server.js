@@ -276,7 +276,7 @@ app.post("/api/user/session", async (req, res) => {
   const variants = getPhoneVariants(normalizedPhone);
   const existingAdmin = await usersCol().findOne({ is_admin: 1, phone: { $in: variants } });
   if (existingAdmin) {
-    return res.status(403).json({ error: "Admin accounts must login through admin dashboard." });
+    return res.status(403).json({ error: "This phone number is not eligible for user access." });
   }
 
   const user = await createUserIfMissing(normalizedPhone);
