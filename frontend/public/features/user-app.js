@@ -676,7 +676,7 @@ function App() {
       <section id="user-about" className="glass section-card mb-2">
         <p className="section-kicker">About</p>
         <h2 className="section-title">About TST PlotConnect</h2>
-        <p className="text-slate-100 font-medium mb-3">
+        <p className="faq-a mb-3">
           TST PlotConnect helps you find verified plots and rentals across Kenya with clear locations,
           honest pricing, and direct contact access after activation.
         </p>
