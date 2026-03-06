@@ -1,7 +1,7 @@
 {
-  "redirects": [
-    { "source": "/about", "destination": "/about.html", "permanent": true },
-    { "source": "/plots", "destination": "/plots.html", "permanent": true },
-    { "source": "/contact", "destination": "/contact.html", "permanent": true }
+  "rewrites": [
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/plots", "destination": "/plots.html" },
+    { "source": "/contact", "destination": "/contact.html" }
   ]
 }
