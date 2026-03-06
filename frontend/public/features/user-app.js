@@ -332,7 +332,7 @@ function App() {
     }
   }
 
-  async function startUserSession() {
+  async function startUserSession({ silent = false } = {}) {
     try {
       if (!phone.trim()) throw new Error("Enter phone number first.");
       const data = await api("/api/user/session", {
@@ -340,7 +340,9 @@ function App() {
         body: JSON.stringify({ phone: phone.trim() })
       });
       setToken(data.token);
-      showMessage("Session started. You can now activate account.");
+      if (!silent) {
+        showMessage("Session started. You can now activate account.");
+      }
       await loadStatus(data.token);
       await loadPlots();
       return data.token;
@@ -367,9 +369,7 @@ function App() {
   async function pay() {
     try {
       if (!phone.trim()) throw new Error("Enter your phone number first.");
-      if (!window.confirm("Proceed to pay Ksh 50 to unlock contacts for 24 hours?")) return;
-
-      const authToken = token || await startUserSession();
+      const authToken = token || await startUserSession({ silent: true });
       if (!authToken) return;
 
       const data = await api("/api/pay", {
