@@ -472,7 +472,7 @@ function App() {
     { id: "user-payments", label: "My Payments" },
     { id: "user-map", label: "Map" },
     { id: "user-support", label: "Support / FAQ" },
-    { id: "about-page", label: "About Page", href: "https://www.tst-plotconnect.com/about" }
+    { id: "user-about", label: "About" }
   ];
 
   return html`
@@ -503,14 +503,10 @@ function App() {
           <div className="sidebar-list">
             ${userNavItems.map((item) => html`
               <a
-                href=${item.href || `#${item.id}`}
+                href=${`#${item.id}`}
                 className=${`sidebar-link ${activeNav === item.id ? "is-active" : ""}`}
-                target=${item.href ? "_blank" : undefined}
-                rel=${item.href ? "noopener noreferrer" : undefined}
                 onClick=${() => {
-                  if (!item.href) {
-                    setActiveNav(item.id);
-                  }
+                  setActiveNav(item.id);
                   setIsMobileNavOpen(false);
                 }}
               >
@@ -671,6 +667,25 @@ function App() {
           <div className="faq-item">
             <p className="faq-q">What if payment is delayed?</p>
             <p className="faq-a">Wait for STK confirmation on your phone. The status will update automatically.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="user-about" className="glass section-card mb-2">
+        <p className="section-kicker">About</p>
+        <h2 className="section-title">About TST PlotConnect</h2>
+        <p className="text-slate-200 mb-3">
+          TST PlotConnect helps you find verified plots and rentals across Kenya with clear locations,
+          honest pricing, and direct contact access after activation.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="input-modern rounded-xl p-3">
+            <p className="text-muted text-xs">What we offer</p>
+            <p className="font-semibold">Verified listings, location filters, and map-based browsing.</p>
+          </div>
+          <div className="input-modern rounded-xl p-3">
+            <p className="text-muted text-xs">Why it matters</p>
+            <p className="font-semibold">Reduce fraud, save time, and make confident property decisions.</p>
           </div>
         </div>
       </section>
