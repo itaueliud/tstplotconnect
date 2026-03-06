@@ -192,7 +192,7 @@ function App() {
   const [plots, setPlots] = useState([]);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({ country: "", county: "", area: "" });
+  const [filters, setFilters] = useState({ country: "", county: "", area: "", minPrice: "", maxPrice: "" });
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
   const [nowTs, setNowTs] = useState(Date.now());
@@ -307,15 +307,30 @@ function App() {
       if (filters.country) query.set("country", filters.country);
       if (filters.county) query.set("county", filters.county);
       if (filters.area) query.set("area", filters.area);
+      if (filters.minPrice) query.set("minPrice", filters.minPrice);
+      if (filters.maxPrice) query.set("maxPrice", filters.maxPrice);
       const data = await api(`/api/plots${query.toString() ? `?${query.toString()}` : ""}`);
       const rows = Array.isArray(data) ? data : [];
-      if (rows.length > 0) {
-        setPlots(rows);
+      const min = Number(filters.minPrice);
+      const max = Number(filters.maxPrice);
+      const hasMin = Number.isFinite(min);
+      const hasMax = Number.isFinite(max);
+      const priceFiltered = rows.filter((p) => {
+        const price = Number(p.price);
+        if (!Number.isFinite(price)) return true;
+        if (hasMin && price < min) return false;
+        if (hasMax && price > max) return false;
+        return true;
+      });
+      if (priceFiltered.length > 0) {
+        setPlots(priceFiltered);
       } else {
         const fallback = SAMPLE_PLOTS.filter((p) =>
           (!filters.country || p.country === filters.country) &&
           (!filters.county || (p.county || p.town) === filters.county) &&
-          (!filters.area || p.area === filters.area)
+          (!filters.area || p.area === filters.area) &&
+          (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
+          (!filters.maxPrice || p.price <= Number(filters.maxPrice))
         );
         setPlots(fallback);
       }
@@ -323,7 +338,9 @@ function App() {
       const fallback = SAMPLE_PLOTS.filter((p) =>
         (!filters.country || p.country === filters.country) &&
         (!filters.county || (p.county || p.town) === filters.county) &&
-        (!filters.area || p.area === filters.area)
+        (!filters.area || p.area === filters.area) &&
+        (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
+        (!filters.maxPrice || p.price <= Number(filters.maxPrice))
       );
       setPlots(fallback);
       showMessage(`${err.message}. Showing sample plots.`, true);
@@ -418,11 +435,11 @@ function App() {
 
   useEffect(() => {
     loadPlots();
-  }, [filters.country, filters.county, filters.area, token]);
+  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice, token]);
 
   useEffect(() => {
     setSelectedPlotId("");
-  }, [filters.country, filters.county, filters.area]);
+  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice]);
 
   useEffect(() => {
     loadStatus();
@@ -543,8 +560,8 @@ function App() {
       <section id="user-search" className="glass section-card mb-5">
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <select className="input-modern p-3 rounded-xl" value=${filters.country} onChange=${(e) => setFilters({ country: e.target.value, county: "", area: "" })}>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <select className="input-modern p-3 rounded-xl" value=${filters.country} onChange=${(e) => setFilters({ country: e.target.value, county: "", area: "", minPrice: "", maxPrice: "" })}>
             <option value="">All Countries</option>
             ${(meta.countries || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
           </select>
@@ -556,6 +573,24 @@ function App() {
             <option value="">All Areas</option>
             ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
           </select>
+          <input
+            className="input-modern p-3 rounded-xl"
+            type="number"
+            inputMode="numeric"
+            min="0"
+            placeholder="Min price"
+            value=${filters.minPrice}
+            onInput=${(e) => setFilters({ ...filters, minPrice: e.target.value })}
+          />
+          <input
+            className="input-modern p-3 rounded-xl"
+            type="number"
+            inputMode="numeric"
+            min="0"
+            placeholder="Max price"
+            value=${filters.maxPrice}
+            onInput=${(e) => setFilters({ ...filters, maxPrice: e.target.value })}
+          />
         </div>
       </section>
 
