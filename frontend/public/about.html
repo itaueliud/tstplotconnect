@@ -4,115 +4,267 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>About TST PlotConnect</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --ink: #0b1220;
+      --ink-2: #1a2235;
+      --muted: #6c778a;
+      --emerald: #1f7a3a;
+      --mint: #8ce0b0;
+      --sun: #f3c969;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --stroke: #e6ebf4;
+      --shadow: 0 20px 45px rgba(11, 18, 32, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: 'Inter', sans-serif;
       margin: 0;
-      background: #f9fafb;
-      color: #333;
-      line-height: 1.6;
+      font-family: "Manrope", sans-serif;
+      background: radial-gradient(1200px 600px at 70% -10%, #eaf7f0 0%, transparent 60%),
+                  radial-gradient(900px 500px at -10% 10%, #eef1ff 0%, transparent 55%),
+                  var(--bg);
+      color: var(--ink);
+      line-height: 1.7;
     }
+
     header {
-      background: linear-gradient(135deg, #2e7d32, #66bb6a);
-      color: white;
-      padding: 4rem 2rem;
-      text-align: center;
-      animation: fadeInDown 1s ease-out;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(120deg, #0d3f1e 0%, #16703a 55%, #1f7a3a 100%);
+      color: #f8fff9;
+      padding: 5.5rem 1.5rem 6rem;
     }
+
+    .hero-wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 2.5rem;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.8rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
     header h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(2.4rem, 4vw, 3.6rem);
+      margin: 1rem 0 0.8rem;
+      line-height: 1.1;
     }
+
     header p {
-      font-size: 1.6rem;
-      opacity: 0.9;
+      font-size: clamp(1.2rem, 2.2vw, 1.5rem);
+      margin: 0 0 1.6rem;
+      color: #e4f6ea;
     }
-    section {
-      max-width: 900px;
-      margin: 3rem auto;
-      padding: 0 2rem;
+
+    .hero-highlights {
+      display: grid;
+      gap: 1rem;
     }
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      transform: translateY(30px);
-      opacity: 0;
-      animation: fadeUp 1s forwards;
+
+    .hero-highlight {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      padding: 1rem 1.2rem;
+      font-weight: 600;
     }
-    .card:nth-child(2) { animation-delay: 0.3s; }
-    .card:nth-child(3) { animation-delay: 0.6s; }
-    .card:nth-child(4) { animation-delay: 0.9s; }
-    h2 {
-      margin-top: 0;
-      color: #2e7d32;
+
+    .glow {
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(243, 201, 105, 0.45) 0%, rgba(243, 201, 105, 0) 60%);
+      top: -120px;
+      right: -120px;
+      filter: blur(2px);
     }
-    ul {
+
+    main {
+      max-width: 1100px;
+      margin: -3.5rem auto 4rem;
+      padding: 0 1.5rem;
+      display: grid;
+      gap: 2rem;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 22px;
+      padding: 2.2rem;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 1.5rem;
+      margin: 0 0 0.8rem;
+      color: var(--ink-2);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.6rem;
+    }
+
+    .list {
       list-style: none;
       padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.75rem;
     }
-    ul li::before {
-      content: "✔️";
-      margin-right: 0.5rem;
-      color: #2e7d32;
+
+    .list li {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 0.6rem;
+      align-items: start;
+      font-weight: 500;
+      color: var(--ink-2);
     }
+
+    .dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, var(--mint), #54c27a);
+      box-shadow: 0 4px 10px rgba(31, 122, 58, 0.35);
+      margin-top: 4px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat {
+      background: #f4f8f5;
+      border-radius: 18px;
+      padding: 1.2rem;
+      border: 1px solid #e0efe5;
+    }
+
+    .stat span {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+
+    .stat strong {
+      font-size: 1.4rem;
+      color: var(--emerald);
+    }
+
     footer {
       text-align: center;
-      padding: 2rem;
-      background: #f1f1f1;
-      font-size: 0.9rem;
-      color: #555;
+      padding: 2.5rem 1.5rem 3rem;
+      color: var(--muted);
+      font-size: 0.95rem;
     }
-    /* Animations */
-    @keyframes fadeInDown {
-      from { opacity: 0; transform: translateY(-30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeUp {
-      to { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 640px) {
+      header {
+        padding: 4.5rem 1.25rem 5rem;
+      }
+      .panel {
+        padding: 1.6rem;
+      }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>About TST PlotConnect</h1>
-    <p>Find your ideal accommodation.</p>
+    <div class="glow" aria-hidden="true"></div>
+    <div class="hero-wrap">
+      <div>
+        <span class="badge">Verified listings platform</span>
+        <h1>Find your ideal accommodation.</h1>
+        <p>We connect renters, buyers, and investors to trusted plots and rentals across Kenya with clear locations and transparent details.</p>
+      </div>
+      <div class="hero-highlights">
+        <div class="hero-highlight">Verified land and rental listings</div>
+        <div class="hero-highlight">Location-first discovery and filters</div>
+        <div class="hero-highlight">Direct contact access after activation</div>
+      </div>
+    </div>
   </header>
 
-  <section>
-    <div class="card">
+  <main>
+    <section class="panel">
       <h2>Who We Are</h2>
-      <p>TST PlotConnect is a verified listings platform built to make land and rental discovery faster, safer, and more transparent across Kenya. We bring together vetted plots, clear locations, and direct contact access so buyers and renters can make confident decisions.</p>
-    </div>
+      <p>
+        TST PlotConnect is built to make land and rental discovery faster, safer, and more transparent.
+        We bring together vetted plots, clear locations, and verified contacts so you can make confident decisions.
+      </p>
+    </section>
 
-    <div class="card">
-      <h2>What We Offer</h2>
-      <ul>
-        <li>Verified plot and rental listings</li>
-        <li>Location filters by country, county, and area</li>
-        <li>Map-based browsing with pinned locations</li>
-        <li>Secure contact access after activation</li>
-      </ul>
-    </div>
+    <section class="panel two-col">
+      <div>
+        <h2>What We Offer</h2>
+        <ul class="list">
+          <li><span class="dot" aria-hidden="true"></span><span>Verified plot and rental listings</span></li>
+          <li><span class="dot" aria-hidden="true"></span><span>Location filters by country, county, and area</span></li>
+          <li><span class="dot" aria-hidden="true"></span><span>Map-based browsing with pinned locations</span></li>
+          <li><span class="dot" aria-hidden="true"></span><span>Secure contact access after activation</span></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Why People Use Us</h2>
+        <ul class="list">
+          <li><span class="dot" aria-hidden="true"></span><span>Reduce the risk of fake listings</span></li>
+          <li><span class="dot" aria-hidden="true"></span><span>Save time with clear, searchable locations</span></li>
+          <li><span class="dot" aria-hidden="true"></span><span>Compare prices and listing details quickly</span></li>
+          <li><span class="dot" aria-hidden="true"></span><span>Talk directly to caretakers and owners</span></li>
+        </ul>
+      </div>
+    </section>
 
-    <div class="card">
-      <h2>Why People Use Us</h2>
-      <ul>
-        <li>Reduce the risk of fake listings</li>
-        <li>Save time with clear, searchable locations</li>
-        <li>Compare prices and listing details quickly</li>
-        <li>Talk directly to caretakers and owners</li>
-      </ul>
-    </div>
-
-    <div class="card">
+    <section class="panel">
       <h2>Our Focus</h2>
-      <p>We prioritize verified data, responsive support, and a smooth mobile-first experience. TST PlotConnect is built for students, families, and investors who want trusted property options.</p>
-    </div>
-  </section>
+      <p>
+        We prioritize verified data, responsive support, and a smooth mobile-first experience.
+        TST PlotConnect is built for students, families, and investors who want trusted property options.
+      </p>
+      <div class="stats">
+        <div class="stat">
+          <span>Commitment</span>
+          <strong>Trust-first</strong>
+        </div>
+        <div class="stat">
+          <span>Coverage</span>
+          <strong>Growing counties</strong>
+        </div>
+        <div class="stat">
+          <span>Experience</span>
+          <strong>Mobile-ready</strong>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <footer>
     &copy; 2026 TST PlotConnect. All rights reserved.
