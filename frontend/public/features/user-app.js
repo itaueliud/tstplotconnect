@@ -472,7 +472,7 @@ function App() {
     { id: "user-payments", label: "My Payments" },
     { id: "user-map", label: "Map" },
     { id: "user-support", label: "Support / FAQ" },
-    { id: "user-about", label: "About" }
+    { id: "user-about", label: "About", href: "https://www.tst-plotconnect.com/about" }
   ];
 
   return html`
@@ -503,10 +503,12 @@ function App() {
           <div className="sidebar-list">
             ${userNavItems.map((item) => html`
               <a
-                href=${`#${item.id}`}
+                href=${item.href || `#${item.id}`}
                 className=${`sidebar-link ${activeNav === item.id ? "is-active" : ""}`}
                 onClick=${() => {
-                  setActiveNav(item.id);
+                  if (!item.href) {
+                    setActiveNav(item.id);
+                  }
                   setIsMobileNavOpen(false);
                 }}
               >
