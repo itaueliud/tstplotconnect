@@ -676,7 +676,7 @@ function App() {
       <section id="user-about" className="glass section-card mb-2">
         <p className="section-kicker">About</p>
         <h2 className="section-title">About TST PlotConnect</h2>
-        <p className="text-slate-200 mb-3">
+        <p className="text-slate-100 font-medium mb-3">
           TST PlotConnect helps you find verified plots and rentals across Kenya with clear locations,
           honest pricing, and direct contact access after activation.
         </p>
@@ -709,24 +709,19 @@ function App() {
           <div>
             <p className="footer-heading">Contact</p>
             <p className="footer-note">support@tst-plotconnect.com</p>
-            <p className="footer-note">+254 796 675 724</p>
+            <p className="footer-note">0768622994</p>
             <div className="footer-social" aria-label="Social links">
-              <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="Facebook">
+              <a href="https://web.facebook.com/profile.php?id=61586345377148" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="Facebook">
                 <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
                   <path fill="currentColor" d="M13.5 8.5V6.8c0-.8.5-1.3 1.4-1.3h1.6V2.4h-2.8C10.9 2.4 9.7 4 9.7 6.4v2.1H7.3v3.2h2.4v9h3.8v-9h2.7l.4-3.2h-3.1z"/>
                 </svg>
               </a>
-              <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="Instagram">
+              <a href="https://www.instagram.com/techswifttrix/?hl=en" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="Instagram">
                 <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
                   <path fill="currentColor" d="M7.5 2h9A5.5 5.5 0 0 1 22 7.5v9a5.5 5.5 0 0 1-5.5 5.5h-9A5.5 5.5 0 0 1 2 16.5v-9A5.5 5.5 0 0 1 7.5 2zm0 1.8A3.7 3.7 0 0 0 3.8 7.5v9a3.7 3.7 0 0 0 3.7 3.7h9a3.7 3.7 0 0 0 3.7-3.7v-9a3.7 3.7 0 0 0-3.7-3.7h-9zm9.3 1.4a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 1.8A3.2 3.2 0 1 0 12 15.2 3.2 3.2 0 0 0 12 8.8z"/>
                 </svg>
               </a>
-              <a href="https://x.com/" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="X">
-                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                  <path fill="currentColor" d="M18.2 3h2.9l-6.3 7.2L22 21h-5.6l-4.4-5.8L6.9 21H4l6.7-7.7L3.7 3h5.7l4 5.3L18.2 3zm-1 16.3h1.6L8.6 4.6H7z"/>
-                </svg>
-              </a>
-              <a href="https://wa.me/254700000000" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="WhatsApp">
+              <a href="https://wa.me/254768622994" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="WhatsApp">
                 <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
                   <path fill="currentColor" d="M20.5 3.5A11 11 0 0 0 3.2 16.7L2 22l5.4-1.2A11 11 0 1 0 20.5 3.5zM12 20a8.8 8.8 0 0 1-4.5-1.2l-.3-.2-3.2.7.7-3.1-.2-.3A8.8 8.8 0 1 1 12 20zm4.8-6.6c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.2l-.6.9c-.2.3-.4.3-.7.1a7.3 7.3 0 0 1-3.6-3.2c-.2-.3 0-.5.1-.7l.5-.6c.2-.2.2-.4.3-.6l-.5-1.3c-.1-.3-.3-.3-.5-.3h-.5c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.7s1.1 3 1.2 3.2c.2.2 2.2 3.4 5.4 4.7.8.3 1.4.5 1.9.6.8.2 1.5.2 2.1.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.1-1.3-.1-.1-.3-.2-.6-.3z"/>
                 </svg>
