@@ -4,6 +4,8 @@ import htm from "https://esm.sh/htm@3.1.1";
 
 const html = htm.bind(React.createElement);
 const DEFAULT_API_BASE = "https://tstplotconnect-2.onrender.com";
+const SUPPORT_PHONE = "0768622994";
+const SUPPORT_WHATSAPP = "254768622994";
 const API = (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_API_URL)
   || (typeof window !== "undefined" && window.NEXT_PUBLIC_API_URL)
   || DEFAULT_API_BASE;
@@ -195,6 +197,7 @@ function App() {
   const [registerPassword, setRegisterPassword] = useState("");
   const [loginPhone, setLoginPhone] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [showForgotOptions, setShowForgotOptions] = useState(false);
   const [plots, setPlots] = useState([]);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -407,6 +410,7 @@ function App() {
 
       persistSession(data.token, data.user);
       setLoginPassword("");
+      setShowForgotOptions(false);
       showMessage("Login successful. Activate your account.");
       await loadStatus(data.token);
       await loadPlots();
@@ -686,6 +690,36 @@ function App() {
                         Login
                       </button>
                     </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        className="btn-soft rounded-xl p-2 text-sm"
+                        onClick=${() => setShowForgotOptions((v) => !v)}
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
+                    ${showForgotOptions
+                      ? html`
+                          <div className="mt-3 rounded-xl border border-slate-700/60 bg-slate-900/40 p-3">
+                            <p className="text-sm text-slate-200">Password reset options:</p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <a
+                                className="btn-soft rounded-xl p-2 text-sm"
+                                href=${`https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(`Hello, I forgot my PlotConnect password. Phone: ${loginPhone.trim() || "-"}`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                WhatsApp Support
+                              </a>
+                              <a className="btn-soft rounded-xl p-2 text-sm" href=${`tel:${SUPPORT_PHONE}`}>Call Support</a>
+                            </div>
+                            <p className="mt-2 text-xs text-slate-400">
+                              If you entered a wrong password, retype it carefully and try again.
+                            </p>
+                          </div>
+                        `
+                      : null}
                   `}
             `}
         ${msg.text ? html`<p className=${`mt-3 text-sm ${msg.error ? "text-red-300" : "text-emerald-300"}`}>${msg.text}</p>` : null}

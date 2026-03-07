@@ -364,10 +364,13 @@ app.post("/api/user/login", async (req, res) => {
   const variants = getPhoneVariants(phone);
   const user = await usersCol().findOne({ phone: { $in: variants }, is_admin: 0 });
   if (!user) {
-    return res.status(401).json({ error: "Invalid credentials" });
+    return res.status(401).json({ error: "Account not found. Please register first." });
   }
   if (!user.password || !bcrypt.compareSync(String(password), user.password)) {
-    return res.status(401).json({ error: "Invalid credentials" });
+    return res.status(401).json({
+      error: "Wrong password. Please try again or use Forgot Password.",
+      code: "WRONG_PASSWORD"
+    });
   }
 
   const token = signToken(user);
