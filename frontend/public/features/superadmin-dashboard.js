@@ -895,15 +895,16 @@ function App() {
               ${isSuperAdmin
                 ? html`
                     <section id="admin-data-management" className="glass fade-in p-6 rounded-2xl mb-6 dashboard-card">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+                      <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-start">
                         <div>
                           <h2 className="text-xl font-bold text-emerald-400">Data Management</h2>
                           <p className="text-sm text-muted">Download records and prune data to avoid congestion.</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 md:ml-auto md:justify-end">
                           <span className="text-xs text-muted">Export format</span>
                           <select
                             className="input-modern p-2 rounded-xl"
+                            style=${{ minWidth: "120px" }}
                             value=${downloadFormat}
                             onChange=${(e) => setDownloadFormat(e.target.value)}
                           >
