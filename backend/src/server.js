@@ -181,6 +181,17 @@ function generateTemporaryPassword(length = 10) {
   return out;
 }
 
+async function generateUserDisplayId() {
+  const users = usersCol();
+  for (let i = 0; i < 10; i += 1) {
+    const candidate = `U${Math.floor(100000 + Math.random() * 900000)}`;
+    // eslint-disable-next-line no-await-in-loop
+    const exists = await users.findOne({ displayId: candidate }, { projection: { _id: 1 } });
+    if (!exists) return candidate;
+  }
+  return `U${Date.now().toString().slice(-6)}`;
+}
+
 function getPhoneVariants(phoneInput) {
   const raw = String(phoneInput || "").trim();
   const digits = raw.replace(/\D/g, "");
@@ -226,7 +237,9 @@ async function createUserIfMissing(phone) {
 
   const user = {
     id: randomUUID(),
+    displayId: await generateUserDisplayId(),
     phone,
+    name: "",
     password: null,
     is_admin: 0,
     is_super_admin: 0,
@@ -263,9 +276,21 @@ app.post("/api/register", (_req, res) => {
 });
 
 app.post("/api/user/session", async (req, res) => {
-  const { phone } = req.body || {};
+  return res.status(410).json({
+    error: "User session endpoint deprecated. Please register or log in."
+  });
+});
+
+app.post("/api/user/register", async (req, res) => {
+  const { name, phone, password } = req.body || {};
+  if (!name || String(name).trim().length < 2) {
+    return res.status(400).json({ error: "Name is required" });
+  }
   if (!phone) {
-    return res.status(400).json({ error: "Phone is required" });
+    return res.status(400).json({ error: "Safaricom phone number is required" });
+  }
+  if (!password || String(password).length < 4) {
+    return res.status(400).json({ error: "Password must be at least 4 characters" });
   }
 
   let normalizedPhone = "";
@@ -275,12 +300,83 @@ app.post("/api/user/session", async (req, res) => {
     return res.status(400).json({ error: "Invalid Kenyan phone number" });
   }
 
-  const user = await createUserIfMissing(normalizedPhone);
+  const existing = await usersCol().findOne({ phone: normalizedPhone });
+  if (existing && (existing.is_admin || existing.is_super_admin)) {
+    return res.status(403).json({ error: "Admin accounts cannot register here." });
+  }
+
+  if (existing && existing.password) {
+    return res.status(409).json({ error: "Account already exists. Please log in." });
+  }
+
+  const displayId = existing?.displayId || await generateUserDisplayId();
+  const hash = bcrypt.hashSync(String(password), 10);
+
+  const userDoc = {
+    name: String(name).trim(),
+    phone: normalizedPhone,
+    password: hash,
+    displayId,
+    role: "user",
+    is_admin: 0,
+    is_super_admin: 0,
+    failedLoginAttempts: 0,
+    lockUntil: null
+  };
+
+  let user = existing;
+  if (existing) {
+    await usersCol().updateOne({ _id: existing._id }, { $set: userDoc });
+    user = await usersCol().findOne({ _id: existing._id });
+  } else {
+    user = {
+      id: randomUUID(),
+      ...userDoc,
+      activatedAt: null,
+      expiresAt: null,
+      paymentStatus: false,
+      createdAt: new Date()
+    };
+    await usersCol().insertOne(user);
+  }
+
+  const token = signToken(user);
+  return res.status(201).json({
+    token,
+    user: {
+      id: user.id,
+      displayId: user.displayId,
+      name: user.name || "",
+      phone: user.phone,
+      isAdmin: !!user.is_admin,
+      isSuperAdmin: !!user.is_super_admin,
+      role: user.role || "user"
+    }
+  });
+});
+
+app.post("/api/user/login", async (req, res) => {
+  const { phone, password } = req.body || {};
+  if (!phone || !password) {
+    return res.status(400).json({ error: "Phone and password are required" });
+  }
+
+  const variants = getPhoneVariants(phone);
+  const user = await usersCol().findOne({ phone: { $in: variants }, is_admin: 0 });
+  if (!user) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+  if (!user.password || !bcrypt.compareSync(String(password), user.password)) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
   const token = signToken(user);
   return res.json({
     token,
     user: {
       id: user.id,
+      displayId: user.displayId || user.id,
+      name: user.name || "",
       phone: user.phone,
       isAdmin: !!user.is_admin,
       isSuperAdmin: !!user.is_super_admin,
@@ -415,14 +511,19 @@ app.get("/api/user/status", requireAuth, async (req, res) => {
 });
 
 app.post("/api/pay", requireAuth, async (req, res) => {
-  const { phone } = req.body || {};
-  if (!phone || String(phone).length < 9) {
-    return res.status(400).json({ error: "Valid phone required" });
+  const user = await usersCol().findOne({ id: req.user.id });
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+  if (!user.phone) {
+    return res.status(400).json({ error: "User phone is missing" });
   }
 
   let pendingId = null;
   try {
-    normalizePhone(phone);
+    const normalizedPhone = normalizePhone(user.phone);
+    const accountReference = user.displayId || user.id;
+    const transactionDesc = `Activate account ${accountReference}`;
 
     if (PAYMENT_MODE !== "daraja") {
       const now = new Date();
@@ -436,7 +537,9 @@ app.post("/api/pay", requireAuth, async (req, res) => {
         status: "Completed",
         timestamp: now,
         activatedAt: now,
-        expiresAt
+        expiresAt,
+        accountReference,
+        phone: normalizedPhone
       };
       await paymentsCol().insertOne(payment);
       await syncUserActivationStatus(req.user.id, payment);
@@ -456,7 +559,6 @@ app.post("/api/pay", requireAuth, async (req, res) => {
       });
     }
 
-    const normalizedPhone = normalizePhone(phone);
     const now = new Date();
     const placeholderReceipt = `PENDING_${Date.now()}`;
     const pending = {
@@ -467,12 +569,19 @@ app.post("/api/pay", requireAuth, async (req, res) => {
       status: "Pending",
       timestamp: now,
       activatedAt: null,
-      expiresAt: null
+      expiresAt: null,
+      accountReference,
+      phone: normalizedPhone
     };
     const insertPending = await paymentsCol().insertOne(pending);
     pendingId = insertPending.insertedId;
 
-    const stk = await initiateStkPush({ phone: normalizedPhone, amount: 50 });
+    const stk = await initiateStkPush({
+      phone: normalizedPhone,
+      amount: 50,
+      accountReference,
+      transactionDesc
+    });
     const checkout = stk.CheckoutRequestID || "";
 
     await paymentsCol().updateOne(
@@ -512,6 +621,9 @@ app.post("/api/payment/callback", async (req, res) => {
     if (!payment) {
       return res.status(200).json({ ok: true });
     }
+    if (payment.status === "Completed") {
+      return res.status(200).json({ ok: true });
+    }
 
     if (resultCode !== 0) {
       return res.status(200).json({ ok: true });
@@ -522,6 +634,35 @@ app.post("/api/payment/callback", async (req, res) => {
       : [];
     const receiptItem = items.find((x) => x.Name === "MpesaReceiptNumber");
     const receipt = receiptItem && receiptItem.Value ? String(receiptItem.Value) : `TST${Date.now()}`;
+    const amountItem = items.find((x) => x.Name === "Amount");
+    const phoneItem = items.find((x) => x.Name === "PhoneNumber");
+    const paidAmount = amountItem && amountItem.Value ? Number(amountItem.Value) : null;
+    const paidPhoneRaw = phoneItem && phoneItem.Value ? String(phoneItem.Value) : "";
+    let paidPhone = "";
+    try {
+      if (paidPhoneRaw) {
+        paidPhone = normalizePhone(paidPhoneRaw);
+      }
+    } catch (_err) {
+      paidPhone = "";
+    }
+
+    const expectedAmount = Number(payment.amount || 0);
+    const expectedPhone = payment.phone ? normalizePhone(payment.phone) : "";
+    if (!paidPhone || paidPhone !== expectedPhone || paidAmount !== expectedAmount) {
+      await paymentsCol().updateOne(
+        { _id: payment._id },
+        {
+          $set: {
+            status: "Failed",
+            mpesaReceipt: receipt,
+            activatedAt: null,
+            expiresAt: null
+          }
+        }
+      );
+      return res.status(200).json({ ok: true });
+    }
 
     const activatedAt = new Date();
     const expiresAt = new Date(activatedAt.getTime() + 24 * 60 * 60 * 1000);

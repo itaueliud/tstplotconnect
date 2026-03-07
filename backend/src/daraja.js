@@ -83,7 +83,7 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-async function initiateStkPush({ phone, amount }) {
+async function initiateStkPush({ phone, amount, accountReference, transactionDesc }) {
   const cfg = getConfig();
   const token = await getAccessToken();
   const timestamp = formatTimestamp();
@@ -103,8 +103,8 @@ async function initiateStkPush({ phone, amount }) {
     PartyB: partyB,
     PhoneNumber: phone,
     CallBackURL: cfg.callbackUrl,
-    AccountReference: "TstPlotconnect",
-    TransactionDesc: "Do you want to pay Kshs.50 to TstPlotconnect to activate account"
+    AccountReference: accountReference || "TstPlotconnect",
+    TransactionDesc: transactionDesc || "Pay Kshs.50 to TstPlotconnect to activate account"
   };
 
   const res = await fetch(`${cfg.baseUrl}/mpesa/stkpush/v1/processrequest`, {

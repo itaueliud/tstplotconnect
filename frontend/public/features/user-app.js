@@ -187,8 +187,14 @@ function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
   const [apiBase, setApiBase] = useState(API);
   const [msg, setMsg] = useState({ text: "", error: false });
-  const [phone, setPhone] = useState("");
   const [token, setToken] = useState("");
+  const [userProfile, setUserProfile] = useState(null);
+  const [authMode, setAuthMode] = useState("register");
+  const [registerName, setRegisterName] = useState("");
+  const [registerPhone, setRegisterPhone] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [loginPhone, setLoginPhone] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [plots, setPlots] = useState([]);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -211,6 +217,18 @@ function App() {
 
   function showMessage(text, error = false) {
     setMsg({ text, error });
+  }
+
+  function persistSession(nextToken, user) {
+    setToken(nextToken || "");
+    setUserProfile(user || null);
+    if (nextToken) {
+      localStorage.setItem("userToken", nextToken);
+      if (user) localStorage.setItem("userProfile", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("userToken");
+      localStorage.removeItem("userProfile");
+    }
   }
 
   function addPaymentLog(statusValue, note) {
@@ -349,24 +367,59 @@ function App() {
     }
   }
 
-  async function startUserSession({ silent = false } = {}) {
+  async function registerUser() {
     try {
-      if (!phone.trim()) throw new Error("Enter phone number first.");
-      const data = await api("/api/user/session", {
+      if (!registerName.trim()) throw new Error("Enter your name.");
+      if (!registerPhone.trim()) throw new Error("Enter your Safaricom phone.");
+      if (!registerPassword.trim()) throw new Error("Enter a password.");
+
+      const data = await api("/api/user/register", {
         method: "POST",
-        body: JSON.stringify({ phone: phone.trim() })
+        body: JSON.stringify({
+          name: registerName.trim(),
+          phone: registerPhone.trim(),
+          password: registerPassword
+        })
       });
-      setToken(data.token);
-      if (!silent) {
-        showMessage("Session started. You can now activate account.");
-      }
+
+      persistSession(data.token, data.user);
+      setRegisterPassword("");
+      showMessage("Registration complete. Activate your account below.");
       await loadStatus(data.token);
       await loadPlots();
-      return data.token;
     } catch (err) {
       showMessage(err.message, true);
-      return "";
     }
+  }
+
+  async function loginUser() {
+    try {
+      if (!loginPhone.trim()) throw new Error("Enter your phone.");
+      if (!loginPassword.trim()) throw new Error("Enter your password.");
+
+      const data = await api("/api/user/login", {
+        method: "POST",
+        body: JSON.stringify({
+          phone: loginPhone.trim(),
+          password: loginPassword
+        })
+      });
+
+      persistSession(data.token, data.user);
+      setLoginPassword("");
+      showMessage("Login successful. Activate your account.");
+      await loadStatus(data.token);
+      await loadPlots();
+    } catch (err) {
+      showMessage(err.message, true);
+    }
+  }
+
+  function logoutUser() {
+    persistSession("", null);
+    setStatus(null);
+    setPaymentLog([]);
+    showMessage("Logged out.");
   }
 
   async function waitForActivation(maxSeconds = 120, authToken = null) {
@@ -385,13 +438,11 @@ function App() {
 
   async function pay() {
     try {
-      if (!phone.trim()) throw new Error("Enter your phone number first.");
-      const authToken = token || await startUserSession({ silent: true });
-      if (!authToken) return;
+      if (!token) throw new Error("Register or log in first.");
+      const authToken = token;
 
       const data = await api("/api/pay", {
         method: "POST",
-        body: JSON.stringify({ phone: phone.trim() })
       }, authToken);
       showMessage(data.message || "Payment initiated.");
       addPaymentLog("Pending", data.message || "Payment initiated.");
@@ -429,6 +480,18 @@ function App() {
   }
 
   useEffect(() => {
+    const savedToken = localStorage.getItem("userToken") || "";
+    const savedProfileRaw = localStorage.getItem("userProfile") || "";
+    if (savedToken) {
+      setToken(savedToken);
+      if (savedProfileRaw) {
+        try {
+          setUserProfile(JSON.parse(savedProfileRaw));
+        } catch (_err) {
+          setUserProfile(null);
+        }
+      }
+    }
     loadMetadata();
     loadPlots();
   }, []);
@@ -540,10 +603,91 @@ function App() {
       <section id="user-access" className="glass section-card mb-5">
         <p className="section-kicker">Access</p>
         <h2 className="section-title">Unlock Contacts</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <input className="input-modern p-3 rounded-xl" placeholder="Phone e.g. 0700..." value=${phone} onInput=${(e) => setPhone(e.target.value)} />
-          <button className="btn-success rounded-xl p-3" onClick=${pay} disabled=${!phone.trim()}>Pay Ksh 50</button>
-        </div>
+        ${token
+          ? html`
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <div className="input-modern rounded-xl p-3">
+                  <p className="text-muted text-xs">User</p>
+                  <p className="font-semibold">${userProfile?.name || "Registered User"}</p>
+                </div>
+                <div className="input-modern rounded-xl p-3">
+                  <p className="text-muted text-xs">Phone</p>
+                  <p className="font-semibold">${userProfile?.phone || "-"}</p>
+                </div>
+                <div className="input-modern rounded-xl p-3">
+                  <p className="text-muted text-xs">User ID</p>
+                  <p className="font-semibold">${userProfile?.displayId || userProfile?.id || "-"}</p>
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row gap-3">
+                <button className="btn-success rounded-xl p-3" onClick=${pay} disabled=${loading}>Activate Account (Ksh 50)</button>
+                <button className="btn-soft rounded-xl p-3" onClick=${logoutUser}>Log Out</button>
+              </div>
+              <p className="mt-2 text-xs text-muted">STK push will be sent to your registered Safaricom number.</p>
+            `
+          : html`
+              <div className="flex gap-2 mb-3">
+                <button
+                  className=${`btn-chip ${authMode === "register" ? "btn-chip-edit" : ""}`}
+                  onClick=${() => setAuthMode("register")}
+                >
+                  Register
+                </button>
+                <button
+                  className=${`btn-chip ${authMode === "login" ? "btn-chip-edit" : ""}`}
+                  onClick=${() => setAuthMode("login")}
+                >
+                  Login
+                </button>
+              </div>
+              ${authMode === "register"
+                ? html`
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <input
+                        className="input-modern p-3 rounded-xl"
+                        placeholder="Full name"
+                        value=${registerName}
+                        onInput=${(e) => setRegisterName(e.target.value)}
+                      />
+                      <input
+                        className="input-modern p-3 rounded-xl"
+                        placeholder="Safaricom phone e.g. 0700..."
+                        value=${registerPhone}
+                        onInput=${(e) => setRegisterPhone(e.target.value)}
+                      />
+                      <input
+                        type="password"
+                        className="input-modern p-3 rounded-xl"
+                        placeholder="Password"
+                        value=${registerPassword}
+                        onInput=${(e) => setRegisterPassword(e.target.value)}
+                      />
+                      <button className="btn-success rounded-xl p-3 md:col-span-3" onClick=${registerUser} disabled=${loading}>
+                        Register & Continue
+                      </button>
+                    </div>
+                  `
+                : html`
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <input
+                        className="input-modern p-3 rounded-xl"
+                        placeholder="Safaricom phone"
+                        value=${loginPhone}
+                        onInput=${(e) => setLoginPhone(e.target.value)}
+                      />
+                      <input
+                        type="password"
+                        className="input-modern p-3 rounded-xl"
+                        placeholder="Password"
+                        value=${loginPassword}
+                        onInput=${(e) => setLoginPassword(e.target.value)}
+                      />
+                      <button className="btn-success rounded-xl p-3" onClick=${loginUser} disabled=${loading}>
+                        Login
+                      </button>
+                    </div>
+                  `}
+            `}
         ${msg.text ? html`<p className=${`mt-3 text-sm ${msg.error ? "text-red-300" : "text-emerald-300"}`}>${msg.text}</p>` : null}
         ${status
           ? html`
@@ -695,7 +839,7 @@ function App() {
         <div className="faq-list">
           <div className="faq-item">
             <p className="faq-q">How do I unlock contacts?</p>
-            <p className="faq-a">Go to Access, enter your phone, tap Continue, then Pay Ksh 50.</p>
+            <p className="faq-a">Register or log in first. Then tap Activate Account to receive the STK prompt on your phone.</p>
           </div>
           <div className="faq-item">
             <p className="faq-q">How long does access last?</p>
@@ -703,7 +847,7 @@ function App() {
           </div>
           <div className="faq-item">
             <p className="faq-q">What if payment is delayed?</p>
-            <p className="faq-a">Wait for STK confirmation on your phone. The status will update automatically.</p>
+            <p className="faq-a">Wait for the STK confirmation on your registered phone. The status will update automatically.</p>
           </div>
         </div>
       </section>

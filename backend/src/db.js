@@ -73,6 +73,7 @@ async function ensureCollections() {
 async function ensureIndexes() {
   await db.collection("users").createIndex({ id: 1 }, { unique: true });
   await db.collection("users").createIndex({ phone: 1 }, { unique: true });
+  await db.collection("users").createIndex({ displayId: 1 }, { unique: true, sparse: true });
   await db.collection("plots").createIndex({ id: 1 }, { unique: true });
   await db.collection("plots").createIndex({ country: 1, county: 1, area: 1 });
   await db.collection("plots").createIndex({ town: 1, area: 1 });
@@ -101,6 +102,23 @@ async function migrateUsers() {
 
     if (!user.id) {
       setDoc.id = randomUUID();
+    }
+    if (!user.displayId) {
+      // Best-effort unique display id for legacy users.
+      let displayId = null;
+      for (let i = 0; i < 10; i += 1) {
+        const candidate = `U${Math.floor(100000 + Math.random() * 900000)}`;
+        // eslint-disable-next-line no-await-in-loop
+        const exists = await users.findOne({ displayId: candidate }, { projection: { _id: 1 } });
+        if (!exists) {
+          displayId = candidate;
+          break;
+        }
+      }
+      setDoc.displayId = displayId || `U${Date.now().toString().slice(-6)}`;
+    }
+    if (typeof user.name === "undefined") {
+      setDoc.name = "";
     }
     if (!user.password && user.password_hash) {
       setDoc.password = user.password_hash;

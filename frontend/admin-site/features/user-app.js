@@ -3,7 +3,7 @@ import { createRoot } from "https://esm.sh/react-dom@18.2.0/client";
 import htm from "https://esm.sh/htm@3.1.1";
 
 const html = htm.bind(React.createElement);
-const DEFAULT_API_BASE = "http://localhost:3000";
+const DEFAULT_API_BASE = "https://tstplotconnect-2.onrender.com";
 const API = (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_API_URL)
   || (typeof window !== "undefined" && window.NEXT_PUBLIC_API_URL)
   || DEFAULT_API_BASE;
@@ -107,7 +107,7 @@ function add3DBuildings(map) {
   }
 }
 
-function MapLibreMap({ centerLngLat, markerLabel }) {
+function MapLibreMap({ centerLngLat, markerLabel, enableFocusZoom = false }) {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -127,7 +127,7 @@ function MapLibreMap({ centerLngLat, markerLabel }) {
           container: mapContainerRef.current,
           style: "https://tiles.openfreemap.org/styles/liberty",
           center: [lng, lat],
-          zoom: 16,
+          zoom: 6,
           minZoom: 3,
           maxZoom: 22,
           pitch: 58,
@@ -166,7 +166,8 @@ function MapLibreMap({ centerLngLat, markerLabel }) {
   useEffect(() => {
     if (!mapRef.current) return;
     const [lng, lat] = centerLngLat || DEFAULT_MAP_CENTER;
-    mapRef.current.easeTo({ center: [lng, lat], zoom: 18, pitch: 58, bearing: -18, duration: 900 });
+    const targetZoom = enableFocusZoom ? 18 : mapRef.current.getZoom();
+    mapRef.current.easeTo({ center: [lng, lat], zoom: targetZoom, pitch: 58, bearing: -18, duration: 900 });
 
     if (markerRef.current) {
       markerRef.current.setLngLat([lng, lat]);
@@ -174,7 +175,7 @@ function MapLibreMap({ centerLngLat, markerLabel }) {
         new window.maplibregl.Popup({ offset: 16 }).setText(markerLabel || "Selected Plot")
       );
     }
-  }, [centerLngLat, markerLabel]);
+  }, [centerLngLat, markerLabel, enableFocusZoom]);
 
   if (mapError) {
     return html`<div className="map-container rounded-2xl p-4 text-red-300">${mapError}</div>`;
@@ -186,12 +187,18 @@ function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
   const [apiBase, setApiBase] = useState(API);
   const [msg, setMsg] = useState({ text: "", error: false });
-  const [phone, setPhone] = useState("");
   const [token, setToken] = useState("");
+  const [userProfile, setUserProfile] = useState(null);
+  const [authMode, setAuthMode] = useState("register");
+  const [registerName, setRegisterName] = useState("");
+  const [registerPhone, setRegisterPhone] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [loginPhone, setLoginPhone] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [plots, setPlots] = useState([]);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({ country: "", county: "", area: "" });
+  const [filters, setFilters] = useState({ country: "", county: "", area: "", minPrice: "", maxPrice: "" });
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
   const [nowTs, setNowTs] = useState(Date.now());
@@ -210,6 +217,18 @@ function App() {
 
   function showMessage(text, error = false) {
     setMsg({ text, error });
+  }
+
+  function persistSession(nextToken, user) {
+    setToken(nextToken || "");
+    setUserProfile(user || null);
+    if (nextToken) {
+      localStorage.setItem("userToken", nextToken);
+      if (user) localStorage.setItem("userProfile", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("userToken");
+      localStorage.removeItem("userProfile");
+    }
   }
 
   function addPaymentLog(statusValue, note) {
@@ -274,12 +293,12 @@ function App() {
     return DEFAULT_MAP_CENTER;
   }
 
-  async function api(path, options = {}) {
+  async function api(path, options = {}, authToken = null) {
     const url = `${apiBase.replace(/\/+$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
     const res = await fetch(url, {
       headers: {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...((authToken || token) ? { Authorization: `Bearer ${authToken || token}` } : {}),
         ...(options.headers || {})
       },
       ...options
@@ -306,15 +325,30 @@ function App() {
       if (filters.country) query.set("country", filters.country);
       if (filters.county) query.set("county", filters.county);
       if (filters.area) query.set("area", filters.area);
+      if (filters.minPrice) query.set("minPrice", filters.minPrice);
+      if (filters.maxPrice) query.set("maxPrice", filters.maxPrice);
       const data = await api(`/api/plots${query.toString() ? `?${query.toString()}` : ""}`);
       const rows = Array.isArray(data) ? data : [];
-      if (rows.length > 0) {
-        setPlots(rows);
+      const min = Number(filters.minPrice);
+      const max = Number(filters.maxPrice);
+      const hasMin = Number.isFinite(min);
+      const hasMax = Number.isFinite(max);
+      const priceFiltered = rows.filter((p) => {
+        const price = Number(p.price);
+        if (!Number.isFinite(price)) return true;
+        if (hasMin && price < min) return false;
+        if (hasMax && price > max) return false;
+        return true;
+      });
+      if (priceFiltered.length > 0) {
+        setPlots(priceFiltered);
       } else {
         const fallback = SAMPLE_PLOTS.filter((p) =>
           (!filters.country || p.country === filters.country) &&
           (!filters.county || (p.county || p.town) === filters.county) &&
-          (!filters.area || p.area === filters.area)
+          (!filters.area || p.area === filters.area) &&
+          (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
+          (!filters.maxPrice || p.price <= Number(filters.maxPrice))
         );
         setPlots(fallback);
       }
@@ -322,7 +356,9 @@ function App() {
       const fallback = SAMPLE_PLOTS.filter((p) =>
         (!filters.country || p.country === filters.country) &&
         (!filters.county || (p.county || p.town) === filters.county) &&
-        (!filters.area || p.area === filters.area)
+        (!filters.area || p.area === filters.area) &&
+        (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
+        (!filters.maxPrice || p.price <= Number(filters.maxPrice))
       );
       setPlots(fallback);
       showMessage(`${err.message}. Showing sample plots.`, true);
@@ -331,25 +367,64 @@ function App() {
     }
   }
 
-  async function startUserSession() {
+  async function registerUser() {
     try {
-      if (!phone.trim()) throw new Error("Enter phone number first.");
-      const data = await api("/api/user/session", {
+      if (!registerName.trim()) throw new Error("Enter your name.");
+      if (!registerPhone.trim()) throw new Error("Enter your Safaricom phone.");
+      if (!registerPassword.trim()) throw new Error("Enter a password.");
+
+      const data = await api("/api/user/register", {
         method: "POST",
-        body: JSON.stringify({ phone: phone.trim() })
+        body: JSON.stringify({
+          name: registerName.trim(),
+          phone: registerPhone.trim(),
+          password: registerPassword
+        })
       });
-      setToken(data.token);
-      showMessage("Session started. You can now activate account.");
-      await loadStatus();
+
+      persistSession(data.token, data.user);
+      setRegisterPassword("");
+      showMessage("Registration complete. Activate your account below.");
+      await loadStatus(data.token);
       await loadPlots();
     } catch (err) {
       showMessage(err.message, true);
     }
   }
 
-  async function waitForActivation(maxSeconds = 120) {
+  async function loginUser() {
+    try {
+      if (!loginPhone.trim()) throw new Error("Enter your phone.");
+      if (!loginPassword.trim()) throw new Error("Enter your password.");
+
+      const data = await api("/api/user/login", {
+        method: "POST",
+        body: JSON.stringify({
+          phone: loginPhone.trim(),
+          password: loginPassword
+        })
+      });
+
+      persistSession(data.token, data.user);
+      setLoginPassword("");
+      showMessage("Login successful. Activate your account.");
+      await loadStatus(data.token);
+      await loadPlots();
+    } catch (err) {
+      showMessage(err.message, true);
+    }
+  }
+
+  function logoutUser() {
+    persistSession("", null);
+    setStatus(null);
+    setPaymentLog([]);
+    showMessage("Logged out.");
+  }
+
+  async function waitForActivation(maxSeconds = 120, authToken = null) {
     for (let i = 0; i < maxSeconds; i += 1) {
-      const s = await api("/api/user/status");
+      const s = await api("/api/user/status", {}, authToken);
       setStatus(s);
       if (s.active) {
         await loadPlots();
@@ -363,19 +438,17 @@ function App() {
 
   async function pay() {
     try {
-      if (!token) throw new Error("Enter phone and tap Continue first.");
-      if (!phone.trim()) throw new Error("Enter your phone number first.");
-      if (!window.confirm("Proceed to pay Ksh 50 to unlock contacts for 24 hours?")) return;
+      if (!token) throw new Error("Register or log in first.");
+      const authToken = token;
 
       const data = await api("/api/pay", {
         method: "POST",
-        body: JSON.stringify({ phone: phone.trim() })
-      });
+      }, authToken);
       showMessage(data.message || "Payment initiated.");
       addPaymentLog("Pending", data.message || "Payment initiated.");
-      await loadStatus();
+      await loadStatus(authToken);
       if (data.mode === "daraja") {
-        const confirmed = await waitForActivation(120);
+        const confirmed = await waitForActivation(120, authToken);
         if (!confirmed) {
           showMessage("STK sent. Complete payment on your phone; contacts unlock after confirmation.");
         } else {
@@ -395,29 +468,41 @@ function App() {
     await pay();
   }
 
-  async function loadStatus() {
-    if (!token) {
+  async function loadStatus(authToken = null) {
+    if (!authToken && !token) {
       setStatus(null);
       return;
     }
     try {
-      const data = await api("/api/user/status");
+      const data = await api("/api/user/status", {}, authToken);
       setStatus(data);
     } catch (_err) {}
   }
 
   useEffect(() => {
+    const savedToken = localStorage.getItem("userToken") || "";
+    const savedProfileRaw = localStorage.getItem("userProfile") || "";
+    if (savedToken) {
+      setToken(savedToken);
+      if (savedProfileRaw) {
+        try {
+          setUserProfile(JSON.parse(savedProfileRaw));
+        } catch (_err) {
+          setUserProfile(null);
+        }
+      }
+    }
     loadMetadata();
     loadPlots();
   }, []);
 
   useEffect(() => {
     loadPlots();
-  }, [filters.country, filters.county, filters.area, token]);
+  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice, token]);
 
   useEffect(() => {
     setSelectedPlotId("");
-  }, [filters.country, filters.county, filters.area]);
+  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice]);
 
   useEffect(() => {
     loadStatus();
@@ -466,14 +551,15 @@ function App() {
     { id: "user-listings", label: "Listings" },
     { id: "user-payments", label: "My Payments" },
     { id: "user-map", label: "Map" },
-    { id: "user-support", label: "Support / FAQ" }
+    { id: "user-support", label: "Support / FAQ" },
+    { id: "user-about", label: "About", href: "https://www.tst-plotconnect.com/about" }
   ];
 
   return html`
     <div className="page-shell">
       <nav className="glass hero-nav mb-5">
         <h1 className="brand-title">TST PlotConnect</h1>
-        <p className="brand-subtitle">Discover Verified Rentals Faster</p>
+        <p className="brand-subtitle">Find your ideal accommodation</p>
       </nav>
 
       <main className="user-main">
@@ -497,10 +583,12 @@ function App() {
           <div className="sidebar-list">
             ${userNavItems.map((item) => html`
               <a
-                href=${`#${item.id}`}
+                href=${item.href || `#${item.id}`}
                 className=${`sidebar-link ${activeNav === item.id ? "is-active" : ""}`}
                 onClick=${() => {
-                  setActiveNav(item.id);
+                  if (!item.href) {
+                    setActiveNav(item.id);
+                  }
                   setIsMobileNavOpen(false);
                 }}
               >
@@ -515,11 +603,91 @@ function App() {
       <section id="user-access" className="glass section-card mb-5">
         <p className="section-kicker">Access</p>
         <h2 className="section-title">Unlock Contacts</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <input className="input-modern p-3 rounded-xl" placeholder="Phone e.g. 0700..." value=${phone} onInput=${(e) => setPhone(e.target.value)} />
-          <button className="btn-success rounded-xl p-3" onClick=${startUserSession}>Continue</button>
-          <button className="btn-success rounded-xl p-3" onClick=${pay} disabled=${!token}>Pay Ksh 50</button>
-        </div>
+        ${token
+          ? html`
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <div className="input-modern rounded-xl p-3">
+                  <p className="text-muted text-xs">User</p>
+                  <p className="font-semibold">${userProfile?.name || "Registered User"}</p>
+                </div>
+                <div className="input-modern rounded-xl p-3">
+                  <p className="text-muted text-xs">Phone</p>
+                  <p className="font-semibold">${userProfile?.phone || "-"}</p>
+                </div>
+                <div className="input-modern rounded-xl p-3">
+                  <p className="text-muted text-xs">User ID</p>
+                  <p className="font-semibold">${userProfile?.displayId || userProfile?.id || "-"}</p>
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row gap-3">
+                <button className="btn-success rounded-xl p-3" onClick=${pay} disabled=${loading}>Activate Account (Ksh 50)</button>
+                <button className="btn-soft rounded-xl p-3" onClick=${logoutUser}>Log Out</button>
+              </div>
+              <p className="mt-2 text-xs text-muted">STK push will be sent to your registered Safaricom number.</p>
+            `
+          : html`
+              <div className="flex gap-2 mb-3">
+                <button
+                  className=${`btn-chip ${authMode === "register" ? "btn-chip-edit" : ""}`}
+                  onClick=${() => setAuthMode("register")}
+                >
+                  Register
+                </button>
+                <button
+                  className=${`btn-chip ${authMode === "login" ? "btn-chip-edit" : ""}`}
+                  onClick=${() => setAuthMode("login")}
+                >
+                  Login
+                </button>
+              </div>
+              ${authMode === "register"
+                ? html`
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <input
+                        className="input-modern p-3 rounded-xl"
+                        placeholder="Full name"
+                        value=${registerName}
+                        onInput=${(e) => setRegisterName(e.target.value)}
+                      />
+                      <input
+                        className="input-modern p-3 rounded-xl"
+                        placeholder="Safaricom phone e.g. 0700..."
+                        value=${registerPhone}
+                        onInput=${(e) => setRegisterPhone(e.target.value)}
+                      />
+                      <input
+                        type="password"
+                        className="input-modern p-3 rounded-xl"
+                        placeholder="Password"
+                        value=${registerPassword}
+                        onInput=${(e) => setRegisterPassword(e.target.value)}
+                      />
+                      <button className="btn-success rounded-xl p-3 md:col-span-3" onClick=${registerUser} disabled=${loading}>
+                        Register & Continue
+                      </button>
+                    </div>
+                  `
+                : html`
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <input
+                        className="input-modern p-3 rounded-xl"
+                        placeholder="Safaricom phone"
+                        value=${loginPhone}
+                        onInput=${(e) => setLoginPhone(e.target.value)}
+                      />
+                      <input
+                        type="password"
+                        className="input-modern p-3 rounded-xl"
+                        placeholder="Password"
+                        value=${loginPassword}
+                        onInput=${(e) => setLoginPassword(e.target.value)}
+                      />
+                      <button className="btn-success rounded-xl p-3" onClick=${loginUser} disabled=${loading}>
+                        Login
+                      </button>
+                    </div>
+                  `}
+            `}
         ${msg.text ? html`<p className=${`mt-3 text-sm ${msg.error ? "text-red-300" : "text-emerald-300"}`}>${msg.text}</p>` : null}
         ${status
           ? html`
@@ -536,8 +704,8 @@ function App() {
       <section id="user-search" className="glass section-card mb-5">
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <select className="input-modern p-3 rounded-xl" value=${filters.country} onChange=${(e) => setFilters({ country: e.target.value, county: "", area: "" })}>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <select className="input-modern p-3 rounded-xl" value=${filters.country} onChange=${(e) => setFilters({ country: e.target.value, county: "", area: "", minPrice: "", maxPrice: "" })}>
             <option value="">All Countries</option>
             ${(meta.countries || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
           </select>
@@ -549,6 +717,24 @@ function App() {
             <option value="">All Areas</option>
             ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
           </select>
+          <input
+            className="input-modern p-3 rounded-xl"
+            type="number"
+            inputMode="numeric"
+            min="0"
+            placeholder="Min price"
+            value=${filters.minPrice}
+            onInput=${(e) => setFilters({ ...filters, minPrice: e.target.value })}
+          />
+          <input
+            className="input-modern p-3 rounded-xl"
+            type="number"
+            inputMode="numeric"
+            min="0"
+            placeholder="Max price"
+            value=${filters.maxPrice}
+            onInput=${(e) => setFilters({ ...filters, maxPrice: e.target.value })}
+          />
         </div>
       </section>
 
@@ -591,7 +777,7 @@ function App() {
                     ${mediaUnlocked ? null : html`<p className="media-lock-note">Activate account</p>`}
                     <h3 className="text-lg font-semibold leading-tight">${plot.title}</h3>
                     <p className="plot-meta mt-1">${plot.country || "Kenya"} | ${plot.county || plot.town || "-"} | ${plot.area}</p>
-                    <p className=${`mt-2 font-bold text-lg ${mediaUnlocked ? "" : "media-locked"}`}>Ksh ${plot.price}</p>
+                    <p className="mt-2 font-bold text-lg">Ksh ${plot.price}</p>
                     <p className="mt-2 text-sm text-slate-300">${plot.description || "No description added yet."}</p>
                     <p className="mt-2 text-sm">Caretaker: ${plot.caretaker}</p>
                     <p className="text-sm">WhatsApp: ${plot.whatsapp}</p>
@@ -608,6 +794,7 @@ function App() {
         <${MapLibreMap}
           centerLngLat=${selectedCoords}
           markerLabel=${selectedLabel}
+          enableFocusZoom=${!!selectedPlotId}
         />
       </section>
 
@@ -652,7 +839,7 @@ function App() {
         <div className="faq-list">
           <div className="faq-item">
             <p className="faq-q">How do I unlock contacts?</p>
-            <p className="faq-a">Go to Access, enter your phone, tap Continue, then Pay Ksh 50.</p>
+            <p className="faq-a">Register or log in first. Then tap Activate Account to receive the STK prompt on your phone.</p>
           </div>
           <div className="faq-item">
             <p className="faq-q">How long does access last?</p>
@@ -660,11 +847,26 @@ function App() {
           </div>
           <div className="faq-item">
             <p className="faq-q">What if payment is delayed?</p>
-            <p className="faq-a">Wait for STK confirmation on your phone. The status will update automatically.</p>
+            <p className="faq-a">Wait for the STK confirmation on your registered phone. The status will update automatically.</p>
           </div>
-          <div className="faq-item">
-            <p className="faq-q">Need help quickly?</p>
-            <p className="faq-a">Email support@tstplotconnect.com or call +254 700 000 000.</p>
+        </div>
+      </section>
+
+      <section id="user-about" className="glass section-card mb-2">
+        <p className="section-kicker">About</p>
+        <h2 className="section-title">About TST PlotConnect</h2>
+        <p className="faq-a mb-3">
+          TST PlotConnect helps you find verified plots and rentals across Kenya with clear locations,
+          honest pricing, and direct contact access after activation.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="input-modern rounded-xl p-3">
+            <p className="text-muted text-xs">What we offer</p>
+            <p className="font-semibold">Verified listings, location filters, and map-based browsing.</p>
+          </div>
+          <div className="input-modern rounded-xl p-3">
+            <p className="text-muted text-xs">Why it matters</p>
+            <p className="font-semibold">Reduce fraud, save time, and make confident property decisions.</p>
           </div>
         </div>
       </section>
@@ -685,25 +887,20 @@ function App() {
           </div>
           <div>
             <p className="footer-heading">Contact</p>
-            <p className="footer-note">support@tstplotconnect.com</p>
-            <p className="footer-note">+254 700 000 000</p>
+            <p className="footer-note">support@tst-plotconnect.com</p>
+            <p className="footer-note">0768622994</p>
             <div className="footer-social" aria-label="Social links">
-              <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="Facebook">
+              <a href="https://web.facebook.com/profile.php?id=61586345377148" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="Facebook">
                 <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
                   <path fill="currentColor" d="M13.5 8.5V6.8c0-.8.5-1.3 1.4-1.3h1.6V2.4h-2.8C10.9 2.4 9.7 4 9.7 6.4v2.1H7.3v3.2h2.4v9h3.8v-9h2.7l.4-3.2h-3.1z"/>
                 </svg>
               </a>
-              <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="Instagram">
+              <a href="https://www.instagram.com/techswifttrix/?hl=en" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="Instagram">
                 <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
                   <path fill="currentColor" d="M7.5 2h9A5.5 5.5 0 0 1 22 7.5v9a5.5 5.5 0 0 1-5.5 5.5h-9A5.5 5.5 0 0 1 2 16.5v-9A5.5 5.5 0 0 1 7.5 2zm0 1.8A3.7 3.7 0 0 0 3.8 7.5v9a3.7 3.7 0 0 0 3.7 3.7h9a3.7 3.7 0 0 0 3.7-3.7v-9a3.7 3.7 0 0 0-3.7-3.7h-9zm9.3 1.4a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 1.8A3.2 3.2 0 1 0 12 15.2 3.2 3.2 0 0 0 12 8.8z"/>
                 </svg>
               </a>
-              <a href="https://x.com/" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="X">
-                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                  <path fill="currentColor" d="M18.2 3h2.9l-6.3 7.2L22 21h-5.6l-4.4-5.8L6.9 21H4l6.7-7.7L3.7 3h5.7l4 5.3L18.2 3zm-1 16.3h1.6L8.6 4.6H7z"/>
-                </svg>
-              </a>
-              <a href="https://wa.me/254700000000" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="WhatsApp">
+              <a href="https://wa.me/254768622994" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="WhatsApp">
                 <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
                   <path fill="currentColor" d="M20.5 3.5A11 11 0 0 0 3.2 16.7L2 22l5.4-1.2A11 11 0 1 0 20.5 3.5zM12 20a8.8 8.8 0 0 1-4.5-1.2l-.3-.2-3.2.7.7-3.1-.2-.3A8.8 8.8 0 1 1 12 20zm4.8-6.6c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.2l-.6.9c-.2.3-.4.3-.7.1a7.3 7.3 0 0 1-3.6-3.2c-.2-.3 0-.5.1-.7l.5-.6c.2-.2.2-.4.3-.6l-.5-1.3c-.1-.3-.3-.3-.5-.3h-.5c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.7s1.1 3 1.2 3.2c.2.2 2.2 3.4 5.4 4.7.8.3 1.4.5 1.9.6.8.2 1.5.2 2.1.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.1-1.3-.1-.1-.3-.2-.6-.3z"/>
                 </svg>
