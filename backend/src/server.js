@@ -626,6 +626,17 @@ app.post("/api/payment/callback", async (req, res) => {
     }
 
     if (resultCode !== 0) {
+      await paymentsCol().updateOne(
+        { _id: payment._id },
+        {
+          $set: {
+            status: "Failed",
+            activatedAt: null,
+            expiresAt: null
+          }
+        }
+      );
+      await syncUserActivationStatus(payment.userId, null);
       return res.status(200).json({ ok: true });
     }
 
@@ -649,7 +660,12 @@ app.post("/api/payment/callback", async (req, res) => {
 
     const expectedAmount = Number(payment.amount || 0);
     const expectedPhone = payment.phone ? normalizePhone(payment.phone) : "";
-    if (!paidPhone || paidPhone !== expectedPhone || paidAmount !== expectedAmount) {
+    const amountMatches = Number.isFinite(paidAmount) ? paidAmount === expectedAmount : true;
+    const phoneMatches = (!expectedPhone || !paidPhone) ? true : paidPhone === expectedPhone;
+
+    // Daraja callback metadata may be partially missing in some live scenarios.
+    // Trust successful ResultCode and only hard-fail on a definite amount mismatch.
+    if (!amountMatches) {
       await paymentsCol().updateOne(
         { _id: payment._id },
         {
@@ -657,7 +673,8 @@ app.post("/api/payment/callback", async (req, res) => {
             status: "Failed",
             mpesaReceipt: receipt,
             activatedAt: null,
-            expiresAt: null
+            expiresAt: null,
+            validationError: "Amount mismatch"
           }
         }
       );
@@ -674,7 +691,8 @@ app.post("/api/payment/callback", async (req, res) => {
           status: "Completed",
           mpesaReceipt: receipt,
           activatedAt,
-          expiresAt
+          expiresAt,
+          validationWarning: phoneMatches ? null : "Phone mismatch"
         }
       }
     );
@@ -686,7 +704,8 @@ app.post("/api/payment/callback", async (req, res) => {
     });
 
     return res.status(200).json({ ok: true });
-  } catch (_err) {
+  } catch (err) {
+    console.error("Payment callback processing error:", err && err.message ? err.message : err);
     return res.status(200).json({ ok: true });
   }
 });
