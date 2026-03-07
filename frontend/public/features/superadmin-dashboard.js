@@ -30,6 +30,33 @@ function commaUrls(text) {
     .filter(Boolean);
 }
 
+function csvSafe(value) {
+  if (value === null || value === undefined) return "";
+  const raw = String(value);
+  if (/[",\n\r]/.test(raw)) {
+    return `"${raw.replace(/"/g, "\"\"")}"`;
+  }
+  return raw;
+}
+
+function buildCsv(headers, rows) {
+  const headerRow = headers.map((h) => csvSafe(h.label)).join(",");
+  const body = rows.map((row) => headers.map((h) => csvSafe(h.value(row))).join(","));
+  return [headerRow, ...body].join("\r\n");
+}
+
+function triggerDownload(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function App() {
   const ADMIN_MOBILE_NAV_BREAKPOINT = 900;
   const [apiBaseInput, setApiBaseInput] = useState(inferApiBase());
@@ -68,6 +95,7 @@ function App() {
   const [forgotExpiresAt, setForgotExpiresAt] = useState("");
   const [activeNav, setActiveNav] = useState("dashboard-home");
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [downloadFormat, setDownloadFormat] = useState("csv");
 
   const [plotForm, setPlotForm] = useState({
     title: "",
@@ -462,6 +490,114 @@ function App() {
     }
   }
 
+  function downloadDataset(name, headers, rows) {
+    if (!rows || rows.length === 0) {
+      showMessage(`No ${name} records to download.`, true);
+      return;
+    }
+    const csv = buildCsv(headers, rows);
+    const stamp = new Date().toISOString().slice(0, 10);
+    const asExcel = downloadFormat === "excel";
+    const ext = asExcel ? "xls" : "csv";
+    const mime = asExcel ? "application/vnd.ms-excel" : "text/csv;charset=utf-8;";
+    triggerDownload(`${name}-${stamp}.${ext}`, csv, mime);
+  }
+
+  function downloadPlots() {
+    downloadDataset("plots", [
+      { label: "ID", value: (p) => p.id },
+      { label: "Title", value: (p) => p.title },
+      { label: "Price", value: (p) => p.price },
+      { label: "Country", value: (p) => p.country || "Kenya" },
+      { label: "County", value: (p) => p.county || p.town || "" },
+      { label: "Area", value: (p) => p.area || "" },
+      { label: "Caretaker", value: (p) => p.caretaker || "" },
+      { label: "WhatsApp", value: (p) => p.whatsapp || "" },
+      { label: "Description", value: (p) => p.description || "" },
+      { label: "Images", value: (p) => (p.images || []).join(" | ") },
+      { label: "Videos", value: (p) => (p.videos || []).join(" | ") }
+    ], plots);
+  }
+
+  function downloadUsers() {
+    downloadDataset("users", [
+      { label: "User ID", value: (u) => u.id },
+      { label: "Phone", value: (u) => u.phone },
+      { label: "Role", value: (u) => u.role || (u.is_super_admin ? "super_admin" : u.is_admin ? "admin" : "user") },
+      { label: "Is Admin", value: (u) => (u.is_admin ? "yes" : "no") },
+      { label: "Is Super Admin", value: (u) => (u.is_super_admin ? "yes" : "no") },
+      { label: "Created", value: (u) => formatDate(u.createdAt) },
+      { label: "Activated", value: (u) => formatDate(u.activatedAt || u.activated_at) },
+      { label: "Expires", value: (u) => formatDate(u.expiresAt || u.expires_at) },
+      { label: "Payment Status", value: (u) => (u.paymentStatus ? "active" : "-") }
+    ], users);
+  }
+
+  function downloadPayments() {
+    downloadDataset("payments", [
+      { label: "Payment ID", value: (p) => p.id },
+      { label: "User ID", value: (p) => p.userId || "" },
+      { label: "Phone", value: (p) => p.phone || "" },
+      { label: "Amount", value: (p) => p.amount },
+      { label: "Status", value: (p) => p.status },
+      { label: "Receipt", value: (p) => p.mpesaReceipt || "" },
+      { label: "Activated", value: (p) => formatDate(p.activatedAt) },
+      { label: "Expires", value: (p) => formatDate(p.expiresAt) },
+      { label: "Created", value: (p) => formatDate(p.timestamp || p.createdAt) }
+    ], payments);
+  }
+
+  function downloadAdminAccounts() {
+    downloadDataset("admin-accounts", [
+      { label: "Admin ID", value: (a) => a.id },
+      { label: "Login Phone", value: (a) => a.loginPhone },
+      { label: "Role", value: (a) => a.role === "super_admin" ? "Super Admin" : "Admin" },
+      { label: "Created", value: (a) => formatDate(a.createdAt) },
+      { label: "Lock Status", value: (a) => a.lockUntil ? `Locked until ${formatDate(a.lockUntil)}` : "Unlocked" }
+    ], adminAccounts);
+  }
+
+  function downloadActiveAccounts() {
+    downloadDataset("active-accounts", [
+      { label: "User ID", value: (a) => a.userId },
+      { label: "Phone", value: (a) => a.phone || "" },
+      { label: "Activated", value: (a) => formatDate(a.activatedAt) },
+      { label: "Expires", value: (a) => formatDate(a.expiresAt) },
+      { label: "Remaining", value: (a) => `${a.remainingHours}h ${a.remainingMinutes}m (${a.remainingSeconds}s)` },
+      { label: "Receipt", value: (a) => a.mpesaReceipt || "" }
+    ], activeAccounts);
+  }
+
+  async function deleteUserBySuperAdmin(userId) {
+    if (!isSuperAdmin) return showMessage("Super admin login required.", true);
+    if (!window.confirm("Delete this user and their related payments?")) return;
+    setBusy(true);
+    try {
+      const res = await api(`/api/super-admin/users/${encodeURIComponent(userId)}`, { method: "DELETE" });
+      showMessage(res.message || "User deleted.");
+      await Promise.all([loadUsers(), loadPayments(), loadAnalytics(), loadActiveAccounts()]);
+    } catch (err) {
+      showMessage(err.message || "Failed to delete user.", true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deletePaymentBySuperAdmin(paymentId) {
+    if (!isSuperAdmin) return showMessage("Super admin login required.", true);
+    if (!window.confirm("Delete this payment record?")) return;
+    setBusy(true);
+    try {
+      const res = await api(`/api/super-admin/payments/${encodeURIComponent(paymentId)}`, { method: "DELETE" });
+      showMessage(res.message || "Payment deleted.");
+      await Promise.all([loadPayments(), loadUsers(), loadAnalytics(), loadActiveAccounts()]);
+    } catch (err) {
+      showMessage(err.message || "Failed to delete payment.", true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function editPlot(plot) {
     if (!isAdminAuthenticated) return showMessage("Admin login required.", true);
     const title = window.prompt("Title:", plot.title);
@@ -756,6 +892,38 @@ function App() {
                 <article className="glass rounded-2xl p-4 stat-card"><p className="text-xs text-muted">Revenue</p><p className="text-2xl font-bold">Ksh ${metrics.revenue}</p></article>
               </section>
 
+              ${isSuperAdmin
+                ? html`
+                    <section id="admin-data-management" className="glass fade-in p-6 rounded-2xl mb-6 dashboard-card">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+                        <div>
+                          <h2 className="text-xl font-bold text-emerald-400">Data Management</h2>
+                          <p className="text-sm text-muted">Download records and prune data to avoid congestion.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted">Export format</span>
+                          <select
+                            className="input-modern p-2 rounded-xl"
+                            value=${downloadFormat}
+                            onChange=${(e) => setDownloadFormat(e.target.value)}
+                          >
+                            <option value="csv">CSV</option>
+                            <option value="excel">Excel (CSV)</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <button className="btn-soft rounded-xl p-3" onClick=${downloadPlots} disabled=${busy}>Download Plots</button>
+                        <button className="btn-soft rounded-xl p-3" onClick=${downloadUsers} disabled=${busy}>Download Users</button>
+                        <button className="btn-soft rounded-xl p-3" onClick=${downloadPayments} disabled=${busy}>Download Payments</button>
+                        <button className="btn-soft rounded-xl p-3" onClick=${downloadAdminAccounts} disabled=${busy}>Download Admin Accounts</button>
+                        <button className="btn-soft rounded-xl p-3" onClick=${downloadActiveAccounts} disabled=${busy}>Download Active Accounts</button>
+                      </div>
+                      <p className="mt-3 text-xs text-muted">Excel exports are CSV-compatible for easy opening in Excel.</p>
+                    </section>
+                  `
+                : null}
+
               <section id="admin-add-plot" className="glass fade-in p-6 rounded-2xl mb-6 dashboard-card">
                 <h2 className="text-xl font-bold mb-4 text-emerald-400">Add Plot</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -959,6 +1127,9 @@ function App() {
                           <td className="p-2 flex gap-2">
                             <button className="btn-chip btn-chip-edit" onClick=${() => activateUser(u.id)}>Activate 24h</button>
                             <button className="btn-chip btn-chip-danger" onClick=${() => revokeUser(u.id)}>Revoke</button>
+                            ${isSuperAdmin && !u.is_admin && !u.is_super_admin
+                              ? html`<button className="btn-chip btn-chip-danger" onClick=${() => deleteUserBySuperAdmin(u.id)}>Delete</button>`
+                              : null}
                           </td>
                         </tr>
                       `)}
@@ -971,7 +1142,7 @@ function App() {
                 <h2 className="text-xl font-bold mb-4 text-emerald-400">Payments</h2>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left data-table">
-                    <thead><tr><th className="p-2">Payment ID</th><th className="p-2">User</th><th className="p-2">Amount</th><th className="p-2">Status</th><th className="p-2">Receipt</th><th className="p-2">Created</th></tr></thead>
+                    <thead><tr><th className="p-2">Payment ID</th><th className="p-2">User</th><th className="p-2">Amount</th><th className="p-2">Status</th><th className="p-2">Receipt</th><th className="p-2">Created</th><th className="p-2">Action</th></tr></thead>
                     <tbody>
                       ${payments.map((p) => html`
                         <tr key=${p.id} className="admin-row border-t border-slate-700">
@@ -981,6 +1152,11 @@ function App() {
                           <td className="p-2">${p.status}</td>
                           <td className="p-2">${p.mpesaReceipt || "-"}</td>
                           <td className="p-2">${formatDate(p.timestamp || p.createdAt)}</td>
+                          <td className="p-2">
+                            ${isSuperAdmin
+                              ? html`<button className="btn-chip btn-chip-danger" onClick=${() => deletePaymentBySuperAdmin(p.id)}>Delete</button>`
+                              : null}
+                          </td>
                         </tr>
                       `)}
                     </tbody>

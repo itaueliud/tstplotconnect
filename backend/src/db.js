@@ -379,6 +379,8 @@ async function seedLocationMetadata() {
         "Queens",
         "Kathemboni",
         "eastleigh",
+        "Katungo",
+        "Mutituni",
         "Muthini",
         "Kathaleyoni",
         "Machakos Town Centre",
