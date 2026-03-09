@@ -4,6 +4,8 @@ import htm from "https://esm.sh/htm@3.1.1";
 
 const html = htm.bind(React.createElement);
 const DEFAULT_API_BASE = "https://tstplotconnect-2.onrender.com";
+const SUPPORT_PHONE = "0768622994";
+const SUPPORT_WHATSAPP = "254768622994";
 const API = (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_API_URL)
   || (typeof window !== "undefined" && window.NEXT_PUBLIC_API_URL)
   || DEFAULT_API_BASE;
@@ -195,16 +197,25 @@ function App() {
   const [registerPassword, setRegisterPassword] = useState("");
   const [loginPhone, setLoginPhone] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [showForgotOptions, setShowForgotOptions] = useState(false);
+  const [forgotPhone, setForgotPhone] = useState("");
+  const [forgotCode, setForgotCode] = useState("");
+  const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [forgotStep, setForgotStep] = useState("request");
+  const [forgotExpiresAt, setForgotExpiresAt] = useState("");
+  const [forgotBusy, setForgotBusy] = useState(false);
   const [plots, setPlots] = useState([]);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ country: "", county: "", area: "", minPrice: "", maxPrice: "" });
+  const [countryConfirmed, setCountryConfirmed] = useState(false);
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
   const [nowTs, setNowTs] = useState(Date.now());
   const [activeNav, setActiveNav] = useState("user-access");
   const [paymentLog, setPaymentLog] = useState([]);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const lastKnownActiveRef = useRef(false);
 
   const counties = useMemo(
     () => (filters.country ? meta.countiesByCountry[filters.country] || [] : []),
@@ -214,6 +225,10 @@ function App() {
     () => (filters.county ? meta.areasByCounty[filters.county] || [] : []),
     [meta, filters.county]
   );
+  const availableCountries = useMemo(() => {
+    const source = Array.isArray(meta.countries) ? meta.countries : [];
+    return Array.from(new Set(source.filter(Boolean)));
+  }, [meta.countries]);
 
   function showMessage(text, error = false) {
     setMsg({ text, error });
@@ -313,9 +328,19 @@ function App() {
     try {
       const data = await api("/api/metadata/locations");
       const incoming = data || { countries: [], countiesByCountry: {}, areasByCounty: {} };
-      const countries = Array.from(new Set([...(incoming.countries || []), ...SUPPORTED_COUNTRIES]));
-      setMeta({ ...incoming, countries });
-    } catch (_err) {}
+      setMeta({
+        countries: Array.isArray(incoming.countries) ? incoming.countries : [],
+        countiesByCountry: incoming.countiesByCountry && typeof incoming.countiesByCountry === "object"
+          ? incoming.countiesByCountry
+          : {},
+        areasByCounty: incoming.areasByCounty && typeof incoming.areasByCounty === "object"
+          ? incoming.areasByCounty
+          : {}
+      });
+    } catch (_err) {
+      setMeta({ countries: [], countiesByCountry: {}, areasByCounty: {} });
+      showMessage("Failed to load location metadata from server.", true);
+    }
   }
 
   async function loadPlots() {
@@ -367,6 +392,25 @@ function App() {
     }
   }
 
+  async function loadPaymentLog(authToken = null) {
+    if (!authToken && !token) {
+      setPaymentLog([]);
+      return;
+    }
+    try {
+      const rows = await api("/api/user/payments", {}, authToken);
+      const mapped = (Array.isArray(rows) ? rows : []).map((p) => ({
+        id: p.id,
+        timestamp: p.timestamp,
+        amount: p.amount,
+        status: p.status,
+        note: p.validationError || p.validationWarning || (p.status === "Completed" ? "Payment confirmed." : ""),
+        mpesaReceipt: p.mpesaReceipt
+      }));
+      setPaymentLog(mapped);
+    } catch (_err) {}
+  }
+
   async function registerUser() {
     try {
       if (!registerName.trim()) throw new Error("Enter your name.");
@@ -386,6 +430,7 @@ function App() {
       setRegisterPassword("");
       showMessage("Registration complete. Activate your account below.");
       await loadStatus(data.token);
+      await loadPaymentLog(data.token);
       await loadPlots();
     } catch (err) {
       showMessage(err.message, true);
@@ -407,18 +452,78 @@ function App() {
 
       persistSession(data.token, data.user);
       setLoginPassword("");
+      setShowForgotOptions(false);
       showMessage("Login successful. Activate your account.");
-      await loadStatus(data.token);
+      const freshStatus = await loadStatus(data.token);
+      setNowTs(Date.now());
+      await loadPaymentLog(data.token);
+      if (freshStatus && freshStatus.active) {
+        showMessage("Login successful. Account is active and contacts are unlocked.");
+      }
       await loadPlots();
     } catch (err) {
       showMessage(err.message, true);
     }
   }
 
+  async function requestPasswordResetCode() {
+    try {
+      const phone = (forgotPhone || loginPhone || "").trim();
+      if (!phone) throw new Error("Enter your phone number first.");
+      setForgotBusy(true);
+      const data = await api("/api/auth/request-code", {
+        method: "POST",
+        body: JSON.stringify({ phone })
+      });
+      setForgotPhone(phone);
+      setForgotStep("verify");
+      setForgotCode("");
+      setForgotExpiresAt(data?.expiresAt || "");
+      showMessage(data?.message || "OTP sent. Check your phone.");
+    } catch (err) {
+      showMessage(err.message || "Failed to send OTP.", true);
+    } finally {
+      setForgotBusy(false);
+    }
+  }
+
+  async function verifyPasswordResetCode() {
+    try {
+      const phone = (forgotPhone || loginPhone || "").trim();
+      if (!phone) throw new Error("Enter your phone number.");
+      if (!forgotCode.trim()) throw new Error("Enter the OTP code.");
+      if (!forgotNewPassword.trim()) throw new Error("Enter your new password.");
+      setForgotBusy(true);
+      const data = await api("/api/auth/verify-code", {
+        method: "POST",
+        body: JSON.stringify({
+          phone,
+          code: forgotCode.trim(),
+          newPassword: forgotNewPassword
+        })
+      });
+      setLoginPhone(phone);
+      setLoginPassword("");
+      setShowForgotOptions(false);
+      setForgotStep("request");
+      setForgotCode("");
+      setForgotNewPassword("");
+      setForgotExpiresAt("");
+      showMessage(data?.message || "Password reset successful. Please log in.");
+    } catch (err) {
+      showMessage(err.message || "Failed to reset password.", true);
+    } finally {
+      setForgotBusy(false);
+    }
+  }
+
   function logoutUser() {
     persistSession("", null);
+    setCountryConfirmed(false);
+    setFilters({ country: "", county: "", area: "", minPrice: "", maxPrice: "" });
     setStatus(null);
     setPaymentLog([]);
+    lastKnownActiveRef.current = false;
     showMessage("Logged out.");
   }
 
@@ -447,15 +552,16 @@ function App() {
       showMessage(data.message || "Payment initiated.");
       addPaymentLog("Pending", data.message || "Payment initiated.");
       await loadStatus(authToken);
+      await loadPaymentLog(authToken);
       if (data.mode === "daraja") {
         const confirmed = await waitForActivation(120, authToken);
         if (!confirmed) {
           showMessage("STK sent. Complete payment on your phone; contacts unlock after confirmation.");
         } else {
-          addPaymentLog("Completed", "Contacts unlocked for 24 hours.");
+          await loadPaymentLog(authToken);
         }
       } else {
-        addPaymentLog("Completed", "Contacts unlocked for 24 hours.");
+        await loadPaymentLog(authToken);
         await loadPlots();
       }
     } catch (err) {
@@ -476,7 +582,9 @@ function App() {
     try {
       const data = await api("/api/user/status", {}, authToken);
       setStatus(data);
+      return data;
     } catch (_err) {}
+    return null;
   }
 
   useEffect(() => {
@@ -506,9 +614,27 @@ function App() {
 
   useEffect(() => {
     loadStatus();
-    const t = setInterval(loadStatus, 1000);
-    return () => clearInterval(t);
+    loadPaymentLog();
+    const statusTimer = setInterval(loadStatus, 1000);
+    const paymentTimer = setInterval(loadPaymentLog, 5000);
+    return () => {
+      clearInterval(statusTimer);
+      clearInterval(paymentTimer);
+    };
   }, [token]);
+
+  useEffect(() => {
+    const isActive = !!(status && status.active);
+    if (token && isActive && !lastKnownActiveRef.current) {
+      loadPlots();
+      loadPaymentLog();
+      showMessage("Payment received. Contacts unlocked for 24 hours.");
+    }
+    lastKnownActiveRef.current = isActive;
+    if (!token) {
+      lastKnownActiveRef.current = false;
+    }
+  }, [status, token]);
 
   useEffect(() => {
     const t = setInterval(() => setNowTs(Date.now()), 1000);
@@ -545,15 +671,62 @@ function App() {
   const selectedLabel = selectedPlot
     ? selectedPlot.title
     : (filters.area || filters.county || filters.country || "Selected Location");
-  const userNavItems = [
-    { id: "user-access", label: "Access" },
-    { id: "user-search", label: "Search" },
-    { id: "user-listings", label: "Listings" },
-    { id: "user-payments", label: "My Payments" },
-    { id: "user-map", label: "Map" },
-    { id: "user-support", label: "Support / FAQ" },
-    { id: "user-about", label: "About" }
-  ];
+  const isAuthenticated = Boolean(token);
+  const hasChosenCountry = Boolean(filters.country) && countryConfirmed;
+  const userNavItems = isAuthenticated
+    ? [
+        { id: "user-access", label: "Access" },
+        { id: "user-search", label: "Search" },
+        { id: "user-listings", label: "Listings" },
+        { id: "user-payments", label: "My Payments" },
+        { id: "user-map", label: "Map" },
+        { id: "user-support", label: "Support / FAQ" },
+        { id: "user-about", label: "About" }
+      ]
+    : [{ id: "user-access", label: "Access" }];
+
+  if (!isAuthenticated && !hasChosenCountry) {
+    return html`
+      <div className="page-shell">
+        <nav className="glass hero-nav mb-5">
+          <h1 className="brand-title">TST PlotConnect</h1>
+          <p className="brand-subtitle">Find your ideal accommodation</p>
+        </nav>
+
+        <main className="user-main">
+          <section className="glass section-card w-full">
+            <p className="section-kicker">Step 1 of 2</p>
+            <h2 className="section-title">Select Country</h2>
+            <p className="text-sm text-slate-300 mb-3">Choose your country to continue to registration or login.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <select
+                className="input-modern p-3 rounded-xl md:col-span-2"
+                value=${filters.country}
+                onChange=${(e) => {
+                  setCountryConfirmed(false);
+                  setFilters({ country: e.target.value, county: "", area: "", minPrice: "", maxPrice: "" });
+                }}
+              >
+                <option value="">Choose country</option>
+                ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+              </select>
+              <button
+                className="btn-success rounded-xl p-3"
+                disabled=${!filters.country}
+                onClick=${() => {
+                  setCountryConfirmed(true);
+                  setActiveNav("user-access");
+                  showMessage("Country selected. Please register or log in.");
+                }}
+              >
+                Continue
+              </button>
+            </div>
+          </section>
+        </main>
+      </div>
+    `;
+  }
 
   return html`
     <div className="page-shell">
@@ -686,6 +859,84 @@ function App() {
                         Login
                       </button>
                     </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        className="btn-soft rounded-xl p-2 text-sm"
+                        onClick=${() => {
+                          setShowForgotOptions((v) => !v);
+                          setForgotPhone((prev) => prev || loginPhone);
+                        }}
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
+                    ${showForgotOptions
+                      ? html`
+                          <div className="mt-3 rounded-xl border border-slate-700/60 bg-slate-900/40 p-3">
+                            <p className="text-sm text-slate-200">Reset password with OTP:</p>
+                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
+                              <input
+                                className="input-modern p-2 rounded-xl"
+                                placeholder="Phone e.g. 0700..."
+                                value=${forgotPhone}
+                                onInput=${(e) => setForgotPhone(e.target.value)}
+                              />
+                              <button
+                                type="button"
+                                className="btn-soft rounded-xl p-2 text-sm"
+                                onClick=${requestPasswordResetCode}
+                                disabled=${forgotBusy}
+                              >
+                                Send OTP
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-soft rounded-xl p-2 text-sm"
+                                onClick=${requestPasswordResetCode}
+                                disabled=${forgotBusy}
+                              >
+                                Resend OTP
+                              </button>
+                            </div>
+                            ${forgotStep === "verify"
+                              ? html`
+                                  <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
+                                    <input
+                                      className="input-modern p-2 rounded-xl"
+                                      placeholder="Enter OTP code"
+                                      value=${forgotCode}
+                                      onInput=${(e) => setForgotCode(e.target.value)}
+                                    />
+                                    <input
+                                      type="password"
+                                      className="input-modern p-2 rounded-xl"
+                                      placeholder="New password"
+                                      value=${forgotNewPassword}
+                                      onInput=${(e) => setForgotNewPassword(e.target.value)}
+                                    />
+                                    <button
+                                      type="button"
+                                      className="btn-success rounded-xl p-2 text-sm"
+                                      onClick=${verifyPasswordResetCode}
+                                      disabled=${forgotBusy}
+                                    >
+                                      Verify OTP & Reset
+                                    </button>
+                                  </div>
+                                `
+                              : null}
+                            <p className="mt-2 text-xs text-slate-400">
+                              ${forgotExpiresAt
+                                ? `OTP expires at ${new Date(forgotExpiresAt).toLocaleTimeString()}.`
+                                : "Enter your phone and tap Send OTP."}
+                            </p>
+                            <p className="mt-2 text-xs text-slate-400">
+                              Need help? <a href=${`https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(`Hello, I need help resetting my PlotConnect password. Phone: ${(forgotPhone || loginPhone).trim() || "-"}`)}`} target="_blank" rel="noopener noreferrer">WhatsApp Support</a> or <a href=${`tel:${SUPPORT_PHONE}`}>Call Support</a>.
+                            </p>
+                          </div>
+                        `
+                      : null}
                   `}
             `}
         ${msg.text ? html`<p className=${`mt-3 text-sm ${msg.error ? "text-red-300" : "text-emerald-300"}`}>${msg.text}</p>` : null}
@@ -701,13 +952,15 @@ function App() {
           : null}
       </section>
 
+      ${isAuthenticated
+        ? html`
       <section id="user-search" className="glass section-card mb-5">
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <select className="input-modern p-3 rounded-xl" value=${filters.country} onChange=${(e) => setFilters({ country: e.target.value, county: "", area: "", minPrice: "", maxPrice: "" })}>
             <option value="">All Countries</option>
-            ${(meta.countries || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+            ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
           </select>
           <select className="input-modern p-3 rounded-xl" value=${filters.county} onChange=${(e) => setFilters({ ...filters, county: e.target.value, area: "" })}>
             <option value="">All Counties</option>
@@ -752,8 +1005,14 @@ function App() {
           : html`
               <div className="plot-grid">
                 ${plots.map((plot, idx) => html`
-                  ${(() => {
+                ${(() => {
                     const mediaUnlocked = !!(status && status.active);
+                    const caretakerDisplay = mediaUnlocked
+                      ? (plot.caretaker && plot.caretaker !== "Locked" ? plot.caretaker : "0756734298")
+                      : "Locked";
+                    const whatsappDisplay = mediaUnlocked
+                      ? (plot.whatsapp && plot.whatsapp !== "Locked" ? plot.whatsapp : "0756734298")
+                      : "Locked";
                     return html`
                   <article
                     key=${plot.id}
@@ -779,8 +1038,12 @@ function App() {
                     <p className="plot-meta mt-1">${plot.country || "Kenya"} | ${plot.county || plot.town || "-"} | ${plot.area}</p>
                     <p className="mt-2 font-bold text-lg">Ksh ${plot.price}</p>
                     <p className="mt-2 text-sm text-slate-300">${plot.description || "No description added yet."}</p>
-                    <p className="mt-2 text-sm">Caretaker: ${plot.caretaker}</p>
-                    <p className="text-sm">WhatsApp: ${plot.whatsapp}</p>
+                    ${mediaUnlocked
+                      ? html`
+                          <p className="mt-2 text-sm">Caretaker: ${caretakerDisplay}</p>
+                          <p className="text-sm">WhatsApp: ${whatsappDisplay}</p>
+                        `
+                      : html`<p className="mt-2 text-sm text-amber-700">Contacts hidden until account activation.</p>`}
                   </article>
                 `})()}
                 `)}
@@ -913,6 +1176,8 @@ function App() {
           <a href="#user-access" className="back-to-top">Back to top</a>
         </div>
       </footer>
+      `
+        : null}
         </div>
       </main>
     </div>
@@ -920,12 +1185,3 @@ function App() {
 }
 
 createRoot(document.getElementById("app")).render(html`<${App} />`);
-
-
-
-
-
-
-
-
-

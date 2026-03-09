@@ -454,8 +454,12 @@ function App() {
       setLoginPassword("");
       setShowForgotOptions(false);
       showMessage("Login successful. Activate your account.");
-      await loadStatus(data.token);
+      const freshStatus = await loadStatus(data.token);
+      setNowTs(Date.now());
       await loadPaymentLog(data.token);
+      if (freshStatus && freshStatus.active) {
+        showMessage("Login successful. Account is active and contacts are unlocked.");
+      }
       await loadPlots();
     } catch (err) {
       showMessage(err.message, true);
@@ -578,7 +582,9 @@ function App() {
     try {
       const data = await api("/api/user/status", {}, authToken);
       setStatus(data);
+      return data;
     } catch (_err) {}
+    return null;
   }
 
   useEffect(() => {
@@ -678,6 +684,7 @@ function App() {
         { id: "user-about", label: "About" }
       ]
     : [{ id: "user-access", label: "Access" }];
+  const isAboutOpen = isAuthenticated && activeNav === "user-about";
 
   if (!isAuthenticated && !hasChosenCountry) {
     return html`
@@ -750,9 +757,12 @@ function App() {
           <div className="sidebar-list">
             ${userNavItems.map((item) => html`
               <a
-                href=${item.href || `#${item.id}`}
+                href=${item.id === "user-about" ? "#" : (item.href || `#${item.id}`)}
                 className=${`sidebar-link ${activeNav === item.id ? "is-active" : ""}`}
-                onClick=${() => {
+                onClick=${(e) => {
+                  if (item.id === "user-about") {
+                    e.preventDefault();
+                  }
                   if (!item.href) {
                     setActiveNav(item.id);
                   }
@@ -948,6 +958,8 @@ function App() {
 
       ${isAuthenticated
         ? html`
+      ${!isAboutOpen
+        ? html`
       <section id="user-search" className="glass section-card mb-5">
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
@@ -1108,25 +1120,34 @@ function App() {
           </div>
         </div>
       </section>
+          `
+        : null}
 
-      <section id="user-about" className="glass section-card mb-2">
-        <p className="section-kicker">About</p>
-        <h2 className="section-title">About TST PlotConnect</h2>
-        <p className="faq-a mb-3">
-          TST PlotConnect helps you find verified plots and rentals across Kenya with clear locations,
-          honest pricing, and direct contact access after activation.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="input-modern rounded-xl p-3">
-            <p className="text-muted text-xs">What we offer</p>
-            <p className="font-semibold">Verified listings, location filters, and map-based browsing.</p>
-          </div>
-          <div className="input-modern rounded-xl p-3">
-            <p className="text-muted text-xs">Why it matters</p>
-            <p className="font-semibold">Reduce fraud, save time, and make confident property decisions.</p>
-          </div>
-        </div>
-      </section>
+      ${isAboutOpen
+        ? html`
+            <section id="user-about" className="glass section-card mb-2">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="section-kicker">About</p>
+                  <h2 className="section-title mb-0">About TST PlotConnect</h2>
+                </div>
+                <button
+                  type="button"
+                  className="btn-soft rounded-xl px-3 py-2"
+                  onClick=${() => setActiveNav("user-access")}
+                >
+                  Close About
+                </button>
+              </div>
+              <iframe
+                src="/about.html"
+                title="About TST PlotConnect"
+                className="w-full rounded-xl border border-slate-700/60"
+                style=${{ minHeight: "75vh", background: "#fff" }}
+              ></iframe>
+            </section>
+          `
+        : null}
 
       <footer className="user-footer">
         <div className="footer-grid">

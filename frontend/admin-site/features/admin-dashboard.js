@@ -3,7 +3,7 @@ import { createRoot } from "https://esm.sh/react-dom@18.2.0/client";
 import htm from "https://esm.sh/htm@3.1.1";
 
 const html = htm.bind(React.createElement);
-const DEFAULT_API_BASE = "http://localhost:3000";
+const DEFAULT_API_BASE = "https://tstplotconnect-2.onrender.com";
 const API = (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_API_URL)
   || (typeof window !== "undefined" && window.NEXT_PUBLIC_API_URL)
   || DEFAULT_API_BASE;
@@ -17,10 +17,10 @@ function inferApiBase() {
   const isLocal = loc.protocol === "file:" || isLocalHost;
   if (isLocal) {
     localStorage.removeItem("apiBase");
-    return API || `http://${loc.hostname || "localhost"}:10000`;
+    return API;
   }
   const saved = localStorage.getItem("apiBase");
-  return saved || API || DEFAULT_API_BASE;
+  return saved || API;
 }
 
 function formatDate(value) {
@@ -35,6 +35,33 @@ function commaUrls(text) {
     .split(",")
     .map((x) => x.trim())
     .filter(Boolean);
+}
+
+function csvSafe(value) {
+  if (value === null || value === undefined) return "";
+  const raw = String(value);
+  if (/[",\n\r]/.test(raw)) {
+    return `"${raw.replace(/"/g, "\"\"")}"`;
+  }
+  return raw;
+}
+
+function buildCsv(headers, rows) {
+  const headerRow = headers.map((h) => csvSafe(h.label)).join(",");
+  const body = rows.map((row) => headers.map((h) => csvSafe(h.value(row))).join(","));
+  return [headerRow, ...body].join("\r\n");
+}
+
+function triggerDownload(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function App() {
@@ -161,7 +188,7 @@ function App() {
       ? window.location.origin
       : "";
     const saved = localStorage.getItem("apiBase") || "";
-    const candidates = [apiBaseInput, current, saved, API, "http://127.0.0.1:3000"]
+    const candidates = [apiBaseInput, current, saved, API, "http://127.0.0.1:3000", "http://localhost:10000", "http://127.0.0.1:10000"]
       .map((x) => String(x || "").trim())
       .filter(Boolean)
       .filter((v, i, a) => a.indexOf(v) === i);
@@ -511,6 +538,131 @@ function App() {
     }
   }
 
+  function downloadDataset(name, headers, rows) {
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const csv = buildCsv(headers, rows);
+    triggerDownload(`${name}-${stamp}.csv`, csv, "text/csv;charset=utf-8");
+  }
+
+  function downloadPlots() {
+    downloadDataset("plots", [
+      { label: "ID", value: (p) => p.id },
+      { label: "Title", value: (p) => p.title },
+      { label: "Price", value: (p) => p.price },
+      { label: "Country", value: (p) => p.country || "Kenya" },
+      { label: "County", value: (p) => p.county || p.town || "" },
+      { label: "Area", value: (p) => p.area || "" },
+      { label: "Caretaker", value: (p) => p.caretaker || "" },
+      { label: "WhatsApp", value: (p) => p.whatsapp || "" },
+      { label: "Description", value: (p) => p.description || "" },
+      { label: "Created At", value: (p) => p.createdAt || p.created_at || "" }
+    ], plots);
+  }
+
+  function downloadUsers() {
+    downloadDataset("users", [
+      { label: "User ID", value: (u) => u.id },
+      { label: "Phone", value: (u) => u.phone },
+      { label: "Role", value: (u) => u.role || (u.is_super_admin ? "super_admin" : u.is_admin ? "admin" : "user") },
+      { label: "Is Admin", value: (u) => (u.is_admin ? "yes" : "no") },
+      { label: "Is Super Admin", value: (u) => (u.is_super_admin ? "yes" : "no") },
+      { label: "Activated At", value: (u) => u.activatedAt || u.activated_at || "" },
+      { label: "Expires At", value: (u) => u.expiresAt || u.expires_at || "" },
+      { label: "Payment Status", value: (u) => (u.paymentStatus ? "active" : "inactive") }
+    ], users);
+  }
+
+  function downloadPayments() {
+    downloadDataset("payments", [
+      { label: "Payment ID", value: (p) => p.id },
+      { label: "User ID", value: (p) => p.userId || "" },
+      { label: "Phone", value: (p) => p.phone || "" },
+      { label: "Amount", value: (p) => p.amount || 0 },
+      { label: "Status", value: (p) => p.status || "" },
+      { label: "Receipt", value: (p) => p.mpesaReceipt || "" },
+      { label: "Activated At", value: (p) => p.activatedAt || "" },
+      { label: "Expires At", value: (p) => p.expiresAt || "" },
+      { label: "Timestamp", value: (p) => p.timestamp || p.createdAt || "" }
+    ], payments);
+  }
+
+  function downloadActiveAccounts() {
+    downloadDataset("active-accounts", [
+      { label: "User ID", value: (a) => a.userId },
+      { label: "Phone", value: (a) => a.phone || "" },
+      { label: "Activated At", value: (a) => a.activatedAt || "" },
+      { label: "Expires At", value: (a) => a.expiresAt || "" },
+      { label: "Remaining Seconds", value: (a) => a.remainingSeconds || 0 },
+      { label: "Receipt", value: (a) => a.mpesaReceipt || "" }
+    ], activeAccounts);
+  }
+
+  async function runExportThenDelete(label, rows, exportFn, deleteFn) {
+    if (!isAdminAuthenticated) return showMessage("Admin login required.", true);
+    if (!rows.length) return showMessage(`No ${label.toLowerCase()} to export.`, true);
+    exportFn();
+    if (!window.confirm(`Export complete. Delete ${rows.length} ${label.toLowerCase()} records now?`)) return;
+
+    setBusy(true);
+    try {
+      let deleted = 0;
+      let failed = 0;
+      for (const row of rows) {
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          await deleteFn(row);
+          deleted += 1;
+        } catch (_err) {
+          failed += 1;
+        }
+      }
+      await Promise.all([loadPlots(), loadUsers(), loadPayments(), loadAnalytics(), loadActiveAccounts()]);
+      if (failed) {
+        showMessage(`Exported ${label}. Deleted ${deleted}/${rows.length}; failed ${failed}.`, true);
+      } else {
+        showMessage(`Exported and deleted ${deleted} ${label.toLowerCase()} records.`);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteUserRecord(userId) {
+    await api(`/api/admin/users/${encodeURIComponent(userId)}`, { method: "DELETE" });
+  }
+
+  async function deletePaymentRecord(paymentId) {
+    await api(`/api/admin/payments/${encodeURIComponent(paymentId)}`, { method: "DELETE" });
+  }
+
+  async function deleteActivationRecord(userId) {
+    await api(`/api/admin/activations/${encodeURIComponent(userId)}`, { method: "DELETE" });
+  }
+
+  function exportDeletePlots() {
+    return runExportThenDelete("Plots", plots, downloadPlots, (row) => api(`/api/admin/plots/${encodeURIComponent(row.id)}`, { method: "DELETE" }));
+  }
+
+  function exportDeleteUsers() {
+    const deletable = users.filter((u) => !u.is_admin && !u.is_super_admin);
+    return runExportThenDelete("Users", deletable, () => downloadDataset("users", [
+      { label: "User ID", value: (u) => u.id },
+      { label: "Phone", value: (u) => u.phone },
+      { label: "Role", value: (u) => u.role || (u.is_super_admin ? "super_admin" : u.is_admin ? "admin" : "user") },
+      { label: "Activated At", value: (u) => u.activatedAt || u.activated_at || "" },
+      { label: "Expires At", value: (u) => u.expiresAt || u.expires_at || "" },
+      { label: "Payment Status", value: (u) => (u.paymentStatus ? "active" : "inactive") }
+    ], deletable), (row) => deleteUserRecord(row.id));
+  }
+
+  function exportDeletePayments() {
+    return runExportThenDelete("Payments", payments, downloadPayments, (row) => deletePaymentRecord(row.id));
+  }
+
+  function exportDeleteActivations() {
+    return runExportThenDelete("Active Accounts", activeAccounts, downloadActiveAccounts, (row) => deleteActivationRecord(row.userId));
+  }
+
   async function activateUser(userId) {
     if (!isAdminAuthenticated) return showMessage("Admin login required.", true);
     if (!String(userId || "").trim()) return showMessage("User ID is required.", true);
@@ -571,6 +723,17 @@ function App() {
     window.addEventListener("resize", syncMobileNavState);
     return () => window.removeEventListener("resize", syncMobileNavState);
   }, []);
+
+  useEffect(() => {
+    if (!isAdminAuthenticated || !token) return undefined;
+    const poll = async () => {
+      try {
+        await Promise.all([loadPayments(), loadActiveAccounts(), loadUsers(), loadAnalytics()]);
+      } catch (_err) {}
+    };
+    const timer = setInterval(poll, 10000);
+    return () => clearInterval(timer);
+  }, [isAdminAuthenticated, token]);
 
   const metrics = useMemo(() => {
     const revenue = analytics?.payments?.revenue || 0;
@@ -642,6 +805,7 @@ function App() {
                 <div className="glass auth-card">
                   <p className="hero-kicker">ADMIN ACCESS</p>
                   <h2 className="auth-title">Please fill in your details to log in</h2>
+
                   <label className="auth-label" for="admin-phone-input">Username</label>
                   <input
                     id="admin-phone-input"
@@ -904,7 +1068,13 @@ function App() {
                 : null}
 
               <section id="admin-plots" className="glass fade-in p-6 rounded-2xl mb-6 dashboard-card">
-                <h2 className="text-xl font-bold mb-4 text-emerald-400">Plots</h2>
+                <div className="flex items-center justify-between mb-4 gap-2">
+                  <h2 className="text-xl font-bold text-emerald-400">Plots</h2>
+                  <div className="flex gap-2">
+                    <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadPlots} disabled=${busy}>Export Plots</button>
+                    <button className="btn-chip btn-chip-danger" onClick=${exportDeletePlots} disabled=${busy}>Export + Delete</button>
+                  </div>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left data-table">
                     <thead><tr><th className="p-2">ID</th><th className="p-2">Title</th><th className="p-2">Price</th><th className="p-2">Town</th><th className="p-2">Area</th><th className="p-2">Caretaker</th><th className="p-2">WhatsApp</th><th className="p-2">Action</th></tr></thead>
@@ -930,7 +1100,13 @@ function App() {
               </section>
 
               <section id="admin-users" className="glass fade-in p-6 rounded-2xl dashboard-card">
-                <h2 className="text-xl font-bold mb-4 text-emerald-400">Users & Activations</h2>
+                <div className="flex items-center justify-between mb-4 gap-2">
+                  <h2 className="text-xl font-bold text-emerald-400">Users & Activations</h2>
+                  <div className="flex gap-2">
+                    <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadUsers} disabled=${busy}>Export Users</button>
+                    <button className="btn-chip btn-chip-danger" onClick=${exportDeleteUsers} disabled=${busy}>Export + Delete</button>
+                  </div>
+                </div>
                 <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                   <input
                     className="input-modern p-3 rounded-xl md:col-span-2"
@@ -969,7 +1145,13 @@ function App() {
               </section>
 
               <section id="admin-payments" className="glass fade-in p-6 rounded-2xl mt-6 dashboard-card">
-                <h2 className="text-xl font-bold mb-4 text-emerald-400">Payments</h2>
+                <div className="flex items-center justify-between mb-4 gap-2">
+                  <h2 className="text-xl font-bold text-emerald-400">Payments</h2>
+                  <div className="flex gap-2">
+                    <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadPayments} disabled=${busy}>Export Payments</button>
+                    <button className="btn-chip btn-chip-danger" onClick=${exportDeletePayments} disabled=${busy}>Export + Delete</button>
+                  </div>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left data-table">
                     <thead><tr><th className="p-2">Payment ID</th><th className="p-2">User</th><th className="p-2">Amount</th><th className="p-2">Status</th><th className="p-2">Receipt</th><th className="p-2">Created</th></tr></thead>
@@ -992,9 +1174,13 @@ function App() {
               <section id="admin-active-accounts" className="glass fade-in p-6 rounded-2xl mt-6 dashboard-card">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-emerald-400">Active Accounts Check</h2>
-                  <button className="btn-soft px-4 py-2 rounded-xl" onClick=${() => loadActiveAccounts()} disabled=${busy}>
-                    Refresh Active Accounts
-                  </button>
+                  <div className="flex gap-2">
+                    <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadActiveAccounts} disabled=${busy}>Export Activations</button>
+                    <button className="btn-chip btn-chip-danger" onClick=${exportDeleteActivations} disabled=${busy}>Export + Delete</button>
+                    <button className="btn-soft px-4 py-2 rounded-xl" onClick=${() => loadActiveAccounts()} disabled=${busy}>
+                      Refresh Active Accounts
+                    </button>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left data-table">
@@ -1047,11 +1233,5 @@ function App() {
 }
 
 createRoot(document.getElementById("app")).render(html`<${App} />`);
-
-
-
-
-
-
 
 

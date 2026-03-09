@@ -1697,6 +1697,78 @@ app.get("/api/admin/accounts/active", requireSecureAdmin, requireAuth, requireAd
   return res.json(withRemaining);
 });
 
+app.delete("/api/admin/users/:id", requireSecureAdmin, requireAuth, requireAdmin, async (req, res) => {
+  const userId = String(req.params.id || "").trim();
+  if (!userId) {
+    return res.status(400).json({ error: "User ID is required" });
+  }
+
+  const user = await usersCol().findOne({ id: userId });
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+  if (user.is_admin || user.is_super_admin) {
+    return res.status(403).json({ error: "Admin accounts cannot be deleted from this endpoint." });
+  }
+
+  const paymentsResult = await paymentsCol().deleteMany({ userId });
+  const userResult = await usersCol().deleteOne({ id: userId });
+  if (!userResult.deletedCount) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  return res.json({
+    message: "User and related payments deleted.",
+    deletedPayments: paymentsResult.deletedCount
+  });
+});
+
+app.delete("/api/admin/payments/:id", requireSecureAdmin, requireAuth, requireAdmin, async (req, res) => {
+  const paymentId = String(req.params.id || "").trim();
+  if (!paymentId) {
+    return res.status(400).json({ error: "Payment ID is required" });
+  }
+
+  const payment = await paymentsCol().findOne({ id: paymentId });
+  if (!payment) {
+    return res.status(404).json({ error: "Payment not found" });
+  }
+
+  await paymentsCol().deleteOne({ id: paymentId });
+  const active = await getUserActiveActivation(payment.userId);
+  await syncUserActivationStatus(payment.userId, active);
+
+  return res.json({ message: "Payment deleted." });
+});
+
+app.delete("/api/admin/activations/:userId", requireSecureAdmin, requireAuth, requireAdmin, async (req, res) => {
+  const userId = String(req.params.userId || "").trim();
+  if (!userId) {
+    return res.status(400).json({ error: "User ID is required" });
+  }
+
+  const user = await usersCol().findOne({ id: userId });
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+  if (user.is_admin || user.is_super_admin) {
+    return res.status(403).json({ error: "Admin accounts cannot be deleted from this endpoint." });
+  }
+
+  const now = new Date();
+  const result = await paymentsCol().deleteMany({
+    userId,
+    status: "Completed",
+    expiresAt: { $gt: now }
+  });
+  await syncUserActivationStatusToLatest(userId);
+
+  return res.json({
+    message: "Activation records deleted.",
+    deletedActivations: result.deletedCount
+  });
+});
+
 app.post("/api/admin/activate", requireSecureAdmin, requireAuth, requireAdmin, async (req, res) => {
   const { userId } = req.body || {};
   if (!userId) {
