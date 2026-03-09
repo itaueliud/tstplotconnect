@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "https://esm.sh/react@18.2.0";
+import React, { useEffect, useMemo, useRef, useState } from "https://esm.sh/react@18.2.0";
 import { createRoot } from "https://esm.sh/react-dom@18.2.0/client";
 import htm from "https://esm.sh/htm@3.1.1";
 
@@ -552,7 +552,7 @@ function App() {
     { id: "user-payments", label: "My Payments" },
     { id: "user-map", label: "Map" },
     { id: "user-support", label: "Support / FAQ" },
-    { id: "user-about", label: "About", href: "https://www.tst-plotconnect.com/about" }
+    { id: "user-about", label: "About" }
   ];
 
   return html`
@@ -570,7 +570,7 @@ function App() {
           aria-expanded=${isMobileNavOpen ? "true" : "false"}
           aria-controls="user-sidebar-nav"
         >
-          <span aria-hidden="true">${isMobileNavOpen ? "X" : "☰"}</span>
+          <span aria-hidden="true">${isMobileNavOpen ? "X" : "?"}</span>
           <span>${isMobileNavOpen ? "Close Menu" : "Menu"}</span>
         </button>
 

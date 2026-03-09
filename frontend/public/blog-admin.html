@@ -77,7 +77,16 @@
   </main>
 
   <script>
-    window.NEXT_PUBLIC_API_URL = "https://tstplotconnect-2.onrender.com";
+    (function() {
+      const host = window.location.hostname;
+      const proto = window.location.protocol;
+      if (proto === "file:" || host === "localhost" || host === "127.0.0.1") {
+        localStorage.removeItem("apiBase");
+        window.NEXT_PUBLIC_API_URL = "http://localhost:10000";
+      } else {
+        window.NEXT_PUBLIC_API_URL = "https://tstplotconnect-2.onrender.com";
+      }
+    })();
   </script>
   <script type="module" src="/features/blog-admin.js"></script>
 </body>

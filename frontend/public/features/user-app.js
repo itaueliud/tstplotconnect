@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "https://esm.sh/react@18.2.0";
+import React, { useEffect, useMemo, useRef, useState } from "https://esm.sh/react@18.2.0";
 import { createRoot } from "https://esm.sh/react-dom@18.2.0/client";
 import htm from "https://esm.sh/htm@3.1.1";
 
@@ -198,6 +198,12 @@ function App() {
   const [loginPhone, setLoginPhone] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showForgotOptions, setShowForgotOptions] = useState(false);
+  const [forgotPhone, setForgotPhone] = useState("");
+  const [forgotCode, setForgotCode] = useState("");
+  const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [forgotStep, setForgotStep] = useState("request");
+  const [forgotExpiresAt, setForgotExpiresAt] = useState("");
+  const [forgotBusy, setForgotBusy] = useState(false);
   const [plots, setPlots] = useState([]);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -220,9 +226,7 @@ function App() {
     [meta, filters.county]
   );
   const availableCountries = useMemo(() => {
-    const source = Array.isArray(meta.countries) && meta.countries.length
-      ? meta.countries
-      : SUPPORTED_COUNTRIES;
+    const source = Array.isArray(meta.countries) ? meta.countries : [];
     return Array.from(new Set(source.filter(Boolean)));
   }, [meta.countries]);
 
@@ -333,7 +337,10 @@ function App() {
           ? incoming.areasByCounty
           : {}
       });
-    } catch (_err) {}
+    } catch (_err) {
+      setMeta({ countries: [], countiesByCountry: {}, areasByCounty: {} });
+      showMessage("Failed to load location metadata from server.", true);
+    }
   }
 
   async function loadPlots() {
@@ -455,6 +462,57 @@ function App() {
     }
   }
 
+  async function requestPasswordResetCode() {
+    try {
+      const phone = (forgotPhone || loginPhone || "").trim();
+      if (!phone) throw new Error("Enter your phone number first.");
+      setForgotBusy(true);
+      const data = await api("/api/auth/request-code", {
+        method: "POST",
+        body: JSON.stringify({ phone })
+      });
+      setForgotPhone(phone);
+      setForgotStep("verify");
+      setForgotCode("");
+      setForgotExpiresAt(data?.expiresAt || "");
+      showMessage(data?.message || "OTP sent. Check your phone.");
+    } catch (err) {
+      showMessage(err.message || "Failed to send OTP.", true);
+    } finally {
+      setForgotBusy(false);
+    }
+  }
+
+  async function verifyPasswordResetCode() {
+    try {
+      const phone = (forgotPhone || loginPhone || "").trim();
+      if (!phone) throw new Error("Enter your phone number.");
+      if (!forgotCode.trim()) throw new Error("Enter the OTP code.");
+      if (!forgotNewPassword.trim()) throw new Error("Enter your new password.");
+      setForgotBusy(true);
+      const data = await api("/api/auth/verify-code", {
+        method: "POST",
+        body: JSON.stringify({
+          phone,
+          code: forgotCode.trim(),
+          newPassword: forgotNewPassword
+        })
+      });
+      setLoginPhone(phone);
+      setLoginPassword("");
+      setShowForgotOptions(false);
+      setForgotStep("request");
+      setForgotCode("");
+      setForgotNewPassword("");
+      setForgotExpiresAt("");
+      showMessage(data?.message || "Password reset successful. Please log in.");
+    } catch (err) {
+      showMessage(err.message || "Failed to reset password.", true);
+    } finally {
+      setForgotBusy(false);
+    }
+  }
+
   function logoutUser() {
     persistSession("", null);
     setCountryConfirmed(false);
@@ -520,9 +578,6 @@ function App() {
     try {
       const data = await api("/api/user/status", {}, authToken);
       setStatus(data);
-      if (data && data.active) {
-        loadPlots();
-      }
     } catch (_err) {}
   }
 
@@ -545,7 +600,7 @@ function App() {
 
   useEffect(() => {
     loadPlots();
-  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice, token, status && status.active]);
+  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice, token]);
 
   useEffect(() => {
     setSelectedPlotId("");
@@ -620,7 +675,7 @@ function App() {
         { id: "user-payments", label: "My Payments" },
         { id: "user-map", label: "Map" },
         { id: "user-support", label: "Support / FAQ" },
-        { id: "user-about", label: "About", href: "https://www.tst-plotconnect.com/about" }
+        { id: "user-about", label: "About" }
       ]
     : [{ id: "user-access", label: "Access" }];
 
@@ -682,7 +737,7 @@ function App() {
           aria-expanded=${isMobileNavOpen ? "true" : "false"}
           aria-controls="user-sidebar-nav"
         >
-          <span aria-hidden="true">${isMobileNavOpen ? "X" : "☰"}</span>
+          <span aria-hidden="true">${isMobileNavOpen ? "X" : "?"}</span>
           <span>${isMobileNavOpen ? "Close Menu" : "Menu"}</span>
         </button>
 
@@ -802,7 +857,10 @@ function App() {
                       <button
                         type="button"
                         className="btn-soft rounded-xl p-2 text-sm"
-                        onClick=${() => setShowForgotOptions((v) => !v)}
+                        onClick=${() => {
+                          setShowForgotOptions((v) => !v);
+                          setForgotPhone((prev) => prev || loginPhone);
+                        }}
                       >
                         Forgot Password?
                       </button>
@@ -810,20 +868,65 @@ function App() {
                     ${showForgotOptions
                       ? html`
                           <div className="mt-3 rounded-xl border border-slate-700/60 bg-slate-900/40 p-3">
-                            <p className="text-sm text-slate-200">Password reset options:</p>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              <a
+                            <p className="text-sm text-slate-200">Reset password with OTP:</p>
+                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
+                              <input
+                                className="input-modern p-2 rounded-xl"
+                                placeholder="Phone e.g. 0700..."
+                                value=${forgotPhone}
+                                onInput=${(e) => setForgotPhone(e.target.value)}
+                              />
+                              <button
+                                type="button"
                                 className="btn-soft rounded-xl p-2 text-sm"
-                                href=${`https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(`Hello, I forgot my PlotConnect password. Phone: ${loginPhone.trim() || "-"}`)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                onClick=${requestPasswordResetCode}
+                                disabled=${forgotBusy}
                               >
-                                WhatsApp Support
-                              </a>
-                              <a className="btn-soft rounded-xl p-2 text-sm" href=${`tel:${SUPPORT_PHONE}`}>Call Support</a>
+                                Send OTP
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-soft rounded-xl p-2 text-sm"
+                                onClick=${requestPasswordResetCode}
+                                disabled=${forgotBusy}
+                              >
+                                Resend OTP
+                              </button>
                             </div>
+                            ${forgotStep === "verify"
+                              ? html`
+                                  <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
+                                    <input
+                                      className="input-modern p-2 rounded-xl"
+                                      placeholder="Enter OTP code"
+                                      value=${forgotCode}
+                                      onInput=${(e) => setForgotCode(e.target.value)}
+                                    />
+                                    <input
+                                      type="password"
+                                      className="input-modern p-2 rounded-xl"
+                                      placeholder="New password"
+                                      value=${forgotNewPassword}
+                                      onInput=${(e) => setForgotNewPassword(e.target.value)}
+                                    />
+                                    <button
+                                      type="button"
+                                      className="btn-success rounded-xl p-2 text-sm"
+                                      onClick=${verifyPasswordResetCode}
+                                      disabled=${forgotBusy}
+                                    >
+                                      Verify OTP & Reset
+                                    </button>
+                                  </div>
+                                `
+                              : null}
                             <p className="mt-2 text-xs text-slate-400">
-                              If you entered a wrong password, retype it carefully and try again.
+                              ${forgotExpiresAt
+                                ? `OTP expires at ${new Date(forgotExpiresAt).toLocaleTimeString()}.`
+                                : "Enter your phone and tap Send OTP."}
+                            </p>
+                            <p className="mt-2 text-xs text-slate-400">
+                              Need help? <a href=${`https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(`Hello, I need help resetting my PlotConnect password. Phone: ${(forgotPhone || loginPhone).trim() || "-"}`)}`} target="_blank" rel="noopener noreferrer">WhatsApp Support</a> or <a href=${`tel:${SUPPORT_PHONE}`}>Call Support</a>.
                             </p>
                           </div>
                         `
@@ -896,8 +999,14 @@ function App() {
           : html`
               <div className="plot-grid">
                 ${plots.map((plot, idx) => html`
-                  ${(() => {
+                ${(() => {
                     const mediaUnlocked = !!(status && status.active);
+                    const caretakerDisplay = mediaUnlocked
+                      ? (plot.caretaker && plot.caretaker !== "Locked" ? plot.caretaker : "0756734298")
+                      : "Locked";
+                    const whatsappDisplay = mediaUnlocked
+                      ? (plot.whatsapp && plot.whatsapp !== "Locked" ? plot.whatsapp : "0756734298")
+                      : "Locked";
                     return html`
                   <article
                     key=${plot.id}
@@ -923,8 +1032,12 @@ function App() {
                     <p className="plot-meta mt-1">${plot.country || "Kenya"} | ${plot.county || plot.town || "-"} | ${plot.area}</p>
                     <p className="mt-2 font-bold text-lg">Ksh ${plot.price}</p>
                     <p className="mt-2 text-sm text-slate-300">${plot.description || "No description added yet."}</p>
-                    <p className="mt-2 text-sm">Caretaker: ${plot.caretaker}</p>
-                    <p className="text-sm">WhatsApp: ${plot.whatsapp}</p>
+                    ${mediaUnlocked
+                      ? html`
+                          <p className="mt-2 text-sm">Caretaker: ${caretakerDisplay}</p>
+                          <p className="text-sm">WhatsApp: ${whatsappDisplay}</p>
+                        `
+                      : html`<p className="mt-2 text-sm text-amber-700">Contacts hidden until account activation.</p>`}
                   </article>
                 `})()}
                 `)}
@@ -1066,10 +1179,3 @@ function App() {
 }
 
 createRoot(document.getElementById("app")).render(html`<${App} />`);
-
-
-
-
-
-
-

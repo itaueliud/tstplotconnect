@@ -12,6 +12,13 @@ const PORTAL_ROLE = "superadmin";
 const ALTERNATE_PORTAL_PATH = "/admin";
 
 function inferApiBase() {
+  const loc = window.location;
+  const isLocalHost = /^(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/i.test(loc.hostname);
+  const isLocal = loc.protocol === "file:" || isLocalHost;
+  if (isLocal) {
+    localStorage.removeItem("apiBase");
+    return API;
+  }
   const saved = localStorage.getItem("apiBase");
   return saved || API;
 }
@@ -182,7 +189,7 @@ function App() {
       ? window.location.origin
       : "";
     const saved = localStorage.getItem("apiBase") || "";
-    const candidates = [apiBaseInput, current, saved, API, "http://127.0.0.1:3000"]
+    const candidates = [apiBaseInput, current, saved, API, "http://127.0.0.1:3000", "http://localhost:10000", "http://127.0.0.1:10000"]
       .map((x) => String(x || "").trim())
       .filter(Boolean)
       .filter((v, i, a) => a.indexOf(v) === i);
@@ -224,10 +231,10 @@ function App() {
       }
 
       if (!data.user || !data.user.isAdmin) {
-        throw new Error("This account is not admin.");
+        throw new Error("Wrong credentials.");
       }
       if (PORTAL_ROLE === "superadmin" && !data.user.isSuperAdmin) {
-        throw new Error(`This portal is for super admin only. Use ${ALTERNATE_PORTAL_PATH}.`);
+        throw new Error("Wrong credentials.");
       }
 
       setToken(data.token);
@@ -254,11 +261,7 @@ function App() {
       setAdminPhone("");
       setAdminPassword("");
       localStorage.removeItem("adminLoginPhone");
-      if (err.data && err.data.showForgotPassword) {
-        setShowForgotHelp(true);
-        setForgotPhone(adminPhone.trim() || DEFAULT_SUPER_ADMIN_PHONE);
-      }
-      showMessage(err.message || "Login failed.", true);
+      showMessage("Wrong credentials.", true);
     } finally {
       setBusy(false);
     }
@@ -598,6 +601,21 @@ function App() {
     }
   }
 
+  async function deleteActivationBySuperAdmin(userId) {
+    if (!isSuperAdmin) return showMessage("Super admin login required.", true);
+    if (!window.confirm("Delete active activation records for this user?")) return;
+    setBusy(true);
+    try {
+      const res = await api(`/api/super-admin/activations/${encodeURIComponent(userId)}`, { method: "DELETE" });
+      showMessage(res.message || "Activation records deleted.");
+      await Promise.all([loadActiveAccounts(), loadUsers(), loadPayments(), loadAnalytics()]);
+    } catch (err) {
+      showMessage(err.message || "Failed to delete activation records.", true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function editPlot(plot) {
     if (!isAdminAuthenticated) return showMessage("Admin login required.", true);
     const title = window.prompt("Title:", plot.title);
@@ -892,38 +910,6 @@ function App() {
                 <article className="glass rounded-2xl p-4 stat-card"><p className="text-xs text-muted">Revenue</p><p className="text-2xl font-bold">Ksh ${metrics.revenue}</p></article>
               </section>
 
-              ${isSuperAdmin
-                ? html`
-                    <section id="admin-data-management" className="glass fade-in p-6 rounded-2xl mb-6 dashboard-card">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-                        <div>
-                          <h2 className="text-xl font-bold text-emerald-400">Data Management</h2>
-                          <p className="text-sm text-muted">Download records and prune data to avoid congestion.</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted">Export format</span>
-                          <select
-                            className="input-modern p-2 rounded-xl"
-                            value=${downloadFormat}
-                            onChange=${(e) => setDownloadFormat(e.target.value)}
-                          >
-                            <option value="csv">CSV</option>
-                            <option value="excel">Excel (CSV)</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <button className="btn-soft rounded-xl p-3" onClick=${downloadPlots} disabled=${busy}>Download Plots</button>
-                        <button className="btn-soft rounded-xl p-3" onClick=${downloadUsers} disabled=${busy}>Download Users</button>
-                        <button className="btn-soft rounded-xl p-3" onClick=${downloadPayments} disabled=${busy}>Download Payments</button>
-                        <button className="btn-soft rounded-xl p-3" onClick=${downloadAdminAccounts} disabled=${busy}>Download Admin Accounts</button>
-                        <button className="btn-soft rounded-xl p-3" onClick=${downloadActiveAccounts} disabled=${busy}>Download Active Accounts</button>
-                      </div>
-                      <p className="mt-3 text-xs text-muted">Excel exports are CSV-compatible for easy opening in Excel.</p>
-                    </section>
-                  `
-                : null}
-
               <section id="admin-add-plot" className="glass fade-in p-6 rounded-2xl mb-6 dashboard-card">
                 <h2 className="text-xl font-bold mb-4 text-emerald-400">Add Plot</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1071,7 +1057,10 @@ function App() {
                 : null}
 
               <section id="admin-plots" className="glass fade-in p-6 rounded-2xl mb-6 dashboard-card">
-                <h2 className="text-xl font-bold mb-4 text-emerald-400">Plots</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-emerald-400">Plots</h2>
+                  <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadPlots} disabled=${busy}>Export Plots</button>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left data-table">
                     <thead><tr><th className="p-2">ID</th><th className="p-2">Title</th><th className="p-2">Price</th><th className="p-2">Town</th><th className="p-2">Area</th><th className="p-2">Caretaker</th><th className="p-2">WhatsApp</th><th className="p-2">Action</th></tr></thead>
@@ -1097,7 +1086,10 @@ function App() {
               </section>
 
               <section id="admin-users" className="glass fade-in p-6 rounded-2xl dashboard-card">
-                <h2 className="text-xl font-bold mb-4 text-emerald-400">Users & Activations</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-emerald-400">Users & Activations</h2>
+                  <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadUsers} disabled=${busy}>Export Users</button>
+                </div>
                 <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                   <input
                     className="input-modern p-3 rounded-xl md:col-span-2"
@@ -1139,7 +1131,10 @@ function App() {
               </section>
 
               <section id="admin-payments" className="glass fade-in p-6 rounded-2xl mt-6 dashboard-card">
-                <h2 className="text-xl font-bold mb-4 text-emerald-400">Payments</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-emerald-400">Payments</h2>
+                  <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadPayments} disabled=${busy}>Export Payments</button>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left data-table">
                     <thead><tr><th className="p-2">Payment ID</th><th className="p-2">User</th><th className="p-2">Amount</th><th className="p-2">Status</th><th className="p-2">Receipt</th><th className="p-2">Created</th><th className="p-2">Action</th></tr></thead>
@@ -1167,9 +1162,10 @@ function App() {
               <section id="admin-active-accounts" className="glass fade-in p-6 rounded-2xl mt-6 dashboard-card">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-emerald-400">Active Accounts Check</h2>
-                  <button className="btn-soft px-4 py-2 rounded-xl" onClick=${() => loadActiveAccounts()} disabled=${busy}>
-                    Refresh Active Accounts
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadActiveAccounts} disabled=${busy}>Export Activations</button>
+                    <button className="btn-soft px-4 py-2 rounded-xl" onClick=${() => loadActiveAccounts()} disabled=${busy}>Refresh Active Accounts</button>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left data-table">
@@ -1181,11 +1177,12 @@ function App() {
                         <th className="p-2">Expires</th>
                         <th className="p-2">Remaining</th>
                         <th className="p-2">Receipt</th>
+                        <th className="p-2">Action</th>
                       </tr>
                     </thead>
                     <tbody>
                       ${activeAccounts.length === 0
-                        ? html`<tr><td className="p-2 text-muted" colSpan="6">No active accounts found.</td></tr>`
+                        ? html`<tr><td className="p-2 text-muted" colSpan="7">No active accounts found.</td></tr>`
                         : activeAccounts.map((a) => html`
                             <tr key=${a.userId} className="admin-row border-t border-slate-700">
                               <td className="p-2">${a.userId}</td>
@@ -1194,6 +1191,9 @@ function App() {
                               <td className="p-2">${formatDate(a.expiresAt)}</td>
                               <td className="p-2">${a.remainingHours}h ${a.remainingMinutes}m (${a.remainingSeconds}s)</td>
                               <td className="p-2">${a.mpesaReceipt || "-"}</td>
+                              <td className="p-2">
+                                <button className="btn-chip btn-chip-danger" onClick=${() => deleteActivationBySuperAdmin(a.userId)}>Delete</button>
+                              </td>
                             </tr>
                           `)}
                     </tbody>
@@ -1222,9 +1222,6 @@ function App() {
 }
 
 createRoot(document.getElementById("app")).render(html`<${App} />`);
-
-
-
 
 
 

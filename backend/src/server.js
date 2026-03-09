@@ -1,5 +1,5 @@
 const path = require("path");
-const { randomUUID } = require("crypto");
+const { randomUUID, randomInt, createHash } = require("crypto");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 const express = require("express");
 const cors = require("cors");
@@ -18,15 +18,52 @@ const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || "";
 const REQUIRE_HTTPS_ADMIN = (process.env.REQUIRE_HTTPS_ADMIN || "false").toLowerCase() === "true";
 const ADMIN_MAX_LOGIN_ATTEMPTS = Number(process.env.ADMIN_MAX_LOGIN_ATTEMPTS || 5);
 const ADMIN_LOCK_MINUTES = Number(process.env.ADMIN_LOCK_MINUTES || 15);
+const OTP_TTL_MINUTES = Number(process.env.OTP_TTL_MINUTES || 10);
+const OTP_RESEND_SECONDS = Number(process.env.OTP_RESEND_SECONDS || 60);
+const OTP_MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
+const OTP_DEBUG_RESPONSE = (process.env.OTP_DEBUG_RESPONSE || "false").toLowerCase() === "true";
+const SMS_MODE = (process.env.SMS_MODE || "mock").toLowerCase();
+const AFRICASTALKING_API_KEY = String(process.env.AFRICASTALKING_API_KEY || "").trim();
+const AFRICASTALKING_USERNAME = String(process.env.AFRICASTALKING_USERNAME || "sandbox").trim();
+const AFRICASTALKING_SENDER_ID = String(process.env.AFRICASTALKING_SENDER_ID || "").trim();
+
+const ALLOWED_ORIGINS = new Set([
+  "https://tstplotconnect.vercel.app",
+  "https://tstplotsconnect.vercel.app",
+  "https://tstplotconnect-admin.vercel.app",
+  "https://tstplotsconnect-admin.vercel.app",
+  "https://tstplotconnect-84rw.vercel.app",
+  "https://tstplotsconnect-84rw.vercel.app",
+  "https://tst-plotconnect.com",
+  "https://www.tst-plotconnect.com",
+  "https://tstplotsconnect.com",
+  "https://www.tstplotsconnect.com",
+  "http://localhost:5500",
+  "http://localhost:5501",
+  "http://localhost:5502",
+  "http://localhost:5503",
+  "http://127.0.0.1:5500",
+  "http://127.0.0.1:5501",
+  "http://127.0.0.1:5502",
+  "http://127.0.0.1:5503"
+]);
+
+function isPrivateLanOrigin(origin) {
+  return /^https?:\/\/(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/i.test(origin);
+}
+
+function isTrustedVercelOrigin(origin) {
+  return /^https:\/\/tstplots?connect([a-z0-9-]*)\.vercel\.app$/i.test(origin);
+}
 
 app.use(cors({
-  origin: [
-    "https://tstplotconnect.vercel.app",
-    "https://tstplotconnect-admin.vercel.app",
-    "https://tstplotconnect-84rw.vercel.app",
-    "https://tst-plotconnect.com",
-    "https://www.tst-plotconnect.com"
-  ],
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.has(origin) || isPrivateLanOrigin(origin) || isTrustedVercelOrigin(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"));
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
@@ -52,6 +89,10 @@ function blogsCol() {
 
 function locationMetadataCol() {
   return getDb().collection("location_metadata");
+}
+
+function otpCodesCol() {
+  return getDb().collection("otp_codes");
 }
 
 async function getLocationMetadata() {
@@ -158,6 +199,11 @@ async function syncUserActivationStatus(userId, payment) {
   );
 }
 
+async function syncUserActivationStatusToLatest(userId) {
+  const latestActive = await getUserActiveActivation(userId);
+  await syncUserActivationStatus(userId, latestActive || null);
+}
+
 async function getUnlockedFromRequest(req) {
   const authHeader = req.headers.authorization || "";
   const [type, token] = authHeader.split(" ");
@@ -166,7 +212,21 @@ async function getUnlockedFromRequest(req) {
   }
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    return !!(await getUserActiveActivation(payload.id));
+    // primary check: look for a completed payment that has not yet expired
+    const active = await getUserActiveActivation(payload.id);
+    if (active) return true;
+    // secondary fallback: some admin operations may directly update the user
+    // document without inserting a payment record.  honour the stored fields
+    // so the UI doesn't remain locked even though the account appears active.
+    const user = await usersCol().findOne(
+      { id: String(payload.id) },
+      { projection: { expiresAt: 1, paymentStatus: 1 } }
+    );
+    if (user && user.paymentStatus && user.expiresAt) {
+      const expMs = new Date(user.expiresAt).getTime();
+      if (expMs > Date.now()) return true;
+    }
+    return false;
   } catch (_err) {
     return false;
   }
@@ -217,6 +277,61 @@ function canonicalPhone(phoneInput) {
   const variants = getPhoneVariants(phoneInput);
   const normalized = variants.find((p) => /^254\d{9}$/.test(p));
   return normalized || variants[0] || String(phoneInput || "").trim();
+}
+
+function hashOtpCode(phone, code) {
+  return createHash("sha256").update(`${phone}:${code}:${JWT_SECRET}`).digest("hex");
+}
+
+function generateOtpCode() {
+  return String(randomInt(0, 1000000)).padStart(6, "0");
+}
+
+function isSmsConfigured() {
+  if (SMS_MODE !== "africastalking") return true;
+  return Boolean(AFRICASTALKING_API_KEY && AFRICASTALKING_USERNAME);
+}
+
+async function sendOtpSms(phone, code) {
+  if (SMS_MODE !== "africastalking") {
+    return { mode: "mock" };
+  }
+
+  if (!isSmsConfigured()) {
+    throw new Error("SMS service not configured");
+  }
+
+  const message = `Your TST PlotConnect reset code is ${code}. It expires in ${OTP_TTL_MINUTES} minutes.`;
+  const body = new URLSearchParams({
+    username: AFRICASTALKING_USERNAME,
+    to: `+${phone}`,
+    message
+  });
+  if (AFRICASTALKING_SENDER_ID) {
+    body.set("from", AFRICASTALKING_SENDER_ID);
+  }
+
+  const response = await fetch("https://api.africastalking.com/version1/messaging", {
+    method: "POST",
+    headers: {
+      apiKey: AFRICASTALKING_API_KEY,
+      Accept: "application/json",
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: body.toString()
+  });
+
+  const data = await response.json().catch(() => ({}));
+  const recipients = data?.SMSMessageData?.Recipients;
+  const firstRecipient = Array.isArray(recipients) ? recipients[0] : null;
+  const status = String(firstRecipient?.status || "").toLowerCase();
+  const accepted = status.includes("success");
+  if (!response.ok || !accepted) {
+    const details = firstRecipient?.status || data?.SMSMessageData?.Message || data?.errorMessage || JSON.stringify(data);
+    throw new Error(`Failed to send OTP SMS: ${details}`);
+  }
+
+  return { mode: "africastalking" };
 }
 
 function slugify(input) {
@@ -389,15 +504,138 @@ app.post("/api/user/login", async (req, res) => {
 });
 
 app.post("/api/auth/request-code", async (req, res) => {
-  return res.status(410).json({
-    error: "User phone verification is disabled. Super admin manages admin password recovery."
+  const { phone } = req.body || {};
+  if (!phone) {
+    return res.status(400).json({ error: "Phone is required" });
+  }
+
+  let normalizedPhone = "";
+  try {
+    normalizedPhone = normalizePhone(phone);
+  } catch (_err) {
+    return res.status(400).json({ error: "Invalid Kenyan phone number" });
+  }
+
+  const user = await usersCol().findOne({ phone: normalizedPhone, is_admin: 0, is_super_admin: 0 });
+  if (!user) {
+    return res.status(404).json({ error: "Account not found for this phone number." });
+  }
+
+  if (!isSmsConfigured()) {
+    return res.status(502).json({ error: "SMS service is not configured." });
+  }
+
+  const now = new Date();
+  const resendCutoff = new Date(now.getTime() - OTP_RESEND_SECONDS * 1000);
+  const existingRecent = await otpCodesCol().findOne(
+    {
+      phone: normalizedPhone,
+      purpose: "password_reset",
+      used: false,
+      expiresAt: { $gt: now },
+      createdAt: { $gte: resendCutoff }
+    },
+    { sort: { createdAt: -1, _id: -1 } }
+  );
+  if (existingRecent) {
+    const retryAt = existingRecent.createdAt
+      ? new Date(existingRecent.createdAt).getTime() + OTP_RESEND_SECONDS * 1000
+      : now.getTime() + OTP_RESEND_SECONDS * 1000;
+    const retryIn = Math.max(1, Math.ceil((retryAt - now.getTime()) / 1000));
+    return res.status(429).json({ error: `Please wait ${retryIn} seconds before requesting another code.` });
+  }
+
+  const code = generateOtpCode();
+  const expiresAt = new Date(now.getTime() + OTP_TTL_MINUTES * 60 * 1000);
+
+  try {
+    await sendOtpSms(normalizedPhone, code);
+  } catch (err) {
+    return res.status(502).json({ error: err.message || "Failed to send OTP." });
+  }
+
+  await otpCodesCol().insertOne({
+    id: randomUUID(),
+    userId: user.id,
+    phone: normalizedPhone,
+    purpose: "password_reset",
+    codeHash: hashOtpCode(normalizedPhone, code),
+    attempts: 0,
+    used: false,
+    createdAt: now,
+    expiresAt
+  });
+
+  return res.json({
+    message: "OTP sent successfully.",
+    expiresAt: expiresAt.toISOString(),
+    ...(OTP_DEBUG_RESPONSE ? { otp: code } : {})
   });
 });
 
 app.post("/api/auth/verify-code", async (req, res) => {
-  return res.status(410).json({
-    error: "User phone verification is disabled. Super admin manages admin password recovery."
-  });
+  const { phone, code, newPassword } = req.body || {};
+  if (!phone || !code || !newPassword) {
+    return res.status(400).json({ error: "Phone, OTP code, and new password are required." });
+  }
+  if (String(newPassword).length < 4) {
+    return res.status(400).json({ error: "Password must be at least 4 characters." });
+  }
+
+  let normalizedPhone = "";
+  try {
+    normalizedPhone = normalizePhone(phone);
+  } catch (_err) {
+    return res.status(400).json({ error: "Invalid Kenyan phone number" });
+  }
+
+  const now = new Date();
+  const otpDoc = await otpCodesCol().findOne(
+    {
+      phone: normalizedPhone,
+      purpose: "password_reset",
+      used: false,
+      expiresAt: { $gt: now }
+    },
+    { sort: { createdAt: -1, _id: -1 } }
+  );
+
+  if (!otpDoc) {
+    return res.status(400).json({ error: "OTP is invalid or expired. Request a new one." });
+  }
+
+  if (Number(otpDoc.attempts || 0) >= OTP_MAX_ATTEMPTS) {
+    await otpCodesCol().updateOne({ _id: otpDoc._id }, { $set: { used: true } });
+    return res.status(429).json({ error: "Too many incorrect attempts. Request a new OTP." });
+  }
+
+  const expectedHash = hashOtpCode(normalizedPhone, String(code).trim());
+  if (expectedHash !== otpDoc.codeHash) {
+    await otpCodesCol().updateOne(
+      { _id: otpDoc._id },
+      { $inc: { attempts: 1 } }
+    );
+    return res.status(400).json({ error: "Incorrect OTP code." });
+  }
+
+  const user = await usersCol().findOne({ id: otpDoc.userId, phone: normalizedPhone, is_admin: 0, is_super_admin: 0 });
+  if (!user) {
+    return res.status(404).json({ error: "Account not found." });
+  }
+
+  await usersCol().updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        password: bcrypt.hashSync(String(newPassword), 10),
+        failedLoginAttempts: 0,
+        lockUntil: null
+      }
+    }
+  );
+  await otpCodesCol().updateOne({ _id: otpDoc._id }, { $set: { used: true, verifiedAt: new Date() } });
+
+  return res.json({ message: "Password reset successful. Please log in." });
 });
 
 app.post("/api/admin/forgot-password/request-code", async (req, res) => {
@@ -441,8 +679,7 @@ app.post("/api/login", async (req, res) => {
   if (lockUntilMs && lockUntilMs > now) {
     const retryInMinutes = Math.max(1, Math.ceil((lockUntilMs - now) / 60000));
     return res.status(423).json({
-      error: `Account temporarily locked. Try again in about ${retryInMinutes} minute(s).`,
-      showForgotPassword: !!user.is_super_admin
+      error: `Account temporarily locked. Try again in about ${retryInMinutes} minute(s).`
     });
   }
 
@@ -455,8 +692,7 @@ app.post("/api/login", async (req, res) => {
         { $set: { failedLoginAttempts: 0, lockUntil } }
       );
       return res.status(423).json({
-        error: `Account temporarily locked after ${ADMIN_MAX_LOGIN_ATTEMPTS} failed attempts. Try again in about ${ADMIN_LOCK_MINUTES} minute(s).`,
-        showForgotPassword: !!user.is_super_admin
+        error: `Account temporarily locked after ${ADMIN_MAX_LOGIN_ATTEMPTS} failed attempts. Try again in about ${ADMIN_LOCK_MINUTES} minute(s).`
       });
     }
 
@@ -466,8 +702,7 @@ app.post("/api/login", async (req, res) => {
     );
     return res.status(401).json({
       error: "Invalid credentials",
-      failedAttempts: nextAttempts,
-      showForgotPassword: !!user.is_super_admin && nextAttempts >= 3
+      failedAttempts: nextAttempts
     });
   }
 
@@ -497,7 +732,23 @@ app.post("/api/login", async (req, res) => {
 
 app.get("/api/user/status", requireAuth, async (req, res) => {
   const now = Date.now();
-  const activation = await getUserActiveActivation(req.user.id);
+  let activation = await getUserActiveActivation(req.user.id);
+  let userFallback = null;
+  if (!activation) {
+    userFallback = await usersCol().findOne(
+      { id: String(req.user.id) },
+      { projection: { activatedAt: 1, expiresAt: 1, paymentStatus: 1 } }
+    );
+    if (userFallback && userFallback.paymentStatus && userFallback.expiresAt) {
+      const expMs = new Date(userFallback.expiresAt).getTime();
+      if (expMs > now) {
+        activation = {
+          activatedAt: userFallback.activatedAt,
+          expiresAt: userFallback.expiresAt
+        };
+      }
+    }
+  }
   const expiresMs = activation && activation.expiresAt ? new Date(activation.expiresAt).getTime() : 0;
   const remainingMs = Math.max(0, expiresMs - now);
   const remainingSeconds = Math.floor(remainingMs / 1000);
@@ -511,6 +762,30 @@ app.get("/api/user/status", requireAuth, async (req, res) => {
     remainingHours,
     remainingMinutes
   });
+});
+
+app.get("/api/user/payments", requireAuth, async (req, res) => {
+  const rows = await paymentsCol()
+    .find(
+      { userId: String(req.user.id) },
+      {
+        projection: {
+          _id: 0,
+          id: 1,
+          amount: 1,
+          status: 1,
+          mpesaReceipt: 1,
+          timestamp: 1,
+          activatedAt: 1,
+          expiresAt: 1,
+          validationError: 1,
+          validationWarning: 1
+        }
+      }
+    )
+    .sort({ timestamp: -1, _id: -1 })
+    .toArray();
+  return res.json(rows);
 });
 
 app.post("/api/pay", requireAuth, async (req, res) => {
@@ -639,7 +914,7 @@ app.post("/api/payment/callback", async (req, res) => {
           }
         }
       );
-      await syncUserActivationStatus(payment.userId, null);
+      await syncUserActivationStatusToLatest(payment.userId);
       return res.status(200).json({ ok: true });
     }
 
@@ -681,6 +956,7 @@ app.post("/api/payment/callback", async (req, res) => {
           }
         }
       );
+      await syncUserActivationStatusToLatest(payment.userId);
       return res.status(200).json({ ok: true });
     }
 
@@ -1215,6 +1491,34 @@ app.delete("/api/super-admin/payments/:id", requireSecureAdmin, requireAuth, req
   await syncUserActivationStatus(payment.userId, active);
 
   return res.json({ message: "Payment deleted." });
+});
+
+app.delete("/api/super-admin/activations/:userId", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (req, res) => {
+  const userId = String(req.params.userId || "").trim();
+  if (!userId) {
+    return res.status(400).json({ error: "User ID is required" });
+  }
+
+  const user = await usersCol().findOne({ id: userId });
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+  if (user.is_admin || user.is_super_admin) {
+    return res.status(403).json({ error: "Admin accounts cannot be deleted from this endpoint." });
+  }
+
+  const now = new Date();
+  const result = await paymentsCol().deleteMany({
+    userId,
+    status: "Completed",
+    expiresAt: { $gt: now }
+  });
+  await syncUserActivationStatusToLatest(userId);
+
+  return res.json({
+    message: "Activation records deleted.",
+    deletedActivations: result.deletedCount
+  });
 });
 
 app.post("/api/super-admin/locations/county", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (req, res) => {

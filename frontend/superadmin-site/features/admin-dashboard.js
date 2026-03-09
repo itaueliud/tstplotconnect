@@ -12,12 +12,15 @@ const PORTAL_ROLE = "admin";
 const ALTERNATE_PORTAL_PATH = "/superadmin";
 
 function inferApiBase() {
-  if (API) return API;
-  if (window.location.protocol === "http:" || window.location.protocol === "https:") {
-    return window.location.origin;
+  const loc = window.location;
+  const isLocalHost = /^(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/i.test(loc.hostname);
+  const isLocal = loc.protocol === "file:" || isLocalHost;
+  if (isLocal) {
+    localStorage.removeItem("apiBase");
+    return API || `http://${loc.hostname || "localhost"}:10000`;
   }
   const saved = localStorage.getItem("apiBase");
-  return saved || DEFAULT_API_BASE;
+  return saved || API || DEFAULT_API_BASE;
 }
 
 function formatDate(value) {
@@ -200,10 +203,10 @@ function App() {
       }
 
       if (!data.user || !data.user.isAdmin) {
-        throw new Error("This account is not admin.");
+        throw new Error("Wrong credentials.");
       }
       if (PORTAL_ROLE === "admin" && data.user.isSuperAdmin) {
-        throw new Error(`Super admin account detected. Use ${ALTERNATE_PORTAL_PATH}.`);
+        throw new Error("Wrong credentials.");
       }
 
       setToken(data.token);
@@ -229,11 +232,7 @@ function App() {
       setAdminPhone("");
       setAdminPassword("");
       localStorage.removeItem("adminLoginPhone");
-      if (err.data && err.data.showForgotPassword) {
-        setShowForgotHelp(true);
-        setForgotPhone(adminPhone.trim() || DEFAULT_SUPER_ADMIN_PHONE);
-      }
-      showMessage(err.message || "Login failed.", true);
+      showMessage("Wrong credentials.", true);
     } finally {
       setBusy(false);
     }

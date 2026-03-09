@@ -62,7 +62,7 @@ async function closeDb() {
 
 async function ensureCollections() {
   const names = new Set((await db.listCollections({}, { nameOnly: true }).toArray()).map((c) => c.name));
-  const needed = ["users", "plots", "payments", "location_metadata", "blogs"];
+  const needed = ["users", "plots", "payments", "location_metadata", "blogs", "otp_codes"];
   for (const name of needed) {
     if (!names.has(name)) {
       await db.createCollection(name);
@@ -84,6 +84,8 @@ async function ensureIndexes() {
   await db.collection("blogs").createIndex({ id: 1 }, { unique: true });
   await db.collection("blogs").createIndex({ slug: 1 }, { unique: true });
   await db.collection("blogs").createIndex({ createdAt: -1 });
+  await db.collection("otp_codes").createIndex({ phone: 1, purpose: 1, createdAt: -1 });
+  await db.collection("otp_codes").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 }
 
 async function migrateLegacyData() {
