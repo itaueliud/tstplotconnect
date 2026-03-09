@@ -201,8 +201,23 @@ function formatPhoneForTel(phone) {
   return `+${digits}`;
 }
 
+function getInitialFiltersFromUrl() {
+  if (typeof window === "undefined") {
+    return { country: "", county: "", area: "", minPrice: "", maxPrice: "" };
+  }
+  const params = new URLSearchParams(window.location.search || "");
+  return {
+    country: String(params.get("country") || "").trim(),
+    county: String(params.get("county") || "").trim(),
+    area: String(params.get("area") || "").trim(),
+    minPrice: "",
+    maxPrice: ""
+  };
+}
+
 function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
+  const initialFilters = getInitialFiltersFromUrl();
   const [apiBase, setApiBase] = useState(API);
   const [msg, setMsg] = useState({ text: "", error: false });
   const [token, setToken] = useState("");
@@ -224,8 +239,8 @@ function App() {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
-  const [filters, setFilters] = useState({ country: "", county: "", area: "", minPrice: "", maxPrice: "" });
-  const [countryConfirmed, setCountryConfirmed] = useState(false);
+  const [filters, setFilters] = useState(initialFilters);
+  const [countryConfirmed, setCountryConfirmed] = useState(Boolean(initialFilters.country));
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
   const [nowTs, setNowTs] = useState(Date.now());
@@ -840,9 +855,11 @@ function App() {
                 ${status && status.active
                   ? null
                   : html`<button className="btn-success rounded-xl p-3" onClick=${pay} disabled=${loading}>Activate Account (Ksh 50)</button>`}
-                <button className="btn-soft rounded-xl p-3" onClick=${confirmPaymentNow} disabled=${confirmingPayment}>
-                  ${confirmingPayment ? "Checking Payment..." : "Confirm Payment"}
-                </button>
+                ${status && status.active
+                  ? null
+                  : html`<button className="btn-soft rounded-xl p-3" onClick=${confirmPaymentNow} disabled=${confirmingPayment}>
+                      ${confirmingPayment ? "Checking Payment..." : "Confirm Payment"}
+                    </button>`}
                 <button className="btn-soft rounded-xl p-3" onClick=${logoutUser}>Log Out</button>
               </div>
             `
