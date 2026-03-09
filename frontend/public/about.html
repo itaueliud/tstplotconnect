@@ -194,6 +194,32 @@
       color: var(--emerald);
     }
 
+    .ui-tabs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.8rem;
+      margin-top: 1.2rem;
+    }
+
+    .ui-tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-weight: 700;
+      color: #f8fff9;
+      border-radius: 12px;
+      padding: 0.72rem 1rem;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      transition: transform 160ms ease, background-color 160ms ease;
+    }
+
+    .ui-tab:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.24);
+    }
+
     footer {
       text-align: center;
       padding: 2.5rem 1.5rem 3rem;
@@ -219,6 +245,12 @@
         <span class="badge">Verified listings platform</span>
         <h1>Find your ideal accommodation.</h1>
         <p>We connect renters, buyers, and investors to trusted plots and rentals across Kenya with clear locations and transparent details.</p>
+        <div class="ui-tabs">
+          <a class="ui-tab" href="/#user-listings">Listings</a>
+          <a class="ui-tab" href="/#user-map">Map</a>
+          <a class="ui-tab" href="/#user-payment">Payments</a>
+          <a class="ui-tab" href="/#user-faq">FAQ</a>
+        </div>
       </div>
       <div class="hero-highlights">
         <div class="hero-highlight">Verified land and rental listings</div>

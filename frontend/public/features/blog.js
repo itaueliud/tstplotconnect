@@ -38,23 +38,23 @@ function createCard(post) {
 
   const link = document.createElement("a");
   link.href = `/blog-post.html?slug=${encodeURIComponent(post.slug)}`;
-  link.className = "hover:text-emerald-300 transition-colors";
+  link.className = "hover:text-emerald-700 transition-colors text-slate-900";
   link.textContent = post.title || "Untitled post";
   title.appendChild(link);
 
   const meta = document.createElement("p");
-  meta.className = "text-xs text-slate-400";
+  meta.className = "text-xs text-slate-500";
   const date = formatDate(post.createdAt);
-  meta.textContent = [post.author, date].filter(Boolean).join(" • ");
+  meta.textContent = [post.author, date].filter(Boolean).join(" - ");
 
   const excerpt = document.createElement("p");
-  excerpt.className = "text-slate-300";
+  excerpt.className = "text-slate-700";
   excerpt.textContent = post.excerpt || "";
 
   const readMore = document.createElement("a");
   readMore.href = link.href;
-  readMore.className = "text-emerald-300 font-medium";
-  readMore.textContent = "Read more →";
+  readMore.className = "text-emerald-700 font-medium";
+  readMore.textContent = "Read more ->";
 
   card.appendChild(title);
   if (meta.textContent) card.appendChild(meta);
@@ -67,8 +67,8 @@ function createCard(post) {
 function setActiveTag(tag) {
   tagButtons.forEach((btn) => {
     const active = btn.dataset.tag === tag;
-    btn.classList.toggle("border-emerald-400", active);
-    btn.classList.toggle("text-white", active);
+    btn.classList.toggle("border-emerald-500", active);
+    btn.classList.toggle("text-slate-900", active);
   });
 }
 
@@ -97,7 +97,7 @@ async function loadBlogs() {
     if (state.q) params.set("q", state.q);
     if (state.tag) params.set("tag", state.tag);
 
-    const res = await fetch(`${API.replace(/\\/+$/, "")}/api/blog?${params.toString()}`);
+    const res = await fetch(`${API.replace(/\/+$/, "")}/api/blog?${params.toString()}`);
     if (!res.ok) {
       throw new Error(`Failed to load blog posts (${res.status}).`);
     }

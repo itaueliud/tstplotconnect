@@ -28,7 +28,7 @@ function formatDate(value) {
 function toExcerpt(text, max = 160) {
   const clean = String(text || "").replace(/\s+/g, " ").trim();
   if (!clean) return "";
-  return clean.length > max ? `${clean.slice(0, max - 1)}…` : clean;
+  return clean.length > max ? `${clean.slice(0, max - 1)}...` : clean;
 }
 
 function setMeta(title, description, slug) {
@@ -102,7 +102,7 @@ function renderRelated(posts, currentSlug) {
   const filtered = posts.filter((p) => p.slug && p.slug !== currentSlug).slice(0, 2);
   if (filtered.length === 0) {
     const empty = document.createElement("p");
-    empty.className = "text-slate-300";
+    empty.className = "text-slate-700";
     empty.textContent = "No related posts yet.";
     relatedEl.appendChild(empty);
     return;
@@ -116,12 +116,12 @@ function renderRelated(posts, currentSlug) {
     title.className = "font-semibold";
     const link = document.createElement("a");
     link.href = `/blog-post.html?slug=${encodeURIComponent(post.slug)}`;
-    link.className = "hover:text-emerald-300 transition-colors";
+    link.className = "hover:text-emerald-700 transition-colors";
     link.textContent = post.title || "Untitled post";
     title.appendChild(link);
 
     const excerpt = document.createElement("p");
-    excerpt.className = "text-slate-300 mt-2 text-sm";
+    excerpt.className = "text-slate-700 mt-2 text-sm";
     excerpt.textContent = post.excerpt || "";
 
     card.appendChild(title);
@@ -141,14 +141,14 @@ async function loadPost() {
   }
 
   try {
-    const res = await fetch(`${API.replace(/\\/+$/, "")}/api/blog/${encodeURIComponent(slug)}`);
+    const res = await fetch(`${API.replace(/\/+$/, "")}/api/blog/${encodeURIComponent(slug)}`);
     if (!res.ok) {
       throw new Error(`Blog post not found (${res.status}).`);
     }
     const post = await res.json();
     titleEl.textContent = post.title || "Untitled post";
     const date = formatDate(post.createdAt);
-    metaEl.textContent = [post.author, date].filter(Boolean).join(" • ");
+    metaEl.textContent = [post.author, date].filter(Boolean).join(" - ");
     renderContent(post.content);
     const description = post.excerpt || toExcerpt(post.content);
     setMeta(post.title || "Blog Post", description, post.slug);
@@ -156,7 +156,7 @@ async function loadPost() {
 
     const tag = Array.isArray(post.tags) ? post.tags[0] : "";
     if (tag) {
-      const relRes = await fetch(`${API.replace(/\\/+$/, "")}/api/blog?limit=3&tag=${encodeURIComponent(tag)}`);
+      const relRes = await fetch(`${API.replace(/\/+$/, "")}/api/blog?limit=3&tag=${encodeURIComponent(tag)}`);
       if (relRes.ok) {
         const relData = await relRes.json();
         const relItems = Array.isArray(relData.items) ? relData.items : [];
