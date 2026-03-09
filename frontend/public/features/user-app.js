@@ -207,6 +207,7 @@ function App() {
   const [plots, setPlots] = useState([]);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [confirmingPayment, setConfirmingPayment] = useState(false);
   const [filters, setFilters] = useState({ country: "", county: "", area: "", minPrice: "", maxPrice: "" });
   const [countryConfirmed, setCountryConfirmed] = useState(false);
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
@@ -574,6 +575,29 @@ function App() {
     await pay();
   }
 
+  async function confirmPaymentNow() {
+    if (!token) {
+      showMessage("Register or log in first.", true);
+      return;
+    }
+    setConfirmingPayment(true);
+    try {
+      const freshStatus = await loadStatus(token);
+      await loadPaymentLog(token);
+      if (freshStatus && freshStatus.active) {
+        setNowTs(Date.now());
+        await loadPlots();
+        showMessage("Payment confirmed. Contacts unlocked for 24 hours.");
+      } else {
+        showMessage("Payment not confirmed yet. Complete STK on your phone, then tap Confirm Payment again.", true);
+      }
+    } catch (err) {
+      showMessage(err.message || "Failed to confirm payment status.", true);
+    } finally {
+      setConfirmingPayment(false);
+    }
+  }
+
   async function loadStatus(authToken = null) {
     if (!authToken && !token) {
       setStatus(null);
@@ -798,6 +822,9 @@ function App() {
               </div>
               <div className="flex flex-col md:flex-row gap-3">
                 <button className="btn-success rounded-xl p-3" onClick=${pay} disabled=${loading}>Activate Account (Ksh 50)</button>
+                <button className="btn-soft rounded-xl p-3" onClick=${confirmPaymentNow} disabled=${confirmingPayment}>
+                  ${confirmingPayment ? "Checking Payment..." : "Confirm Payment"}
+                </button>
                 <button className="btn-soft rounded-xl p-3" onClick=${logoutUser}>Log Out</button>
               </div>
               <p className="mt-2 text-xs text-muted">STK push will be sent to your registered Safaricom number.</p>

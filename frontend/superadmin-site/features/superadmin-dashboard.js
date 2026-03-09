@@ -90,6 +90,7 @@ function App() {
   const [newCountyName, setNewCountyName] = useState("");
   const [newAreaCounty, setNewAreaCounty] = useState("");
   const [newAreaName, setNewAreaName] = useState("");
+  const [deleteAreaName, setDeleteAreaName] = useState("");
 
   const [adminPhone, setAdminPhone] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
@@ -333,6 +334,28 @@ function App() {
     }
   }
 
+  async function deleteAreaBySuperAdmin() {
+    if (!isSuperAdmin) return showMessage("Super admin login required.", true);
+    const county = String(newAreaCounty || "").trim();
+    const area = String(deleteAreaName || "").trim();
+    if (!county || !area) return showMessage("Select county and area to delete.", true);
+    if (!window.confirm(`Delete area "${area}" from county "${county}"?`)) return;
+    setBusy(true);
+    try {
+      const data = await api("/api/super-admin/locations/area", {
+        method: "DELETE",
+        body: JSON.stringify({ county, area })
+      });
+      showMessage(data.message || "Area deleted.");
+      setDeleteAreaName("");
+      await loadLocationMetadata();
+    } catch (err) {
+      showMessage(err.message || "Failed to delete area.", true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function requestSuperAdminResetCode() {
     setBusy(true);
     try {
@@ -571,6 +594,84 @@ function App() {
     ], activeAccounts);
   }
 
+  async function runExportThenDelete(label, rows, exportFn, deleteFn, onDone) {
+    if (!isSuperAdmin) return showMessage("Super admin login required.", true);
+    if (!rows.length) return showMessage(`No ${label.toLowerCase()} records to export.`, true);
+    exportFn();
+    if (!window.confirm(`Export complete. Delete ${rows.length} ${label.toLowerCase()} records now?`)) return;
+
+    setBusy(true);
+    try {
+      let deleted = 0;
+      let failed = 0;
+      for (const row of rows) {
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          await deleteFn(row);
+          deleted += 1;
+        } catch (_err) {
+          failed += 1;
+        }
+      }
+      if (typeof onDone === "function") {
+        await onDone();
+      }
+      if (failed) showMessage(`Exported ${label}. Deleted ${deleted}/${rows.length}; failed ${failed}.`, true);
+      else showMessage(`Exported and deleted ${deleted} ${label.toLowerCase()} records.`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function exportDeletePlots() {
+    return runExportThenDelete(
+      "Plots",
+      plots,
+      downloadPlots,
+      (row) => api(`/api/admin/plots/${encodeURIComponent(row.id)}`, { method: "DELETE" }),
+      () => Promise.all([loadPlots(), loadAnalytics()])
+    );
+  }
+
+  function exportDeleteUsers() {
+    const deletable = users.filter((u) => !u.is_admin && !u.is_super_admin);
+    return runExportThenDelete(
+      "Users",
+      deletable,
+      () => downloadDataset("users", [
+        { label: "User ID", value: (u) => u.id },
+        { label: "Phone", value: (u) => u.phone },
+        { label: "Role", value: (u) => u.role || (u.is_super_admin ? "super_admin" : u.is_admin ? "admin" : "user") },
+        { label: "Created", value: (u) => formatDate(u.createdAt) },
+        { label: "Activated", value: (u) => formatDate(u.activatedAt || u.activated_at) },
+        { label: "Expires", value: (u) => formatDate(u.expiresAt || u.expires_at) },
+        { label: "Payment Status", value: (u) => (u.paymentStatus ? "active" : "-") }
+      ], deletable),
+      (row) => api(`/api/super-admin/users/${encodeURIComponent(row.id)}`, { method: "DELETE" }),
+      () => Promise.all([loadUsers(), loadPayments(), loadAnalytics(), loadActiveAccounts()])
+    );
+  }
+
+  function exportDeletePayments() {
+    return runExportThenDelete(
+      "Payments",
+      payments,
+      downloadPayments,
+      (row) => api(`/api/super-admin/payments/${encodeURIComponent(row.id)}`, { method: "DELETE" }),
+      () => Promise.all([loadPayments(), loadUsers(), loadAnalytics(), loadActiveAccounts()])
+    );
+  }
+
+  function exportDeleteActivations() {
+    return runExportThenDelete(
+      "Activations",
+      activeAccounts,
+      downloadActiveAccounts,
+      (row) => api(`/api/super-admin/activations/${encodeURIComponent(row.userId)}`, { method: "DELETE" }),
+      () => Promise.all([loadActiveAccounts(), loadUsers(), loadPayments(), loadAnalytics()])
+    );
+  }
+
   async function deleteUserBySuperAdmin(userId) {
     if (!isSuperAdmin) return showMessage("Super admin login required.", true);
     if (!window.confirm("Delete this user and their related payments?")) return;
@@ -701,6 +802,17 @@ function App() {
       if (firstCounty) setNewAreaCounty(firstCounty);
     }
   }, [locationMeta, newAreaCounty]);
+
+  useEffect(() => {
+    const areas = locationMeta.areasByCounty?.[newAreaCounty] || [];
+    if (!areas.length) {
+      setDeleteAreaName("");
+      return;
+    }
+    if (!areas.includes(deleteAreaName)) {
+      setDeleteAreaName(areas[0]);
+    }
+  }, [locationMeta, newAreaCounty, deleteAreaName]);
 
   useEffect(() => {
     function syncHash() {
@@ -1052,6 +1164,17 @@ function App() {
                         />
                         <button className="btn-soft rounded-xl p-3" onClick=${addAreaBySuperAdmin} disabled=${busy}>Add Area</button>
                       </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <select className="input-modern p-3 rounded-xl" value=${newAreaCounty} onChange=${(e) => setNewAreaCounty(e.target.value)}>
+                          <option value="">Select county</option>
+                          ${Object.keys(locationMeta.areasByCounty || {}).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+                        </select>
+                        <select className="input-modern p-3 rounded-xl" value=${deleteAreaName} onChange=${(e) => setDeleteAreaName(e.target.value)}>
+                          <option value="">Select area to delete</option>
+                          ${(locationMeta.areasByCounty?.[newAreaCounty] || []).map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
+                        </select>
+                        <button className="btn-chip btn-chip-danger rounded-xl p-3" onClick=${deleteAreaBySuperAdmin} disabled=${busy || !newAreaCounty || !deleteAreaName}>Delete Area</button>
+                      </div>
                     </section>
                   `
                 : null}
@@ -1059,7 +1182,10 @@ function App() {
               <section id="admin-plots" className="glass fade-in p-6 rounded-2xl mb-6 dashboard-card">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-emerald-400">Plots</h2>
-                  <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadPlots} disabled=${busy}>Export Plots</button>
+                  <div className="flex items-center gap-2">
+                    <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadPlots} disabled=${busy}>Export Plots</button>
+                    <button className="btn-chip btn-chip-danger px-4 py-2 rounded-xl" onClick=${exportDeletePlots} disabled=${busy}>Export + Delete</button>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left data-table">
@@ -1088,7 +1214,10 @@ function App() {
               <section id="admin-users" className="glass fade-in p-6 rounded-2xl dashboard-card">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-emerald-400">Users & Activations</h2>
-                  <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadUsers} disabled=${busy}>Export Users</button>
+                  <div className="flex items-center gap-2">
+                    <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadUsers} disabled=${busy}>Export Users</button>
+                    <button className="btn-chip btn-chip-danger px-4 py-2 rounded-xl" onClick=${exportDeleteUsers} disabled=${busy}>Export + Delete</button>
+                  </div>
                 </div>
                 <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                   <input
@@ -1133,7 +1262,10 @@ function App() {
               <section id="admin-payments" className="glass fade-in p-6 rounded-2xl mt-6 dashboard-card">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-emerald-400">Payments</h2>
-                  <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadPayments} disabled=${busy}>Export Payments</button>
+                  <div className="flex items-center gap-2">
+                    <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadPayments} disabled=${busy}>Export Payments</button>
+                    <button className="btn-chip btn-chip-danger px-4 py-2 rounded-xl" onClick=${exportDeletePayments} disabled=${busy}>Export + Delete</button>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left data-table">
@@ -1164,6 +1296,7 @@ function App() {
                   <h2 className="text-xl font-bold text-emerald-400">Active Accounts Check</h2>
                   <div className="flex items-center gap-2">
                     <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadActiveAccounts} disabled=${busy}>Export Activations</button>
+                    <button className="btn-chip btn-chip-danger px-4 py-2 rounded-xl" onClick=${exportDeleteActivations} disabled=${busy}>Export + Delete</button>
                     <button className="btn-soft px-4 py-2 rounded-xl" onClick=${() => loadActiveAccounts()} disabled=${busy}>Refresh Active Accounts</button>
                   </div>
                 </div>
@@ -1222,8 +1355,6 @@ function App() {
 }
 
 createRoot(document.getElementById("app")).render(html`<${App} />`);
-
-
 
 
 

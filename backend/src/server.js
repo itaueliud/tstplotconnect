@@ -1588,6 +1588,37 @@ app.post("/api/super-admin/locations/area", requireSecureAdmin, requireAuth, req
   return res.json({ message: "Area added successfully." });
 });
 
+app.delete("/api/super-admin/locations/area", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (req, res) => {
+  const { county, area } = req.body || {};
+  const countyName = String(county || "").trim();
+  const areaName = String(area || "").trim();
+  if (!countyName || !areaName) {
+    return res.status(400).json({ error: "county and area are required" });
+  }
+
+  const meta = await getLocationMetadata();
+  const areasByCounty = { ...(meta.areasByCounty || {}) };
+  const existingAreas = Array.isArray(areasByCounty[countyName]) ? areasByCounty[countyName] : [];
+  if (!existingAreas.includes(areaName)) {
+    return res.status(404).json({ error: "Area not found in selected county." });
+  }
+
+  areasByCounty[countyName] = existingAreas.filter((a) => a !== areaName);
+  await locationMetadataCol().updateOne(
+    { key: "default" },
+    {
+      $set: {
+        areasByCounty,
+        updatedAt: new Date()
+      },
+      $setOnInsert: { key: "default", createdAt: new Date() }
+    },
+    { upsert: true }
+  );
+
+  return res.json({ message: "Area deleted successfully." });
+});
+
 app.get("/api/admin/users", requireSecureAdmin, requireAuth, requireAdmin, async (_req, res) => {
   const rows = await usersCol()
     .find(
