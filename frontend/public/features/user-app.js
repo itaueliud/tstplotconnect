@@ -202,12 +202,14 @@ function App() {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ country: "", county: "", area: "", minPrice: "", maxPrice: "" });
+  const [countryConfirmed, setCountryConfirmed] = useState(false);
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
   const [nowTs, setNowTs] = useState(Date.now());
   const [activeNav, setActiveNav] = useState("user-access");
   const [paymentLog, setPaymentLog] = useState([]);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const lastKnownActiveRef = useRef(false);
 
   const counties = useMemo(
     () => (filters.country ? meta.countiesByCountry[filters.country] || [] : []),
@@ -217,6 +219,12 @@ function App() {
     () => (filters.county ? meta.areasByCounty[filters.county] || [] : []),
     [meta, filters.county]
   );
+  const availableCountries = useMemo(() => {
+    const source = Array.isArray(meta.countries) && meta.countries.length
+      ? meta.countries
+      : SUPPORTED_COUNTRIES;
+    return Array.from(new Set(source.filter(Boolean)));
+  }, [meta.countries]);
 
   function showMessage(text, error = false) {
     setMsg({ text, error });
@@ -316,8 +324,15 @@ function App() {
     try {
       const data = await api("/api/metadata/locations");
       const incoming = data || { countries: [], countiesByCountry: {}, areasByCounty: {} };
-      const countries = Array.from(new Set([...(incoming.countries || []), ...SUPPORTED_COUNTRIES]));
-      setMeta({ ...incoming, countries });
+      setMeta({
+        countries: Array.isArray(incoming.countries) ? incoming.countries : [],
+        countiesByCountry: incoming.countiesByCountry && typeof incoming.countiesByCountry === "object"
+          ? incoming.countiesByCountry
+          : {},
+        areasByCounty: incoming.areasByCounty && typeof incoming.areasByCounty === "object"
+          ? incoming.areasByCounty
+          : {}
+      });
     } catch (_err) {}
   }
 
@@ -370,6 +385,25 @@ function App() {
     }
   }
 
+  async function loadPaymentLog(authToken = null) {
+    if (!authToken && !token) {
+      setPaymentLog([]);
+      return;
+    }
+    try {
+      const rows = await api("/api/user/payments", {}, authToken);
+      const mapped = (Array.isArray(rows) ? rows : []).map((p) => ({
+        id: p.id,
+        timestamp: p.timestamp,
+        amount: p.amount,
+        status: p.status,
+        note: p.validationError || p.validationWarning || (p.status === "Completed" ? "Payment confirmed." : ""),
+        mpesaReceipt: p.mpesaReceipt
+      }));
+      setPaymentLog(mapped);
+    } catch (_err) {}
+  }
+
   async function registerUser() {
     try {
       if (!registerName.trim()) throw new Error("Enter your name.");
@@ -389,6 +423,7 @@ function App() {
       setRegisterPassword("");
       showMessage("Registration complete. Activate your account below.");
       await loadStatus(data.token);
+      await loadPaymentLog(data.token);
       await loadPlots();
     } catch (err) {
       showMessage(err.message, true);
@@ -413,6 +448,7 @@ function App() {
       setShowForgotOptions(false);
       showMessage("Login successful. Activate your account.");
       await loadStatus(data.token);
+      await loadPaymentLog(data.token);
       await loadPlots();
     } catch (err) {
       showMessage(err.message, true);
@@ -421,8 +457,11 @@ function App() {
 
   function logoutUser() {
     persistSession("", null);
+    setCountryConfirmed(false);
+    setFilters({ country: "", county: "", area: "", minPrice: "", maxPrice: "" });
     setStatus(null);
     setPaymentLog([]);
+    lastKnownActiveRef.current = false;
     showMessage("Logged out.");
   }
 
@@ -451,15 +490,16 @@ function App() {
       showMessage(data.message || "Payment initiated.");
       addPaymentLog("Pending", data.message || "Payment initiated.");
       await loadStatus(authToken);
+      await loadPaymentLog(authToken);
       if (data.mode === "daraja") {
         const confirmed = await waitForActivation(120, authToken);
         if (!confirmed) {
           showMessage("STK sent. Complete payment on your phone; contacts unlock after confirmation.");
         } else {
-          addPaymentLog("Completed", "Contacts unlocked for 24 hours.");
+          await loadPaymentLog(authToken);
         }
       } else {
-        addPaymentLog("Completed", "Contacts unlocked for 24 hours.");
+        await loadPaymentLog(authToken);
         await loadPlots();
       }
     } catch (err) {
@@ -480,6 +520,9 @@ function App() {
     try {
       const data = await api("/api/user/status", {}, authToken);
       setStatus(data);
+      if (data && data.active) {
+        loadPlots();
+      }
     } catch (_err) {}
   }
 
@@ -502,7 +545,7 @@ function App() {
 
   useEffect(() => {
     loadPlots();
-  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice, token]);
+  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice, token, status && status.active]);
 
   useEffect(() => {
     setSelectedPlotId("");
@@ -510,9 +553,27 @@ function App() {
 
   useEffect(() => {
     loadStatus();
-    const t = setInterval(loadStatus, 1000);
-    return () => clearInterval(t);
+    loadPaymentLog();
+    const statusTimer = setInterval(loadStatus, 1000);
+    const paymentTimer = setInterval(loadPaymentLog, 5000);
+    return () => {
+      clearInterval(statusTimer);
+      clearInterval(paymentTimer);
+    };
   }, [token]);
+
+  useEffect(() => {
+    const isActive = !!(status && status.active);
+    if (token && isActive && !lastKnownActiveRef.current) {
+      loadPlots();
+      loadPaymentLog();
+      showMessage("Payment received. Contacts unlocked for 24 hours.");
+    }
+    lastKnownActiveRef.current = isActive;
+    if (!token) {
+      lastKnownActiveRef.current = false;
+    }
+  }, [status, token]);
 
   useEffect(() => {
     const t = setInterval(() => setNowTs(Date.now()), 1000);
@@ -549,15 +610,62 @@ function App() {
   const selectedLabel = selectedPlot
     ? selectedPlot.title
     : (filters.area || filters.county || filters.country || "Selected Location");
-  const userNavItems = [
-    { id: "user-access", label: "Access" },
-    { id: "user-search", label: "Search" },
-    { id: "user-listings", label: "Listings" },
-    { id: "user-payments", label: "My Payments" },
-    { id: "user-map", label: "Map" },
-    { id: "user-support", label: "Support / FAQ" },
-    { id: "user-about", label: "About", href: "https://www.tst-plotconnect.com/about" }
-  ];
+  const isAuthenticated = Boolean(token);
+  const hasChosenCountry = Boolean(filters.country) && countryConfirmed;
+  const userNavItems = isAuthenticated
+    ? [
+        { id: "user-access", label: "Access" },
+        { id: "user-search", label: "Search" },
+        { id: "user-listings", label: "Listings" },
+        { id: "user-payments", label: "My Payments" },
+        { id: "user-map", label: "Map" },
+        { id: "user-support", label: "Support / FAQ" },
+        { id: "user-about", label: "About", href: "https://www.tst-plotconnect.com/about" }
+      ]
+    : [{ id: "user-access", label: "Access" }];
+
+  if (!isAuthenticated && !hasChosenCountry) {
+    return html`
+      <div className="page-shell">
+        <nav className="glass hero-nav mb-5">
+          <h1 className="brand-title">TST PlotConnect</h1>
+          <p className="brand-subtitle">Find your ideal accommodation</p>
+        </nav>
+
+        <main className="user-main">
+          <section className="glass section-card w-full">
+            <p className="section-kicker">Step 1 of 2</p>
+            <h2 className="section-title">Select Country</h2>
+            <p className="text-sm text-slate-300 mb-3">Choose your country to continue to registration or login.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <select
+                className="input-modern p-3 rounded-xl md:col-span-2"
+                value=${filters.country}
+                onChange=${(e) => {
+                  setCountryConfirmed(false);
+                  setFilters({ country: e.target.value, county: "", area: "", minPrice: "", maxPrice: "" });
+                }}
+              >
+                <option value="">Choose country</option>
+                ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+              </select>
+              <button
+                className="btn-success rounded-xl p-3"
+                disabled=${!filters.country}
+                onClick=${() => {
+                  setCountryConfirmed(true);
+                  setActiveNav("user-access");
+                  showMessage("Country selected. Please register or log in.");
+                }}
+              >
+                Continue
+              </button>
+            </div>
+          </section>
+        </main>
+      </div>
+    `;
+  }
 
   return html`
     <div className="page-shell">
@@ -735,13 +843,15 @@ function App() {
           : null}
       </section>
 
+      ${isAuthenticated
+        ? html`
       <section id="user-search" className="glass section-card mb-5">
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <select className="input-modern p-3 rounded-xl" value=${filters.country} onChange=${(e) => setFilters({ country: e.target.value, county: "", area: "", minPrice: "", maxPrice: "" })}>
             <option value="">All Countries</option>
-            ${(meta.countries || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+            ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
           </select>
           <select className="input-modern p-3 rounded-xl" value=${filters.county} onChange=${(e) => setFilters({ ...filters, county: e.target.value, area: "" })}>
             <option value="">All Counties</option>
@@ -947,6 +1057,8 @@ function App() {
           <a href="#user-access" className="back-to-top">Back to top</a>
         </div>
       </footer>
+      `
+        : null}
         </div>
       </main>
     </div>
@@ -954,8 +1066,6 @@ function App() {
 }
 
 createRoot(document.getElementById("app")).render(html`<${App} />`);
-
-
 
 
 
