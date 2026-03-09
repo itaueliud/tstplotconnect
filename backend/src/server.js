@@ -868,7 +868,7 @@ app.post("/api/pay", requireAuth, async (req, res) => {
     );
 
     return res.json({
-      message: "STK push sent. Complete payment on your phone.",
+      message: "Complete payment on your phone.",
       mode: "daraja",
       checkoutRequestId: checkout,
       merchantRequestId: stk.MerchantRequestID || null
