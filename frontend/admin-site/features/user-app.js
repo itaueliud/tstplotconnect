@@ -185,6 +185,22 @@ function MapLibreMap({ centerLngLat, markerLabel, enableFocusZoom = false }) {
   return html`<div ref=${mapContainerRef} className="map-container rounded-2xl"></div>`;
 }
 
+function formatPhoneForWhatsApp(phone) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("0")) return `254${digits.slice(1)}`;
+  if (digits.startsWith("254")) return digits;
+  return digits;
+}
+
+function formatPhoneForTel(phone) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("0")) return `+254${digits.slice(1)}`;
+  if (digits.startsWith("254")) return `+${digits}`;
+  return `+${digits}`;
+}
+
 function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
   const [apiBase, setApiBase] = useState(API);
@@ -556,7 +572,7 @@ function App() {
       if (data.mode === "daraja") {
         const confirmed = await waitForActivation(120, authToken);
         if (!confirmed) {
-          showMessage("STK sent. Complete payment on your phone; contacts unlock after confirmation.");
+          showMessage("Enter your pin to complete payment");
         } else {
           await loadPaymentLog(authToken);
         }
@@ -793,10 +809,11 @@ function App() {
                 </div>
               </div>
               <div className="flex flex-col md:flex-row gap-3">
-                <button className="btn-success rounded-xl p-3" onClick=${pay} disabled=${loading}>Activate Account (Ksh 50)</button>
+                ${status && status.active
+                  ? null
+                  : html`<button className="btn-success rounded-xl p-3" onClick=${pay} disabled=${loading}>Activate Account (Ksh 50)</button>`}
                 <button className="btn-soft rounded-xl p-3" onClick=${logoutUser}>Log Out</button>
               </div>
-              <p className="mt-2 text-xs text-muted">STK push will be sent to your registered Safaricom number.</p>
             `
           : html`
               <div className="flex gap-2 mb-3">
@@ -1013,6 +1030,9 @@ function App() {
                     const whatsappDisplay = mediaUnlocked
                       ? (plot.whatsapp && plot.whatsapp !== "Locked" ? plot.whatsapp : "0756734298")
                       : "Locked";
+                    const contactPhone = caretakerDisplay !== "Locked" ? caretakerDisplay : whatsappDisplay;
+                    const whatsappPhone = formatPhoneForWhatsApp(contactPhone);
+                    const callPhone = formatPhoneForTel(contactPhone);
                     return html`
                   <article
                     key=${plot.id}
@@ -1040,8 +1060,31 @@ function App() {
                     <p className="mt-2 text-sm text-slate-300">${plot.description || "No description added yet."}</p>
                     ${mediaUnlocked
                       ? html`
-                          <p className="mt-2 text-sm">Caretaker: ${caretakerDisplay}</p>
-                          <p className="text-sm">WhatsApp: ${whatsappDisplay}</p>
+                          <p className="mt-2 text-sm">Caretaker: ${contactPhone}</p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <a
+                              className="rounded-lg px-3 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700"
+                              href=${whatsappPhone ? `https://wa.me/${whatsappPhone}` : "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick=${(e) => {
+                                e.stopPropagation();
+                                if (!whatsappPhone) e.preventDefault();
+                              }}
+                            >
+                              whatsapp
+                            </a>
+                            <a
+                              className="rounded-lg px-3 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700"
+                              href=${callPhone ? `tel:${callPhone}` : "#"}
+                              onClick=${(e) => {
+                                e.stopPropagation();
+                                if (!callPhone) e.preventDefault();
+                              }}
+                            >
+                              phone
+                            </a>
+                          </div>
                         `
                       : html`<p className="mt-2 text-sm text-amber-700">Contacts hidden until account activation.</p>`}
                   </article>
