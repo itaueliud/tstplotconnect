@@ -889,7 +889,7 @@ function App() {
                 ${status && status.active
                   ? null
                   : html`<button className="btn-soft rounded-xl p-3" onClick=${confirmPaymentNow} disabled=${confirmingPayment}>
-                      ${confirmingPayment ? "Checking Payment..." : "Confirm Payment"}
+                      ${confirmingPayment ? "Checking Payment..." : "Refresh"}
                     </button>`}
                 <button className="btn-soft rounded-xl p-3" onClick=${logoutUser}>Log Out</button>
               </div>
