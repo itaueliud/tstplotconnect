@@ -8,6 +8,11 @@
   <meta name="keywords" content="plots Kenya, rentals Kenya, land listings, verified plots, Machakos plots, Nairobi rentals">
   <meta name="robots" content="index,follow">
   <link rel="canonical" href="https://www.tst-plotconnect.com/plots">
+  <script>
+    if (window.location.pathname.endsWith("/plots.html")) {
+      window.location.replace("/plots");
+    }
+  </script>
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="TST PlotConnect">
   <meta property="og:title" content="Plots & Rentals | TST PlotConnect">
@@ -33,10 +38,10 @@
 
     <section class="mt-6">
       <div class="flex items-center justify-between gap-4 mb-3">
-        <h2 class="text-xl font-semibold text-slate-900">All Available Areas</h2>
+        <h2 class="text-xl font-semibold text-slate-900">All Available Counties</h2>
         <p id="count" class="text-sm text-slate-600"></p>
       </div>
-      <p id="status" class="text-sm text-slate-700 mb-4">Loading areas...</p>
+      <p id="status" class="text-sm text-slate-700 mb-4">Loading counties...</p>
       <div id="plots-grid" class="plot-grid"></div>
     </section>
   </main>
@@ -58,18 +63,17 @@
       return `KES ${num.toLocaleString()}`;
     }
 
-    function toAreaRows(plots) {
-      const byArea = new Map();
+    function toCountyRows(plots) {
+      const byCounty = new Map();
       plots.forEach((plot) => {
         const country = (plot.country || "Kenya").trim();
         const county = (plot.county || plot.town || "").trim();
         const area = (plot.area || "").trim();
-        if (!county || !area) return;
-        const key = `${country}|${county}|${area}`;
-        const existing = byArea.get(key) || {
+        if (!county) return;
+        const key = `${country}|${county}`;
+        const existing = byCounty.get(key) || {
           country,
           county,
-          area,
           count: 0,
           image: "",
           minPrice: null
@@ -82,24 +86,24 @@
         if (Number.isFinite(price)) {
           existing.minPrice = existing.minPrice == null ? price : Math.min(existing.minPrice, price);
         }
-        byArea.set(key, existing);
+        byCounty.set(key, existing);
       });
-      return Array.from(byArea.values()).sort((a, b) =>
-        a.county.localeCompare(b.county) || a.area.localeCompare(b.area)
+      return Array.from(byCounty.values()).sort((a, b) =>
+        a.county.localeCompare(b.county)
       );
     }
 
-    function cardHtml(areaRow) {
-      const image = areaRow.image || "";
-      const location = [areaRow.area, areaRow.county, areaRow.country].filter(Boolean).join(", ");
-      const target = `/?country=${encodeURIComponent(areaRow.country)}&county=${encodeURIComponent(areaRow.county)}&area=${encodeURIComponent(areaRow.area)}#user-listings`;
+    function cardHtml(countyRow) {
+      const image = countyRow.image || "";
+      const location = [countyRow.county, countyRow.country].filter(Boolean).join(", ");
+      const target = `/?country=${encodeURIComponent(countyRow.country)}&county=${encodeURIComponent(countyRow.county)}#user-listings`;
       return `
         <a href="${target}" class="plot-card block no-underline">
-          ${image ? `<img src="${image}" alt="${areaRow.area || "Area"} image" class="plot-image">` : '<div class="plot-image media-empty">No image</div>'}
-          <h3 class="text-lg font-semibold mt-3 mb-1">${areaRow.area}</h3>
+          ${image ? `<img src="${image}" alt="${countyRow.county || "County"} image" class="plot-image">` : '<div class="plot-image media-empty">No image</div>'}
+          <h3 class="text-lg font-semibold mt-3 mb-1">${countyRow.county}</h3>
           <p class="plot-meta mb-2">${location || "Location not set"}</p>
-          <p class="font-semibold text-slate-800 mb-2">${areaRow.count} listing${areaRow.count === 1 ? "" : "s"}</p>
-          <p class="text-sm text-slate-700">${areaRow.minPrice == null ? "Price on request" : `Starting from ${formatPrice(areaRow.minPrice)}`}</p>
+          <p class="font-semibold text-slate-800 mb-2">${countyRow.count} listing${countyRow.count === 1 ? "" : "s"}</p>
+          <p class="text-sm text-slate-700">${countyRow.minPrice == null ? "Price on request" : `Starting from ${formatPrice(countyRow.minPrice)}`}</p>
         </a>
       `;
     }
@@ -110,17 +114,17 @@
         if (!res.ok) throw new Error(`Failed to load listings (${res.status})`);
         const plots = await res.json();
         if (!Array.isArray(plots)) throw new Error("Invalid listings response");
-        const areas = toAreaRows(plots);
+        const counties = toCountyRows(plots);
 
-        countEl.textContent = `${areas.length} area${areas.length === 1 ? "" : "s"}`;
-        if (!areas.length) {
-          statusEl.textContent = "No areas found in the database yet.";
+        countEl.textContent = `${counties.length} county${counties.length === 1 ? "" : "ies"}`;
+        if (!counties.length) {
+          statusEl.textContent = "No counties found in the database yet.";
           gridEl.innerHTML = "";
           return;
         }
 
-        statusEl.textContent = "Click any area to open filtered listings in the user app.";
-        gridEl.innerHTML = areas.map(cardHtml).join("");
+        statusEl.textContent = "Click any county to open filtered listings in the user app.";
+        gridEl.innerHTML = counties.map(cardHtml).join("");
       } catch (err) {
         statusEl.textContent = err && err.message
           ? `${err.message}. Use the main app while we reconnect.`
