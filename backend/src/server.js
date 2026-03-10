@@ -1811,23 +1811,13 @@ app.post("/api/admin/activate", requireSecureAdmin, requireAuth, requireAdmin, a
     return res.status(404).json({ error: "User not found" });
   }
 
-  const now = new Date();
-  const expires = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  const receipt = `MANUAL${Date.now()}`;
-  const payment = {
-    id: randomUUID(),
-    userId: user.id,
-    amount: 50,
-    mpesaReceipt: receipt,
-    status: "Completed",
-    timestamp: now,
-    activatedAt: now,
-    expiresAt: expires
-  };
-  await paymentsCol().insertOne(payment);
-  await syncUserActivationStatus(user.id, payment);
+  const activePayment = await getUserActiveActivation(user.id);
+  if (!activePayment) {
+    return res.status(403).json({ error: "Payment not received. Activation blocked." });
+  }
 
-  return res.json({ message: "User activated for 24 hours" });
+  await syncUserActivationStatus(user.id, activePayment);
+  return res.json({ message: "Payment confirmed. Account is active." });
 });
 
 app.post("/api/admin/revoke", requireSecureAdmin, requireAuth, requireAdmin, async (req, res) => {

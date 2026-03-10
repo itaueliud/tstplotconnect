@@ -1313,7 +1313,7 @@ function App() {
           </div>
         </div>
         <div className="footer-bottom">
-          <p className="footer-copy">(c) ${currentYear} TST PlotConnect. All rights reserved. Created by Fluxbyte.</p>
+          <p className="footer-copy">(c) ${currentYear} TST PlotConnect. All rights reserved. A TechSwiftTrix platform.</p>
           <a href="#user-access" className="back-to-top">Back to top</a>
         </div>
       </footer>
