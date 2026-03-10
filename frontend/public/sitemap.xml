@@ -2,61 +2,61 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.tst-plotconnect.com/</loc>
-    <lastmod>2026-03-04</lastmod>
+    <lastmod>2026-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://www.tst-plotconnect.com/about</loc>
-    <lastmod>2026-03-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://www.tst-plotconnect.com/plots</loc>
-    <lastmod>2026-03-04</lastmod>
+    <lastmod>2026-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.tst-plotconnect.com/contact</loc>
-    <lastmod>2026-03-04</lastmod>
+    <loc>https://www.tst-plotconnect.com/about</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.tst-plotconnect.com/contacts</loc>
+    <lastmod>2026-03-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.tst-plotconnect.com/blog.html</loc>
-    <lastmod>2026-03-05</lastmod>
+    <loc>https://www.tst-plotconnect.com/blogs</loc>
+    <lastmod>2026-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.tst-plotconnect.com/blog-post.html?slug=best-student-hostels-near-university-of-nairobi</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.tst-plotconnect.com/blog-post.html?slug=affordable-bedsitters-in-nairobi-for-students</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.tst-plotconnect.com/blog-post.html?slug=how-to-find-a-lodge-for-one-night-in-nairobi</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.tst-plotconnect.com/blog-post.html?slug=safe-student-accommodation-in-kenya</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.tst-plotconnect.com/blog-post.html?slug=tips-for-finding-cheap-rentals-near-campus</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>

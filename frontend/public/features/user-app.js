@@ -278,6 +278,34 @@ function App() {
     }
   }
 
+  function paymentHideKey(user) {
+    const userId = user?.id || user?.displayId || "anon";
+    return `hiddenPaymentIds:${userId}`;
+  }
+
+  function getHiddenPaymentIds() {
+    try {
+      const raw = localStorage.getItem(paymentHideKey(userProfile));
+      const parsed = JSON.parse(raw || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_err) {
+      return [];
+    }
+  }
+
+  function setHiddenPaymentIds(ids) {
+    localStorage.setItem(paymentHideKey(userProfile), JSON.stringify(ids));
+  }
+
+  function hidePaymentInUi(paymentId) {
+    const current = getHiddenPaymentIds();
+    if (!current.includes(paymentId)) {
+      current.push(paymentId);
+      setHiddenPaymentIds(current);
+    }
+    setPaymentLog((prev) => prev.filter((p) => p.id !== paymentId));
+  }
+
   function addPaymentLog(statusValue, note) {
     setPaymentLog((prev) => [
       {
@@ -431,13 +459,16 @@ function App() {
     }
     try {
       const rows = await api("/api/user/payments", {}, authToken);
-      const mapped = (Array.isArray(rows) ? rows : []).map((p) => ({
-        id: p.id,
-        timestamp: p.timestamp,
-        amount: p.amount,
-        status: p.status,
-        note: p.validationError || p.validationWarning || (p.status === "Completed" ? "Payment confirmed." : ""),
-        mpesaReceipt: p.mpesaReceipt
+      const hidden = new Set(getHiddenPaymentIds());
+      const mapped = (Array.isArray(rows) ? rows : [])
+        .filter((p) => !hidden.has(p.id))
+        .map((p) => ({
+          id: p.id,
+          timestamp: p.timestamp,
+          amount: p.amount,
+          status: p.status,
+          note: p.validationError || p.validationWarning || (p.status === "Completed" ? "Payment confirmed." : ""),
+          mpesaReceipt: p.mpesaReceipt
       }));
       setPaymentLog(mapped);
     } catch (_err) {}
@@ -1181,6 +1212,14 @@ function App() {
                       <span className=${`pay-pill pay-${String(p.status || "").toLowerCase()}`}>${p.status}</span>
                       <span>Ksh ${p.amount}</span>
                       <span>${new Date(p.timestamp).toLocaleString()}</span>
+                      <button
+                        type="button"
+                        className="btn-chip btn-chip-danger"
+                        onClick=${() => hidePaymentInUi(p.id)}
+                        aria-label="Remove payment from view"
+                      >
+                        Delete
+                      </button>
                     </p>
                     <p className="payment-log-note">${p.note}</p>
                   </div>
@@ -1227,7 +1266,7 @@ function App() {
                 </button>
               </div>
               <iframe
-                src="/about.html"
+                src="/about"
                 title="About TST PlotConnect"
                 className="w-full rounded-xl border border-slate-700/60"
                 style=${{ minHeight: "75vh", background: "#fff" }}
