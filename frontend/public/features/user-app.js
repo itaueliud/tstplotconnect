@@ -271,6 +271,7 @@ function App() {
   const [countyInput, setCountyInput] = useState("");
   const [areaInput, setAreaInput] = useState("");
   const [categoryInput, setCategoryInput] = useState("");
+  const [openField, setOpenField] = useState("");
   const [countryConfirmed, setCountryConfirmed] = useState(Boolean(initialFilters.country));
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
@@ -349,6 +350,44 @@ function App() {
       ].find((c) => String(c).toLowerCase() === next.toLowerCase());
       return { ...prev, category: match || "" };
     });
+  }
+
+  function normalizeText(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  function getFilteredOptions(options, inputValue, limit = 8) {
+    const query = normalizeText(inputValue);
+    const list = Array.isArray(options) ? options.filter(Boolean) : [];
+    const filtered = query
+      ? list.filter((item) => normalizeText(item).includes(query))
+      : list;
+    return filtered.slice(0, limit);
+  }
+
+  function renderSuggestions(field, options, inputValue, onSelect) {
+    if (openField !== field) return null;
+    const items = getFilteredOptions(options, inputValue);
+    if (!items.length) return null;
+    return html`
+      <div className="combo-suggestions">
+        ${items.map(
+          (item) => html`
+            <button
+              type="button"
+              className="combo-suggestion"
+              onMouseDown=${(e) => e.preventDefault()}
+              onClick=${() => {
+                onSelect(item);
+                setOpenField("");
+              }}
+            >
+              ${item}
+            </button>
+          `
+        )}
+      </div>
+    `;
   }
 
   function persistSession(nextToken, user) {
@@ -1207,10 +1246,13 @@ function App() {
                   list="user-country-options"
                   value=${countryInput}
                   onInput=${(e) => handleCountryInputChange(e.target.value)}
+                  onFocus=${() => setOpenField("country")}
+                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
                 />
                 <datalist id="user-country-options">
                   ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
                 </datalist>
+                ${renderSuggestions("country", availableCountries, countryInput, (value) => handleCountryInputChange(value))}
               </div>
               <div className="combo-single">
                 <input
@@ -1219,10 +1261,13 @@ function App() {
                   list="user-county-options"
                   value=${countyInput}
                   onInput=${(e) => handleCountyInputChange(e.target.value)}
+                  onFocus=${() => setOpenField("county")}
+                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
                 />
                 <datalist id="user-county-options">
                   ${counties.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
                 </datalist>
+                ${renderSuggestions("county", counties, countyInput, (value) => handleCountyInputChange(value))}
               </div>
               <div className="combo-single">
                 <input
@@ -1231,10 +1276,13 @@ function App() {
                   list="user-area-options"
                   value=${areaInput}
                   onInput=${(e) => handleAreaInputChange(e.target.value)}
+                  onFocus=${() => setOpenField("area")}
+                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
                 />
                 <datalist id="user-area-options">
                   ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
                 </datalist>
+                ${renderSuggestions("area", areas, areaInput, (value) => handleAreaInputChange(value))}
               </div>
               <div className="combo-single">
                 <input
@@ -1243,6 +1291,8 @@ function App() {
                   list="user-category-options"
                   value=${categoryInput}
                   onInput=${(e) => handleCategoryInputChange(e.target.value)}
+                  onFocus=${() => setOpenField("category")}
+                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
                 />
                 <datalist id="user-category-options">
                   <option value="Rental Houses"></option>
@@ -1256,6 +1306,23 @@ function App() {
                   <option value="Guest Houses"></option>
                   <option value="Plots for Sale"></option>
                 </datalist>
+                ${renderSuggestions(
+                  "category",
+                  [
+                    "Rental Houses",
+                    "Bedsitters",
+                    "Hostels",
+                    "Apartments",
+                    "Lodges",
+                    "AirBnB",
+                    "Vacant Shops",
+                    "Office Spaces",
+                    "Guest Houses",
+                    "Plots for Sale"
+                  ],
+                  categoryInput,
+                  (value) => handleCategoryInputChange(value)
+                )}
               </div>
               <input
                 className="input-modern p-3 rounded-xl"
