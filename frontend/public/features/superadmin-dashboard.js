@@ -1310,6 +1310,7 @@ function App() {
 
                     <section id="admin-locations" className="glass fade-in p-6 rounded-2xl mb-6 dashboard-card">
                       <h2 className="text-xl font-bold mb-4 text-emerald-400">Manage Counties & Areas</h2>
+                      <p className="text-xs font-semibold text-muted uppercase tracking-[0.18em] mb-2">Add County</p>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                         <select className="input-modern p-3 rounded-xl" value=${newCountyCountry} onChange=${(e) => setNewCountyCountry(e.target.value)}>
                           ${(locationMeta.countries || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
@@ -1320,8 +1321,9 @@ function App() {
                           value=${newCountyName}
                           onInput=${(e) => setNewCountyName(e.target.value)}
                         />
-                        <button className="btn-soft rounded-xl p-3" onClick=${addCountyBySuperAdmin} disabled=${busy}>Add County</button>
+                        <button className="btn-success rounded-xl p-3 w-full" onClick=${addCountyBySuperAdmin} disabled=${busy}>Add County</button>
                       </div>
+                      <p className="text-xs font-semibold text-muted uppercase tracking-[0.18em] mb-2">Update County</p>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                         <select className="input-modern p-3 rounded-xl" value=${editCountyCountry} onChange=${(e) => setEditCountyCountry(e.target.value)}>
                           <option value="">Select country</option>
@@ -1337,8 +1339,9 @@ function App() {
                           value=${editCountyNewName}
                           onInput=${(e) => setEditCountyNewName(e.target.value)}
                         />
-                        <button className="btn-soft rounded-xl p-3 md:col-span-3" onClick=${editCountyBySuperAdmin} disabled=${busy || !editCountyCountry || !editCountyName || !editCountyNewName}>Update County</button>
+                        <button className="btn-success rounded-xl p-3 w-full md:col-span-3" onClick=${editCountyBySuperAdmin} disabled=${busy || !editCountyCountry || !editCountyName || !editCountyNewName}>Update County</button>
                       </div>
+                      <p className="text-xs font-semibold text-muted uppercase tracking-[0.18em] mb-2">Add Area</p>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <select className="input-modern p-3 rounded-xl" value=${newAreaCountry} onChange=${(e) => setNewAreaCountry(e.target.value)}>
                           <option value="">Select country</option>
@@ -1354,8 +1357,9 @@ function App() {
                           value=${newAreaName}
                           onInput=${(e) => setNewAreaName(e.target.value)}
                         />
-                        <button className="btn-soft rounded-xl p-3 md:col-span-3" onClick=${addAreaBySuperAdmin} disabled=${busy}>Add Area</button>
+                        <button className="btn-success rounded-xl p-3 w-full md:col-span-3" onClick=${addAreaBySuperAdmin} disabled=${busy}>Add Area</button>
                       </div>
+                      <p className="text-xs font-semibold text-muted uppercase tracking-[0.18em] mb-2">Update Area</p>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                         <select className="input-modern p-3 rounded-xl" value=${editAreaCountry} onChange=${(e) => setEditAreaCountry(e.target.value)}>
                           <option value="">Select country</option>
@@ -1375,8 +1379,9 @@ function App() {
                           value=${editAreaNewName}
                           onInput=${(e) => setEditAreaNewName(e.target.value)}
                         />
-                        <button className="btn-soft rounded-xl p-3 md:col-span-3" onClick=${editAreaBySuperAdmin} disabled=${busy || !editAreaCountry || !editAreaCounty || !editAreaName || !editAreaNewName}>Update Area</button>
+                        <button className="btn-success rounded-xl p-3 w-full md:col-span-3" onClick=${editAreaBySuperAdmin} disabled=${busy || !editAreaCountry || !editAreaCounty || !editAreaName || !editAreaNewName}>Update Area</button>
                       </div>
+                      <p className="text-xs font-semibold text-muted uppercase tracking-[0.18em] mb-2">Delete Area</p>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <select className="input-modern p-3 rounded-xl" value=${deleteAreaCountry} onChange=${(e) => setDeleteAreaCountry(e.target.value)}>
                           <option value="">Select country</option>
@@ -1390,8 +1395,9 @@ function App() {
                           <option value="">Select area to delete</option>
                           ${(locationMeta.areasByCounty?.[deleteAreaCounty] || []).map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
                         </select>
-                        <button className="btn-chip btn-chip-danger rounded-xl p-3 md:col-span-3" onClick=${deleteAreaBySuperAdmin} disabled=${busy || !deleteAreaCountry || !deleteAreaCounty || !deleteAreaName}>Delete Area</button>
+                        <button className="btn-chip btn-chip-danger rounded-xl p-3 w-full md:col-span-3" onClick=${deleteAreaBySuperAdmin} disabled=${busy || !deleteAreaCountry || !deleteAreaCounty || !deleteAreaName}>Delete Area</button>
                       </div>
+                      <p className="text-xs font-semibold text-muted uppercase tracking-[0.18em] mb-2">Delete County</p>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <select className="input-modern p-3 rounded-xl" value=${deleteCountyCountry} onChange=${(e) => setDeleteCountyCountry(e.target.value)}>
                           <option value="">Select country</option>
@@ -1401,7 +1407,7 @@ function App() {
                           <option value="">Select county to delete</option>
                           ${(locationMeta.countiesByCountry?.[deleteCountyCountry] || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
                         </select>
-                        <button className="btn-chip btn-chip-danger rounded-xl p-3" onClick=${deleteCountyBySuperAdmin} disabled=${busy || !deleteCountyCountry || !deleteCountyName}>Delete County</button>
+                        <button className="btn-chip btn-chip-danger rounded-xl p-3 w-full" onClick=${deleteCountyBySuperAdmin} disabled=${busy || !deleteCountyCountry || !deleteCountyName}>Delete County</button>
                       </div>
                     </section>
                   `

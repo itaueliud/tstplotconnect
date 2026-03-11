@@ -250,6 +250,7 @@ function App() {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
+  const [areaInput, setAreaInput] = useState("");
   const [countryConfirmed, setCountryConfirmed] = useState(false);
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
@@ -274,6 +275,18 @@ function App() {
 
   function showMessage(text, error = false) {
     setMsg({ text, error });
+  }
+
+  function handleAreaInputChange(value) {
+    const next = String(value || "");
+    setAreaInput(next);
+    setFilters((prev) => {
+      if (!next) {
+        return { ...prev, area: "" };
+      }
+      const match = areas.find((a) => String(a).toLowerCase() === next.toLowerCase());
+      return { ...prev, area: match || "" };
+    });
   }
 
   function persistSession(nextToken, user) {
@@ -576,6 +589,7 @@ function App() {
     persistSession("", null);
     setCountryConfirmed(false);
     setFilters({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
+    setAreaInput("");
     setStatus(null);
     setPaymentLog([]);
     lastKnownActiveRef.current = false;
@@ -695,6 +709,12 @@ function App() {
     const t = setInterval(() => setNowTs(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  useEffect(() => {
+    if (filters.area && areaInput !== filters.area) {
+      setAreaInput(filters.area);
+    }
+  }, [filters.area, areaInput]);
 
   useEffect(() => {
     function syncHash() {
@@ -1016,18 +1036,24 @@ function App() {
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
         <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-          <select className="input-modern p-3 rounded-xl" value=${filters.country} onChange=${(e) => setFilters({ country: e.target.value, county: "", area: "", category: "", minPrice: "", maxPrice: "" })}>
+          <select className="input-modern p-3 rounded-xl" value=${filters.country} onChange=${(e) => { setFilters({ country: e.target.value, county: "", area: "", category: "", minPrice: "", maxPrice: "" }); setAreaInput(""); }}>
             <option value="">All Countries</option>
             ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
           </select>
-          <select className="input-modern p-3 rounded-xl" value=${filters.county} onChange=${(e) => setFilters({ ...filters, county: e.target.value, area: "" })}>
+          <select className="input-modern p-3 rounded-xl" value=${filters.county} onChange=${(e) => { setFilters({ ...filters, county: e.target.value, area: "" }); setAreaInput(""); }}>
             <option value="">All Counties</option>
             ${counties.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
           </select>
-          <select className="input-modern p-3 rounded-xl" value=${filters.area} onChange=${(e) => setFilters({ ...filters, area: e.target.value })}>
-            <option value="">All Areas</option>
+          <input
+            className="input-modern p-3 rounded-xl"
+            placeholder="Type or select area"
+            list="user-area-options"
+            value=${areaInput}
+            onInput=${(e) => handleAreaInputChange(e.target.value)}
+          />
+          <datalist id="user-area-options">
             ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
-          </select>
+          </datalist>
           <select className="input-modern p-3 rounded-xl" value=${filters.category} onChange=${(e) => setFilters({ ...filters, category: e.target.value })}>
             <option value="">All Categories</option>
             <option value="Rental Houses">Rental Houses</option>
