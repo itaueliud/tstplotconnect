@@ -352,6 +352,25 @@ function App() {
     });
   }
 
+  function clearFilters() {
+    setFilters({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
+    setCountryInput("");
+    setCountyInput("");
+    setAreaInput("");
+    setCategoryInput("");
+  }
+
+  function getActiveFiltersLabel() {
+    const parts = [];
+    if (filters.country) parts.push(`Country: ${filters.country}`);
+    if (filters.county) parts.push(`County: ${filters.county}`);
+    if (filters.area) parts.push(`Area: ${filters.area}`);
+    if (filters.category) parts.push(`Category: ${filters.category}`);
+    if (filters.minPrice) parts.push(`Min: ${filters.minPrice}`);
+    if (filters.maxPrice) parts.push(`Max: ${filters.maxPrice}`);
+    return parts.length ? parts.join(" | ") : "None";
+  }
+
   function normalizeText(value) {
     return String(value || "").trim().toLowerCase();
   }
@@ -1350,8 +1369,12 @@ function App() {
           <div>
             <p className="section-kicker">Listings</p>
             <h2 className="section-title mb-0">Available Plots</h2>
+            <p className="text-xs text-muted">Active filters: ${getActiveFiltersLabel()}</p>
           </div>
-          <p className="text-xs text-muted">${orderedPlots.length} result${orderedPlots.length === 1 ? "" : "s"}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-muted">${orderedPlots.length} result${orderedPlots.length === 1 ? "" : "s"}</p>
+            <button className="btn-soft px-3 py-1 rounded-lg" onClick=${clearFilters}>Clear Filters</button>
+          </div>
         </div>
 
         ${loading
