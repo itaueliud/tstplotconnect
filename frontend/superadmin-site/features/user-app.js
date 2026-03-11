@@ -1101,9 +1101,9 @@ function App() {
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
         <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-          <div className="area-combo">
+          <div className="combo-single">
             <input
-              className="input-modern area-combo-input"
+              className="input-modern combo-single-input"
               placeholder="All Countries"
               list="user-country-options"
               value=${countryInput}
@@ -1112,23 +1112,10 @@ function App() {
             <datalist id="user-country-options">
               ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
             </datalist>
-            <select
-              className="input-modern area-combo-select"
-              value=${filters.country}
-              onChange=${(e) => {
-                setFilters({ country: e.target.value, county: "", area: "", category: "", minPrice: "", maxPrice: "" });
-                setCountryInput(e.target.value || "");
-                setCountyInput("");
-                setAreaInput("");
-              }}
-            >
-              <option value="">All Countries</option>
-              ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
-            </select>
           </div>
-          <div className="area-combo">
+          <div className="combo-single">
             <input
-              className="input-modern area-combo-input"
+              className="input-modern combo-single-input"
               placeholder="All Counties"
               list="user-county-options"
               value=${countyInput}
@@ -1137,22 +1124,10 @@ function App() {
             <datalist id="user-county-options">
               ${counties.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
             </datalist>
-            <select
-              className="input-modern area-combo-select"
-              value=${filters.county}
-              onChange=${(e) => {
-                setFilters({ ...filters, county: e.target.value, area: "" });
-                setCountyInput(e.target.value || "");
-                setAreaInput("");
-              }}
-            >
-              <option value="">All Counties</option>
-              ${counties.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
-            </select>
           </div>
-          <div className="area-combo">
+          <div className="combo-single">
             <input
-              className="input-modern area-combo-input"
+              className="input-modern combo-single-input"
               placeholder="Type or select area"
               list="user-area-options"
               value=${areaInput}
@@ -1161,21 +1136,10 @@ function App() {
             <datalist id="user-area-options">
               ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
             </datalist>
-            <select
-              className="input-modern area-combo-select"
-              value=${filters.area}
-              onChange=${(e) => {
-                setFilters({ ...filters, area: e.target.value });
-                setAreaInput(e.target.value || "");
-              }}
-            >
-              <option value="">All Areas</option>
-              ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
-            </select>
           </div>
-          <div className="area-combo">
+          <div className="combo-single">
             <input
-              className="input-modern area-combo-input"
+              className="input-modern combo-single-input"
               placeholder="All Categories"
               list="user-category-options"
               value=${categoryInput}
@@ -1193,26 +1157,6 @@ function App() {
               <option value="Guest Houses"></option>
               <option value="Plots for Sale"></option>
             </datalist>
-            <select
-              className="input-modern area-combo-select"
-              value=${filters.category}
-              onChange=${(e) => {
-                setFilters({ ...filters, category: e.target.value });
-                setCategoryInput(e.target.value || "");
-              }}
-            >
-              <option value="">All Categories</option>
-              <option value="Rental Houses">Rental Houses</option>
-              <option value="Bedsitters">Bedsitters</option>
-              <option value="Hostels">Hostels</option>
-              <option value="Apartments">Apartments</option>
-              <option value="Lodges">Lodges</option>
-              <option value="AirBnB">AirBnB</option>
-              <option value="Vacant Shops">Vacant Shops</option>
-              <option value="Office Spaces">Office Spaces</option>
-              <option value="Guest Houses">Guest Houses</option>
-              <option value="Plots for Sale">Plots for Sale</option>
-            </select>
           </div>
           <input
             className="input-modern p-3 rounded-xl"
@@ -1248,12 +1192,10 @@ function App() {
           ? html`<p className="text-slate-300">Loading plots...</p>`
           : html`
               ${(["top", "medium", "bottom"]).map((tier) => {
-                const label = tier === "top" ? "Top Priority" : tier === "medium" ? "Medium Priority" : "Bottom Priority";
                 const rows = groupedPlots[tier] || [];
                 if (!rows.length) return null;
                 return html`
                   <div className="mb-4">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.18em] mb-2">${label}</p>
                     <div className="plot-grid">
                       ${rows.map((plot, idx) => html`
                       ${(() => {

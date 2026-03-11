@@ -233,6 +233,26 @@ body {
   background: #ffffff;
 }
 
+.combo-single {
+  position: relative;
+  width: 100%;
+}
+
+.combo-single-input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.combo-single::after {
+  content: "v";
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  pointer-events: none;
+}
+
 .area-combo {
   position: relative;
   width: 100%;
@@ -256,7 +276,7 @@ body {
 }
 
 .area-combo::after {
-  content: "▾";
+  content: "v";
   position: absolute;
   right: 14px;
   top: 50%;
@@ -698,3 +718,4 @@ body {
     height: min(48vh, 320px);
   }
 }
+

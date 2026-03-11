@@ -216,6 +216,26 @@ body {
   box-shadow: 0 0 0 3px rgba(79, 127, 227, 0.2);
 }
 
+.combo-single {
+  position: relative;
+  width: 100%;
+}
+
+.combo-single-input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.combo-single::after {
+  content: "v";
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  pointer-events: none;
+}
+
 .btn-success {
   background: linear-gradient(135deg, var(--accent-2) 0%, var(--accent) 100%);
   color: #fff;
