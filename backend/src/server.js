@@ -48,6 +48,8 @@ const ALLOWED_ORIGINS = new Set([
   "https://tstplotsconnect-84rw.vercel.app",
   "https://tst-plotconnect.com",
   "https://www.tst-plotconnect.com",
+  "https://tstplotconnect.com",
+  "https://www.tstplotconnect.com",
   "https://tstplotsconnect.com",
   "https://www.tstplotsconnect.com",
   "http://localhost:5500",
