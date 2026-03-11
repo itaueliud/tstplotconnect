@@ -110,15 +110,15 @@ function otpCodesCol() {
 async function getLocationMetadata() {
   const meta = await locationMetadataCol().findOne({ key: "default" });
   if (meta) {
-    return {
-      countries: Array.isArray(meta.countries) ? meta.countries : [],
-      countiesByCountry: meta.countiesByCountry && typeof meta.countiesByCountry === "object"
-        ? meta.countiesByCountry
-        : {},
-      areasByCounty: meta.areasByCounty && typeof meta.areasByCounty === "object"
-        ? meta.areasByCounty
-        : {}
-    };
+    const normalized = normalizeLocationMetadata(meta);
+    if (normalized.changed) {
+      await locationMetadataCol().updateOne(
+        { key: "default" },
+        { $set: normalized.value, $setOnInsert: { key: "default", createdAt: new Date() } },
+        { upsert: true }
+      );
+    }
+    return normalized.value;
   }
   return {
     countries: ["Kenya", "Tanzania", "Uganda", "Ethiopia"],
@@ -142,6 +142,55 @@ async function getLocationMetadata() {
       Makueni: [],
       Nairobi: [],
       Kajiado: []
+    }
+  };
+}
+
+function normalizeLocationMetadata(meta) {
+  const countries = Array.isArray(meta.countries) ? meta.countries : [];
+  const countiesByCountry = meta.countiesByCountry && typeof meta.countiesByCountry === "object"
+    ? meta.countiesByCountry
+    : {};
+  const areasByCounty = meta.areasByCounty && typeof meta.areasByCounty === "object"
+    ? meta.areasByCounty
+    : {};
+
+  let changed = false;
+
+  if (Array.isArray(countiesByCountry.Kenya)) {
+    const kenya = countiesByCountry.Kenya.map((c) => (String(c).trim() === "KITUI COUNTY" ? "kitui county" : c));
+    if (kenya.join("|") !== countiesByCountry.Kenya.join("|")) {
+      countiesByCountry.Kenya = kenya;
+      changed = true;
+    }
+  }
+
+  if (Array.isArray(countiesByCountry.Ethiopia)) {
+    const filtered = countiesByCountry.Ethiopia.filter((c) => String(c).trim().toLowerCase() !== "taita taveta county");
+    if (filtered.length !== countiesByCountry.Ethiopia.length) {
+      countiesByCountry.Ethiopia = filtered;
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    return {
+      changed: true,
+      value: {
+        countries,
+        countiesByCountry,
+        areasByCounty,
+        updatedAt: new Date()
+      }
+    };
+  }
+
+  return {
+    changed: false,
+    value: {
+      countries,
+      countiesByCountry,
+      areasByCounty
     }
   };
 }
@@ -1591,8 +1640,51 @@ app.post("/api/super-admin/locations/county", requireSecureAdmin, requireAuth, r
   return res.json({ message: "County added successfully." });
 });
 
+app.put("/api/super-admin/locations/county", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (req, res) => {
+  const { country, county, newCounty } = req.body || {};
+  const countryName = String(country || "").trim();
+  const countyName = String(county || "").trim();
+  const newCountyName = String(newCounty || "").trim();
+  if (!countryName || !countyName || !newCountyName) {
+    return res.status(400).json({ error: "country, county and newCounty are required" });
+  }
+
+  const meta = await getLocationMetadata();
+  const countiesByCountry = { ...(meta.countiesByCountry || {}) };
+  const list = Array.isArray(countiesByCountry[countryName]) ? countiesByCountry[countryName] : [];
+  if (!list.includes(countyName)) {
+    return res.status(404).json({ error: "County not found in selected country." });
+  }
+  if (list.includes(newCountyName)) {
+    return res.status(409).json({ error: "County name already exists in selected country." });
+  }
+
+  countiesByCountry[countryName] = list.map((c) => (c === countyName ? newCountyName : c));
+  const areasByCounty = { ...(meta.areasByCounty || {}) };
+  if (areasByCounty[countyName]) {
+    areasByCounty[newCountyName] = areasByCounty[countyName];
+    delete areasByCounty[countyName];
+  }
+
+  await locationMetadataCol().updateOne(
+    { key: "default" },
+    {
+      $set: {
+        countiesByCountry,
+        areasByCounty,
+        updatedAt: new Date()
+      },
+      $setOnInsert: { key: "default", createdAt: new Date() }
+    },
+    { upsert: true }
+  );
+
+  return res.json({ message: "County updated successfully." });
+});
+
 app.post("/api/super-admin/locations/area", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (req, res) => {
-  const { county, area } = req.body || {};
+  const { country, county, area } = req.body || {};
+  let countryName = String(country || "").trim();
   const countyName = String(county || "").trim();
   const areaName = String(area || "").trim();
   if (!countyName || !areaName) {
@@ -1600,6 +1692,19 @@ app.post("/api/super-admin/locations/area", requireSecureAdmin, requireAuth, req
   }
 
   const meta = await getLocationMetadata();
+  if (!countryName) {
+    const match = Object.entries(meta.countiesByCountry || {}).find(([, list]) => Array.isArray(list) && list.includes(countyName));
+    countryName = match ? match[0] : "";
+  }
+  if (!countryName) {
+    return res.status(400).json({ error: "country is required" });
+  }
+  const allowedCounties = Array.isArray(meta.countiesByCountry?.[countryName])
+    ? meta.countiesByCountry[countryName]
+    : [];
+  if (!allowedCounties.includes(countyName)) {
+    return res.status(404).json({ error: "County not found in selected country." });
+  }
   const areasByCounty = { ...(meta.areasByCounty || {}) };
   const currentAreas = new Set(areasByCounty[countyName] || []);
   currentAreas.add(areaName);
@@ -1620,15 +1725,65 @@ app.post("/api/super-admin/locations/area", requireSecureAdmin, requireAuth, req
   return res.json({ message: "Area added successfully." });
 });
 
-app.delete("/api/super-admin/locations/area", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (req, res) => {
-  const { county, area } = req.body || {};
+app.put("/api/super-admin/locations/area", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (req, res) => {
+  const { country, county, area, newArea } = req.body || {};
+  const countryName = String(country || "").trim();
   const countyName = String(county || "").trim();
   const areaName = String(area || "").trim();
-  if (!countyName || !areaName) {
-    return res.status(400).json({ error: "county and area are required" });
+  const newAreaName = String(newArea || "").trim();
+  if (!countryName || !countyName || !areaName || !newAreaName) {
+    return res.status(400).json({ error: "country, county, area and newArea are required" });
   }
 
   const meta = await getLocationMetadata();
+  const allowedCounties = Array.isArray(meta.countiesByCountry?.[countryName])
+    ? meta.countiesByCountry[countryName]
+    : [];
+  if (!allowedCounties.includes(countyName)) {
+    return res.status(404).json({ error: "County not found in selected country." });
+  }
+  const areasByCounty = { ...(meta.areasByCounty || {}) };
+  const existingAreas = Array.isArray(areasByCounty[countyName]) ? areasByCounty[countyName] : [];
+  if (!existingAreas.includes(areaName)) {
+    return res.status(404).json({ error: "Area not found in selected county." });
+  }
+  if (existingAreas.includes(newAreaName)) {
+    return res.status(409).json({ error: "Area name already exists in selected county." });
+  }
+
+  areasByCounty[countyName] = existingAreas.map((a) => (a === areaName ? newAreaName : a));
+
+  await locationMetadataCol().updateOne(
+    { key: "default" },
+    {
+      $set: {
+        areasByCounty,
+        updatedAt: new Date()
+      },
+      $setOnInsert: { key: "default", createdAt: new Date() }
+    },
+    { upsert: true }
+  );
+
+  return res.json({ message: "Area updated successfully." });
+});
+
+app.delete("/api/super-admin/locations/area", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (req, res) => {
+  const { country, county, area } = req.body || {};
+  const countryName = String(country || "").trim();
+  const countyName = String(county || "").trim();
+  const areaName = String(area || "").trim();
+  if (!countryName || !countyName || !areaName) {
+    return res.status(400).json({ error: "country, county and area are required" });
+  }
+
+  const meta = await getLocationMetadata();
+  const allowedCounties = Array.isArray(meta.countiesByCountry?.[countryName])
+    ? meta.countiesByCountry[countryName]
+    : [];
+  if (!allowedCounties.includes(countyName)) {
+    return res.status(404).json({ error: "County not found in selected country." });
+  }
   const areasByCounty = { ...(meta.areasByCounty || {}) };
   const existingAreas = Array.isArray(areasByCounty[countyName]) ? areasByCounty[countyName] : [];
   if (!existingAreas.includes(areaName)) {
@@ -1649,6 +1804,43 @@ app.delete("/api/super-admin/locations/area", requireSecureAdmin, requireAuth, r
   );
 
   return res.json({ message: "Area deleted successfully." });
+});
+
+app.delete("/api/super-admin/locations/county", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (req, res) => {
+  const { country, county } = req.body || {};
+  const countryName = String(country || "").trim();
+  const countyName = String(county || "").trim();
+  if (!countryName || !countyName) {
+    return res.status(400).json({ error: "country and county are required" });
+  }
+
+  const meta = await getLocationMetadata();
+  const countiesByCountry = { ...(meta.countiesByCountry || {}) };
+  const list = Array.isArray(countiesByCountry[countryName]) ? countiesByCountry[countryName] : [];
+  if (!list.includes(countyName)) {
+    return res.status(404).json({ error: "County not found in selected country." });
+  }
+
+  countiesByCountry[countryName] = list.filter((c) => c !== countyName);
+  const areasByCounty = { ...(meta.areasByCounty || {}) };
+  if (areasByCounty[countyName]) {
+    delete areasByCounty[countyName];
+  }
+
+  await locationMetadataCol().updateOne(
+    { key: "default" },
+    {
+      $set: {
+        countiesByCountry,
+        areasByCounty,
+        updatedAt: new Date()
+      },
+      $setOnInsert: { key: "default", createdAt: new Date() }
+    },
+    { upsert: true }
+  );
+
+  return res.json({ message: "County deleted successfully." });
 });
 
 app.get("/api/admin/users", requireSecureAdmin, requireAuth, requireAdmin, async (_req, res) => {

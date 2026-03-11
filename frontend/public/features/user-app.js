@@ -457,7 +457,15 @@ function App() {
         if (hasMax && price > max) return false;
         return true;
       });
-      setPlots(priceFiltered);
+      const sampleFiltered = SAMPLE_PLOTS.filter((p) =>
+        (!filters.country || p.country === filters.country) &&
+        (!filters.county || (p.county || p.town) === filters.county) &&
+        (!filters.area || p.area === filters.area) &&
+        (!filters.category || p.category === filters.category) &&
+        (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
+        (!filters.maxPrice || p.price <= Number(filters.maxPrice))
+      ).map((p) => ({ ...p, priority: "bottom" }));
+      setPlots([...priceFiltered, ...sampleFiltered]);
     } catch (err) {
       const fallback = SAMPLE_PLOTS.filter((p) =>
         (!filters.country || p.country === filters.country) &&

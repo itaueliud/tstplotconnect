@@ -88,8 +88,24 @@ function App() {
   const [issuedPassword, setIssuedPassword] = useState("");
   const [newCountyCountry, setNewCountyCountry] = useState("Kenya");
   const [newCountyName, setNewCountyName] = useState("");
+  const [newAreaCountry, setNewAreaCountry] = useState("");
   const [newAreaCounty, setNewAreaCounty] = useState("");
   const [newAreaName, setNewAreaName] = useState("");
+  const [deleteAreaCountry, setDeleteAreaCountry] = useState("");
+  const [deleteAreaCounty, setDeleteAreaCounty] = useState("");
+  const [deleteCountyCountry, setDeleteCountyCountry] = useState("");
+  const [deleteCountyName, setDeleteCountyName] = useState("");
+  const [editCountyCountry, setEditCountyCountry] = useState("");
+  const [editCountyName, setEditCountyName] = useState("");
+  const [editCountyNewName, setEditCountyNewName] = useState("");
+  const [editAreaCountry, setEditAreaCountry] = useState("");
+  const [editAreaCounty, setEditAreaCounty] = useState("");
+  const [editAreaName, setEditAreaName] = useState("");
+  const [editAreaNewName, setEditAreaNewName] = useState("");
+  const [deleteAreaCountry, setDeleteAreaCountry] = useState("");
+  const [deleteAreaCounty, setDeleteAreaCounty] = useState("");
+  const [deleteCountyCountry, setDeleteCountyCountry] = useState("");
+  const [deleteCountyName, setDeleteCountyName] = useState("");
 
   const [adminPhone, setAdminPhone] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
@@ -321,13 +337,105 @@ function App() {
     try {
       await api("/api/super-admin/locations/area", {
         method: "POST",
-        body: JSON.stringify({ county: newAreaCounty, area: newAreaName.trim() })
+        body: JSON.stringify({ country: newAreaCountry, county: newAreaCounty, area: newAreaName.trim() })
       });
       setNewAreaName("");
       showMessage("Area added.");
       await loadLocationMetadata();
     } catch (err) {
       showMessage(err.message, true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteAreaBySuperAdmin() {
+    if (!isSuperAdmin) return showMessage("Super admin login required.", true);
+    const country = String(deleteAreaCountry || "").trim();
+    const county = String(deleteAreaCounty || "").trim();
+    const area = String(deleteAreaName || "").trim();
+    if (!country || !county || !area) return showMessage("Select country, county, and area to delete.", true);
+    if (!window.confirm(`Delete area "${area}" from county "${county}" (${country})?`)) return;
+    setBusy(true);
+    try {
+      const data = await api("/api/super-admin/locations/area", {
+        method: "DELETE",
+        body: JSON.stringify({ country, county, area })
+      });
+      showMessage(data.message || "Area deleted.");
+      setDeleteAreaName("");
+      await loadLocationMetadata();
+    } catch (err) {
+      showMessage(err.message || "Failed to delete area.", true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteCountyBySuperAdmin() {
+    if (!isSuperAdmin) return showMessage("Super admin login required.", true);
+    const country = String(deleteCountyCountry || "").trim();
+    const county = String(deleteCountyName || "").trim();
+    if (!country || !county) return showMessage("Select country and county to delete.", true);
+    if (!window.confirm(`Delete county "${county}" from ${country}? This will remove all its areas.`)) return;
+    setBusy(true);
+    try {
+      const data = await api("/api/super-admin/locations/county", {
+        method: "DELETE",
+        body: JSON.stringify({ country, county })
+      });
+      showMessage(data.message || "County deleted.");
+      setDeleteCountyName("");
+      await loadLocationMetadata();
+    } catch (err) {
+      showMessage(err.message || "Failed to delete county.", true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function editCountyBySuperAdmin() {
+    if (!isSuperAdmin) return showMessage("Super admin login required.", true);
+    const country = String(editCountyCountry || "").trim();
+    const county = String(editCountyName || "").trim();
+    const newCounty = String(editCountyNewName || "").trim();
+    if (!country || !county || !newCounty) return showMessage("Select country, county, and new county name.", true);
+    setBusy(true);
+    try {
+      const data = await api("/api/super-admin/locations/county", {
+        method: "PUT",
+        body: JSON.stringify({ country, county, newCounty })
+      });
+      showMessage(data.message || "County updated.");
+      setEditCountyNewName("");
+      await loadLocationMetadata();
+    } catch (err) {
+      showMessage(err.message || "Failed to update county.", true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function editAreaBySuperAdmin() {
+    if (!isSuperAdmin) return showMessage("Super admin login required.", true);
+    const country = String(editAreaCountry || "").trim();
+    const county = String(editAreaCounty || "").trim();
+    const area = String(editAreaName || "").trim();
+    const newArea = String(editAreaNewName || "").trim();
+    if (!country || !county || !area || !newArea) {
+      return showMessage("Select country, county, area, and new area name.", true);
+    }
+    setBusy(true);
+    try {
+      const data = await api("/api/super-admin/locations/area", {
+        method: "PUT",
+        body: JSON.stringify({ country, county, area, newArea })
+      });
+      showMessage(data.message || "Area updated.");
+      setEditAreaNewName("");
+      await loadLocationMetadata();
+    } catch (err) {
+      showMessage(err.message || "Failed to update area.", true);
     } finally {
       setBusy(false);
     }
@@ -696,11 +804,88 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!newAreaCounty) {
-      const firstCounty = Object.keys(locationMeta.areasByCounty || {})[0] || "";
-      if (firstCounty) setNewAreaCounty(firstCounty);
+    if (!newAreaCountry) {
+      setNewAreaCountry((locationMeta.countries || [])[0] || "");
     }
-  }, [locationMeta, newAreaCounty]);
+  }, [locationMeta, newAreaCountry]);
+
+  useEffect(() => {
+    if (!newAreaCountry) return;
+    const list = locationMeta.countiesByCountry?.[newAreaCountry] || [];
+    if (!list.includes(newAreaCounty)) {
+      setNewAreaCounty(list[0] || "");
+    }
+  }, [locationMeta, newAreaCountry, newAreaCounty]);
+
+  useEffect(() => {
+    if (!deleteAreaCountry) {
+      setDeleteAreaCountry((locationMeta.countries || [])[0] || "");
+    }
+  }, [locationMeta, deleteAreaCountry]);
+
+  useEffect(() => {
+    if (!deleteAreaCountry) return;
+    const list = locationMeta.countiesByCountry?.[deleteAreaCountry] || [];
+    if (!list.includes(deleteAreaCounty)) {
+      setDeleteAreaCounty(list[0] || "");
+    }
+  }, [locationMeta, deleteAreaCountry, deleteAreaCounty]);
+
+  useEffect(() => {
+    const areas = locationMeta.areasByCounty?.[deleteAreaCounty] || [];
+    if (!areas.includes(deleteAreaName)) {
+      setDeleteAreaName(areas[0] || "");
+    }
+  }, [locationMeta, deleteAreaCounty, deleteAreaName]);
+
+  useEffect(() => {
+    if (!deleteCountyCountry) {
+      setDeleteCountyCountry((locationMeta.countries || [])[0] || "");
+    }
+  }, [locationMeta, deleteCountyCountry]);
+
+  useEffect(() => {
+    if (!deleteCountyCountry) return;
+    const list = locationMeta.countiesByCountry?.[deleteCountyCountry] || [];
+    if (!list.includes(deleteCountyName)) {
+      setDeleteCountyName(list[0] || "");
+    }
+  }, [locationMeta, deleteCountyCountry, deleteCountyName]);
+
+  useEffect(() => {
+    if (!editCountyCountry) {
+      setEditCountyCountry((locationMeta.countries || [])[0] || "");
+    }
+  }, [locationMeta, editCountyCountry]);
+
+  useEffect(() => {
+    if (!editCountyCountry) return;
+    const list = locationMeta.countiesByCountry?.[editCountyCountry] || [];
+    if (!list.includes(editCountyName)) {
+      setEditCountyName(list[0] || "");
+    }
+  }, [locationMeta, editCountyCountry, editCountyName]);
+
+  useEffect(() => {
+    if (!editAreaCountry) {
+      setEditAreaCountry((locationMeta.countries || [])[0] || "");
+    }
+  }, [locationMeta, editAreaCountry]);
+
+  useEffect(() => {
+    if (!editAreaCountry) return;
+    const list = locationMeta.countiesByCountry?.[editAreaCountry] || [];
+    if (!list.includes(editAreaCounty)) {
+      setEditAreaCounty(list[0] || "");
+    }
+  }, [locationMeta, editAreaCountry, editAreaCounty]);
+
+  useEffect(() => {
+    const areas = locationMeta.areasByCounty?.[editAreaCounty] || [];
+    if (!areas.includes(editAreaName)) {
+      setEditAreaName(areas[0] || "");
+    }
+  }, [locationMeta, editAreaCounty, editAreaName]);
 
   useEffect(() => {
     function syncHash() {
@@ -1039,10 +1224,31 @@ function App() {
                         />
                         <button className="btn-soft rounded-xl p-3" onClick=${addCountyBySuperAdmin} disabled=${busy}>Add County</button>
                       </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                        <select className="input-modern p-3 rounded-xl" value=${editCountyCountry} onChange=${(e) => setEditCountyCountry(e.target.value)}>
+                          <option value="">Select country</option>
+                          ${(locationMeta.countries || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+                        </select>
+                        <select className="input-modern p-3 rounded-xl" value=${editCountyName} onChange=${(e) => setEditCountyName(e.target.value)}>
+                          <option value="">Select county</option>
+                          ${(locationMeta.countiesByCountry?.[editCountyCountry] || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+                        </select>
+                        <input
+                          className="input-modern p-3 rounded-xl"
+                          placeholder="New county name"
+                          value=${editCountyNewName}
+                          onInput=${(e) => setEditCountyNewName(e.target.value)}
+                        />
+                        <button className="btn-soft rounded-xl p-3 md:col-span-3" onClick=${editCountyBySuperAdmin} disabled=${busy || !editCountyCountry || !editCountyName || !editCountyNewName}>Update County</button>
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <select className="input-modern p-3 rounded-xl" value=${newAreaCountry} onChange=${(e) => setNewAreaCountry(e.target.value)}>
+                          <option value="">Select country</option>
+                          ${(locationMeta.countries || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+                        </select>
                         <select className="input-modern p-3 rounded-xl" value=${newAreaCounty} onChange=${(e) => setNewAreaCounty(e.target.value)}>
                           <option value="">Select county</option>
-                          ${Object.keys(locationMeta.areasByCounty || {}).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+                          ${(locationMeta.countiesByCountry?.[newAreaCountry] || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
                         </select>
                         <input
                           className="input-modern p-3 rounded-xl"
@@ -1050,7 +1256,54 @@ function App() {
                           value=${newAreaName}
                           onInput=${(e) => setNewAreaName(e.target.value)}
                         />
-                        <button className="btn-soft rounded-xl p-3" onClick=${addAreaBySuperAdmin} disabled=${busy}>Add Area</button>
+                        <button className="btn-soft rounded-xl p-3 md:col-span-3" onClick=${addAreaBySuperAdmin} disabled=${busy}>Add Area</button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                        <select className="input-modern p-3 rounded-xl" value=${editAreaCountry} onChange=${(e) => setEditAreaCountry(e.target.value)}>
+                          <option value="">Select country</option>
+                          ${(locationMeta.countries || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+                        </select>
+                        <select className="input-modern p-3 rounded-xl" value=${editAreaCounty} onChange=${(e) => setEditAreaCounty(e.target.value)}>
+                          <option value="">Select county</option>
+                          ${(locationMeta.countiesByCountry?.[editAreaCountry] || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+                        </select>
+                        <select className="input-modern p-3 rounded-xl" value=${editAreaName} onChange=${(e) => setEditAreaName(e.target.value)}>
+                          <option value="">Select area</option>
+                          ${(locationMeta.areasByCounty?.[editAreaCounty] || []).map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
+                        </select>
+                        <input
+                          className="input-modern p-3 rounded-xl"
+                          placeholder="New area name"
+                          value=${editAreaNewName}
+                          onInput=${(e) => setEditAreaNewName(e.target.value)}
+                        />
+                        <button className="btn-soft rounded-xl p-3 md:col-span-3" onClick=${editAreaBySuperAdmin} disabled=${busy || !editAreaCountry || !editAreaCounty || !editAreaName || !editAreaNewName}>Update Area</button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <select className="input-modern p-3 rounded-xl" value=${deleteAreaCountry} onChange=${(e) => setDeleteAreaCountry(e.target.value)}>
+                          <option value="">Select country</option>
+                          ${(locationMeta.countries || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+                        </select>
+                        <select className="input-modern p-3 rounded-xl" value=${deleteAreaCounty} onChange=${(e) => setDeleteAreaCounty(e.target.value)}>
+                          <option value="">Select county</option>
+                          ${(locationMeta.countiesByCountry?.[deleteAreaCountry] || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+                        </select>
+                        <select className="input-modern p-3 rounded-xl" value=${deleteAreaName} onChange=${(e) => setDeleteAreaName(e.target.value)}>
+                          <option value="">Select area to delete</option>
+                          ${(locationMeta.areasByCounty?.[deleteAreaCounty] || []).map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
+                        </select>
+                        <button className="btn-chip btn-chip-danger rounded-xl p-3 md:col-span-3" onClick=${deleteAreaBySuperAdmin} disabled=${busy || !deleteAreaCountry || !deleteAreaCounty || !deleteAreaName}>Delete Area</button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <select className="input-modern p-3 rounded-xl" value=${deleteCountyCountry} onChange=${(e) => setDeleteCountyCountry(e.target.value)}>
+                          <option value="">Select country</option>
+                          ${(locationMeta.countries || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+                        </select>
+                        <select className="input-modern p-3 rounded-xl" value=${deleteCountyName} onChange=${(e) => setDeleteCountyName(e.target.value)}>
+                          <option value="">Select county to delete</option>
+                          ${(locationMeta.countiesByCountry?.[deleteCountyCountry] || []).map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+                        </select>
+                        <button className="btn-chip btn-chip-danger rounded-xl p-3" onClick=${deleteCountyBySuperAdmin} disabled=${busy || !deleteCountyCountry || !deleteCountyName}>Delete County</button>
                       </div>
                     </section>
                   `
@@ -1222,8 +1475,3 @@ function App() {
 }
 
 createRoot(document.getElementById("app")).render(html`<${App} />`);
-
-
-
-
-
