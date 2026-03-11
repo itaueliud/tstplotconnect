@@ -1058,6 +1058,7 @@ app.post("/api/payment/callback", async (req, res) => {
 });
 
 app.get("/api/plots", async (req, res) => {
+  res.set("Cache-Control", "no-store");
   const country = req.query.country || "";
   const county = req.query.county || req.query.town || "";
   const area = req.query.area || "";
