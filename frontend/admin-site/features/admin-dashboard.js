@@ -140,6 +140,39 @@ function App() {
     setMessage({ text, error });
   }
 
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error("Failed to read image file."));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleImageFiles(fileList) {
+    const files = Array.from(fileList || []).filter((file) => file && file.type && file.type.startsWith("image/"));
+    if (!files.length) {
+      showMessage("Please select image files.", true);
+      return;
+    }
+
+    const maxBytes = 2 * 1024 * 1024;
+    const accepted = files.filter((file) => file.size <= maxBytes);
+    if (accepted.length !== files.length) {
+      showMessage("Some images were skipped (max size 2MB each).", true);
+    }
+    if (!accepted.length) return;
+
+    try {
+      const dataUrls = await Promise.all(accepted.map((file) => fileToDataUrl(file)));
+      const merged = [...commaUrls(plotForm.images), ...dataUrls].join(", ");
+      setPlotForm((prev) => ({ ...prev, images: merged }));
+      showMessage(`${dataUrls.length} image${dataUrls.length === 1 ? "" : "s"} added.`);
+    } catch (_err) {
+      showMessage("Failed to add selected images.", true);
+    }
+  }
+
   async function api(path, options = {}, authToken = null) {
     const url = `${apiBase.replace(/\/+$/, "")}${String(path).startsWith("/") ? path : `/${path}`}`;
     const headers = {
@@ -967,6 +1000,17 @@ function App() {
                   <input className="input-modern p-3 rounded-xl" placeholder="WhatsApp phone" value=${plotForm.whatsapp} onInput=${(e) => setPlotForm({ ...plotForm, whatsapp: e.target.value })} />
                   <textarea className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Description" value=${plotForm.description} onInput=${(e) => setPlotForm({ ...plotForm, description: e.target.value })}></textarea>
                   <input className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Image URLs (comma separated)" value=${plotForm.images} onInput=${(e) => setPlotForm({ ...plotForm, images: e.target.value })} />
+                  <input
+                    className="input-modern p-3 rounded-xl md:col-span-2"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange=${async (e) => {
+                      await handleImageFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                  <p className="text-xs text-muted md:col-span-2">You can paste image URLs or upload images (max 2MB each).</p>
                   <input className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Video URLs (comma separated)" value=${plotForm.videos} onInput=${(e) => setPlotForm({ ...plotForm, videos: e.target.value })} />
                   <button className="btn-success py-3 rounded-xl md:col-span-2" onClick=${addPlot} disabled=${busy}>Create Plot</button>
                 </div>
