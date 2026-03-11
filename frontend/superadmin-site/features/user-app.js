@@ -250,7 +250,10 @@ function App() {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
+  const [countryInput, setCountryInput] = useState("");
+  const [countyInput, setCountyInput] = useState("");
   const [areaInput, setAreaInput] = useState("");
+  const [categoryInput, setCategoryInput] = useState("");
   const [countryConfirmed, setCountryConfirmed] = useState(false);
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
@@ -277,6 +280,26 @@ function App() {
     setMsg({ text, error });
   }
 
+  function handleCountryInputChange(value) {
+    const next = String(value || "");
+    setCountryInput(next);
+    setFilters((prev) => {
+      if (!next) return { ...prev, country: "", county: "", area: "" };
+      const match = availableCountries.find((c) => String(c).toLowerCase() === next.toLowerCase());
+      return { ...prev, country: match || "", county: "", area: "" };
+    });
+  }
+
+  function handleCountyInputChange(value) {
+    const next = String(value || "");
+    setCountyInput(next);
+    setFilters((prev) => {
+      if (!next) return { ...prev, county: "", area: "" };
+      const match = counties.find((c) => String(c).toLowerCase() === next.toLowerCase());
+      return { ...prev, county: match || "", area: "" };
+    });
+  }
+
   function handleAreaInputChange(value) {
     const next = String(value || "");
     setAreaInput(next);
@@ -286,6 +309,27 @@ function App() {
       }
       const match = areas.find((a) => String(a).toLowerCase() === next.toLowerCase());
       return { ...prev, area: match || "" };
+    });
+  }
+
+  function handleCategoryInputChange(value) {
+    const next = String(value || "");
+    setCategoryInput(next);
+    setFilters((prev) => {
+      if (!next) return { ...prev, category: "" };
+      const match = [
+        "Rental Houses",
+        "Bedsitters",
+        "Hostels",
+        "Apartments",
+        "Lodges",
+        "AirBnB",
+        "Vacant Shops",
+        "Office Spaces",
+        "Guest Houses",
+        "Plots for Sale"
+      ].find((c) => String(c).toLowerCase() === next.toLowerCase());
+      return { ...prev, category: match || "" };
     });
   }
 
@@ -589,7 +633,10 @@ function App() {
     persistSession("", null);
     setCountryConfirmed(false);
     setFilters({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
+    setCountryInput("");
+    setCountyInput("");
     setAreaInput("");
+    setCategoryInput("");
     setStatus(null);
     setPaymentLog([]);
     lastKnownActiveRef.current = false;
@@ -715,6 +762,24 @@ function App() {
       setAreaInput(filters.area);
     }
   }, [filters.area, areaInput]);
+
+  useEffect(() => {
+    if (filters.country && countryInput !== filters.country) {
+      setCountryInput(filters.country);
+    }
+  }, [filters.country, countryInput]);
+
+  useEffect(() => {
+    if (filters.county && countyInput !== filters.county) {
+      setCountyInput(filters.county);
+    }
+  }, [filters.county, countyInput]);
+
+  useEffect(() => {
+    if (filters.category && categoryInput !== filters.category) {
+      setCategoryInput(filters.category);
+    }
+  }, [filters.category, categoryInput]);
 
   useEffect(() => {
     function syncHash() {
@@ -1036,14 +1101,55 @@ function App() {
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
         <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-          <select className="input-modern p-3 rounded-xl" value=${filters.country} onChange=${(e) => { setFilters({ country: e.target.value, county: "", area: "", category: "", minPrice: "", maxPrice: "" }); setAreaInput(""); }}>
-            <option value="">All Countries</option>
-            ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
-          </select>
-          <select className="input-modern p-3 rounded-xl" value=${filters.county} onChange=${(e) => { setFilters({ ...filters, county: e.target.value, area: "" }); setAreaInput(""); }}>
-            <option value="">All Counties</option>
-            ${counties.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
-          </select>
+          <div className="area-combo">
+            <input
+              className="input-modern area-combo-input"
+              placeholder="All Countries"
+              list="user-country-options"
+              value=${countryInput}
+              onInput=${(e) => handleCountryInputChange(e.target.value)}
+            />
+            <datalist id="user-country-options">
+              ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+            </datalist>
+            <select
+              className="input-modern area-combo-select"
+              value=${filters.country}
+              onChange=${(e) => {
+                setFilters({ country: e.target.value, county: "", area: "", category: "", minPrice: "", maxPrice: "" });
+                setCountryInput(e.target.value || "");
+                setCountyInput("");
+                setAreaInput("");
+              }}
+            >
+              <option value="">All Countries</option>
+              ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+            </select>
+          </div>
+          <div className="area-combo">
+            <input
+              className="input-modern area-combo-input"
+              placeholder="All Counties"
+              list="user-county-options"
+              value=${countyInput}
+              onInput=${(e) => handleCountyInputChange(e.target.value)}
+            />
+            <datalist id="user-county-options">
+              ${counties.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+            </datalist>
+            <select
+              className="input-modern area-combo-select"
+              value=${filters.county}
+              onChange=${(e) => {
+                setFilters({ ...filters, county: e.target.value, area: "" });
+                setCountyInput(e.target.value || "");
+                setAreaInput("");
+              }}
+            >
+              <option value="">All Counties</option>
+              ${counties.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+            </select>
+          </div>
           <div className="area-combo">
             <input
               className="input-modern area-combo-input"
@@ -1067,19 +1173,47 @@ function App() {
               ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
             </select>
           </div>
-          <select className="input-modern p-3 rounded-xl" value=${filters.category} onChange=${(e) => setFilters({ ...filters, category: e.target.value })}>
-            <option value="">All Categories</option>
-            <option value="Rental Houses">Rental Houses</option>
-            <option value="Bedsitters">Bedsitters</option>
-            <option value="Hostels">Hostels</option>
-            <option value="Apartments">Apartments</option>
-            <option value="Lodges">Lodges</option>
-            <option value="AirBnB">AirBnB</option>
-            <option value="Vacant Shops">Vacant Shops</option>
-            <option value="Office Spaces">Office Spaces</option>
-            <option value="Guest Houses">Guest Houses</option>
-            <option value="Plots for Sale">Plots for Sale</option>
-          </select>
+          <div className="area-combo">
+            <input
+              className="input-modern area-combo-input"
+              placeholder="All Categories"
+              list="user-category-options"
+              value=${categoryInput}
+              onInput=${(e) => handleCategoryInputChange(e.target.value)}
+            />
+            <datalist id="user-category-options">
+              <option value="Rental Houses"></option>
+              <option value="Bedsitters"></option>
+              <option value="Hostels"></option>
+              <option value="Apartments"></option>
+              <option value="Lodges"></option>
+              <option value="AirBnB"></option>
+              <option value="Vacant Shops"></option>
+              <option value="Office Spaces"></option>
+              <option value="Guest Houses"></option>
+              <option value="Plots for Sale"></option>
+            </datalist>
+            <select
+              className="input-modern area-combo-select"
+              value=${filters.category}
+              onChange=${(e) => {
+                setFilters({ ...filters, category: e.target.value });
+                setCategoryInput(e.target.value || "");
+              }}
+            >
+              <option value="">All Categories</option>
+              <option value="Rental Houses">Rental Houses</option>
+              <option value="Bedsitters">Bedsitters</option>
+              <option value="Hostels">Hostels</option>
+              <option value="Apartments">Apartments</option>
+              <option value="Lodges">Lodges</option>
+              <option value="AirBnB">AirBnB</option>
+              <option value="Vacant Shops">Vacant Shops</option>
+              <option value="Office Spaces">Office Spaces</option>
+              <option value="Guest Houses">Guest Houses</option>
+              <option value="Plots for Sale">Plots for Sale</option>
+            </select>
+          </div>
           <input
             className="input-modern p-3 rounded-xl"
             type="number"
