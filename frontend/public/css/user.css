@@ -233,6 +233,38 @@ body {
   background: #ffffff;
 }
 
+.area-combo {
+  position: relative;
+  width: 100%;
+}
+
+.area-combo-input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.area-combo-select {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 44px;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.area-combo::after {
+  content: "▾";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  pointer-events: none;
+}
+
 .btn-success,
 .btn-soft,
 .btn-chip,
@@ -646,5 +678,23 @@ body {
   .footer-bottom {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .user-content {
+    padding: 0.9rem;
+  }
+
+  .section-card {
+    padding: 0.9rem;
+  }
+
+  .plot-image {
+    height: 150px;
+  }
+
+  .map-container {
+    height: min(48vh, 320px);
   }
 }

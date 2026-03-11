@@ -217,6 +217,38 @@ body {
 }
 
 .area-combo {
+  position: relative;
+  width: 100%;
+}
+
+.area-combo-input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.area-combo-select {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 44px;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.area-combo::after {
+  content: "▾";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.area-combo {
   display: grid;
   grid-template-rows: 1fr 1fr;
   border: 1px solid #cad2e5;
@@ -604,5 +636,23 @@ body {
   .footer-bottom {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .user-content {
+    padding: 10px;
+  }
+
+  .section-card {
+    padding: 12px;
+  }
+
+  .plot-image {
+    height: 150px;
+  }
+
+  .map-container {
+    height: min(48vh, 320px);
   }
 }

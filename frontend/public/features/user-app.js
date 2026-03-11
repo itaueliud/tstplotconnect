@@ -1143,16 +1143,29 @@ function App() {
                 <option value="">All Counties</option>
                 ${counties.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
               </select>
-              <input
-                className="input-modern p-3 rounded-xl"
-                placeholder="Type or select area"
-                list="user-area-options"
-                value=${areaInput}
-                onInput=${(e) => handleAreaInputChange(e.target.value)}
-              />
-              <datalist id="user-area-options">
-                ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
-              </datalist>
+              <div className="area-combo">
+                <input
+                  className="input-modern area-combo-input"
+                  placeholder="Type or select area"
+                  list="user-area-options"
+                  value=${areaInput}
+                  onInput=${(e) => handleAreaInputChange(e.target.value)}
+                />
+                <datalist id="user-area-options">
+                  ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
+                </datalist>
+                <select
+                  className="input-modern area-combo-select"
+                  value=${filters.area}
+                  onChange=${(e) => {
+                    setFilters({ ...filters, area: e.target.value });
+                    setAreaInput(e.target.value || "");
+                  }}
+                >
+                  <option value="">All Areas</option>
+                  ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
+                </select>
+              </div>
               <select className="input-modern p-3 rounded-xl" value=${filters.category} onChange=${(e) => setFilters({ ...filters, category: e.target.value })}>
                 <option value="">All Categories</option>
                 <option value="Rental Houses">Rental Houses</option>
