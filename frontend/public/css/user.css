@@ -240,17 +240,7 @@ body {
 
 .combo-single-input {
   width: 100%;
-  padding-right: 44px;
-}
-
-.combo-single::after {
-  content: "v";
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6b7280;
-  pointer-events: none;
+  padding-right: 16px;
 }
 
 .area-combo {
