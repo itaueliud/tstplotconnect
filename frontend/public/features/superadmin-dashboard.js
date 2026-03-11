@@ -108,6 +108,7 @@ function App() {
   const [plotForm, setPlotForm] = useState({
     title: "",
     price: "",
+    category: "",
     town: "",
     area: "",
     caretaker: "",
@@ -473,6 +474,7 @@ function App() {
       const payload = {
         title: plotForm.title.trim(),
         price: Number(plotForm.price),
+        category: plotForm.category.trim(),
         town: plotForm.town.trim(),
         area: plotForm.area.trim(),
         caretaker: plotForm.caretaker.trim(),
@@ -485,6 +487,7 @@ function App() {
       setPlotForm({
         title: "",
         price: "",
+        category: "",
         town: "",
         area: "",
         caretaker: "",
@@ -534,6 +537,7 @@ function App() {
       { label: "ID", value: (p) => p.id },
       { label: "Title", value: (p) => p.title },
       { label: "Price", value: (p) => p.price },
+      { label: "Category", value: (p) => p.category || "" },
       { label: "Country", value: (p) => p.country || "Kenya" },
       { label: "County", value: (p) => p.county || p.town || "" },
       { label: "Area", value: (p) => p.area || "" },
@@ -606,7 +610,6 @@ function App() {
       let failed = 0;
       for (const row of rows) {
         try {
-          // eslint-disable-next-line no-await-in-loop
           await deleteFn(row);
           deleted += 1;
         } catch (_err) {
@@ -723,6 +726,8 @@ function App() {
     if (title === null) return;
     const priceInput = window.prompt("Price (Ksh):", String(plot.price));
     if (priceInput === null) return;
+    const category = window.prompt("Category:", plot.category || "");
+    if (category === null) return;
     const town = window.prompt("Town/County:", plot.town || plot.county || "");
     if (town === null) return;
     const area = window.prompt("Area:", plot.area || "");
@@ -743,6 +748,7 @@ function App() {
       const payload = {
         title: title.trim(),
         price: Number(priceInput),
+        category: category.trim(),
         town: town.trim(),
         area: area.trim(),
         caretaker: caretaker.trim(),
@@ -1027,6 +1033,19 @@ function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input className="input-modern p-3 rounded-xl" placeholder="Title" value=${plotForm.title} onInput=${(e) => setPlotForm({ ...plotForm, title: e.target.value })} />
                   <input className="input-modern p-3 rounded-xl" type="number" placeholder="Price (Ksh)" value=${plotForm.price} onInput=${(e) => setPlotForm({ ...plotForm, price: e.target.value })} />
+                  <select className="input-modern p-3 rounded-xl" value=${plotForm.category} onChange=${(e) => setPlotForm({ ...plotForm, category: e.target.value })}>
+                    <option value="">Category</option>
+                    <option value="Rental Houses">Rental Houses</option>
+                    <option value="Bedsitters">Bedsitters</option>
+                    <option value="Hostels">Hostels</option>
+                    <option value="Apartments">Apartments</option>
+                    <option value="Lodges">Lodges</option>
+                    <option value="AirBnB">AirBnB</option>
+                    <option value="Vacant Shops">Vacant Shops</option>
+                    <option value="Office Spaces">Office Spaces</option>
+                    <option value="Guest Houses">Guest Houses</option>
+                    <option value="Plots for Sale">Plots for Sale</option>
+                  </select>
                   <select
                     className="input-modern p-3 rounded-xl"
                     value=${plotForm.town}
@@ -1184,18 +1203,18 @@ function App() {
                   <h2 className="text-xl font-bold text-emerald-400">Plots</h2>
                   <div className="flex items-center gap-2">
                     <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadPlots} disabled=${busy}>Export Plots</button>
-                    <button className="btn-chip btn-chip-danger px-4 py-2 rounded-xl" onClick=${exportDeletePlots} disabled=${busy}>Export + Delete</button>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left data-table">
-                    <thead><tr><th className="p-2">ID</th><th className="p-2">Title</th><th className="p-2">Price</th><th className="p-2">Town</th><th className="p-2">Area</th><th className="p-2">Caretaker</th><th className="p-2">WhatsApp</th><th className="p-2">Action</th></tr></thead>
+                    <thead><tr><th className="p-2">ID</th><th className="p-2">Title</th><th className="p-2">Price</th><th className="p-2">Category</th><th className="p-2">Town</th><th className="p-2">Area</th><th className="p-2">Caretaker</th><th className="p-2">WhatsApp</th><th className="p-2">Action</th></tr></thead>
                     <tbody>
                       ${plots.map((plot) => html`
                         <tr key=${plot.id} className="admin-row border-t border-slate-700">
                           <td className="p-2">${plot.id}</td>
                           <td className="p-2">${plot.title}</td>
                           <td className="p-2">${plot.price}</td>
+                          <td className="p-2">${plot.category || "-"}</td>
                           <td className="p-2">${plot.town || plot.county || "-"}</td>
                           <td className="p-2">${plot.area}</td>
                           <td className="p-2">${plot.caretaker}</td>
@@ -1216,7 +1235,6 @@ function App() {
                   <h2 className="text-xl font-bold text-emerald-400">Users & Activations</h2>
                   <div className="flex items-center gap-2">
                     <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadUsers} disabled=${busy}>Export Users</button>
-                    <button className="btn-chip btn-chip-danger px-4 py-2 rounded-xl" onClick=${exportDeleteUsers} disabled=${busy}>Export + Delete</button>
                   </div>
                 </div>
                 <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1264,7 +1282,6 @@ function App() {
                   <h2 className="text-xl font-bold text-emerald-400">Payments</h2>
                   <div className="flex items-center gap-2">
                     <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadPayments} disabled=${busy}>Export Payments</button>
-                    <button className="btn-chip btn-chip-danger px-4 py-2 rounded-xl" onClick=${exportDeletePayments} disabled=${busy}>Export + Delete</button>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
@@ -1296,7 +1313,6 @@ function App() {
                   <h2 className="text-xl font-bold text-emerald-400">Active Accounts Check</h2>
                   <div className="flex items-center gap-2">
                     <button className="btn-soft px-4 py-2 rounded-xl" onClick=${downloadActiveAccounts} disabled=${busy}>Export Activations</button>
-                    <button className="btn-chip btn-chip-danger px-4 py-2 rounded-xl" onClick=${exportDeleteActivations} disabled=${busy}>Export + Delete</button>
                     <button className="btn-soft px-4 py-2 rounded-xl" onClick=${() => loadActiveAccounts()} disabled=${busy}>Refresh Active Accounts</button>
                   </div>
                 </div>
@@ -1355,6 +1371,3 @@ function App() {
 }
 
 createRoot(document.getElementById("app")).render(html`<${App} />`);
-
-
-

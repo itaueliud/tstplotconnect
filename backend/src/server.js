@@ -26,6 +26,18 @@ const SMS_MODE = (process.env.SMS_MODE || "mock").toLowerCase();
 const AFRICASTALKING_API_KEY = String(process.env.AFRICASTALKING_API_KEY || "").trim();
 const AFRICASTALKING_USERNAME = String(process.env.AFRICASTALKING_USERNAME || "sandbox").trim();
 const AFRICASTALKING_SENDER_ID = String(process.env.AFRICASTALKING_SENDER_ID || "").trim();
+const ALLOWED_CATEGORIES = new Set([
+  "Rental Houses",
+  "Bedsitters",
+  "Hostels",
+  "Apartments",
+  "Lodges",
+  "AirBnB",
+  "Vacant Shops",
+  "Office Spaces",
+  "Guest Houses",
+  "Plots for Sale"
+]);
 
 const ALLOWED_ORIGINS = new Set([
   "https://tstplotconnect.vercel.app",
@@ -140,6 +152,7 @@ function mapPlot(plot, unlocked) {
     id: plot.id,
     title: plot.title,
     price: plot.price,
+    category: plot.category || "",
     country: plot.country || "Kenya",
     county,
     town: county,
@@ -212,12 +225,8 @@ async function getUnlockedFromRequest(req) {
   }
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    // primary check: look for a completed payment that has not yet expired
     const active = await getUserActiveActivation(payload.id);
     if (active) return true;
-    // secondary fallback: some admin operations may directly update the user
-    // document without inserting a payment record.  honour the stored fields
-    // so the UI doesn't remain locked even though the account appears active.
     const user = await usersCol().findOne(
       { id: String(payload.id) },
       { projection: { expiresAt: 1, paymentStatus: 1 } }
@@ -245,7 +254,6 @@ async function generateUserDisplayId() {
   const users = usersCol();
   for (let i = 0; i < 10; i += 1) {
     const candidate = `U${Math.floor(100000 + Math.random() * 900000)}`;
-    // eslint-disable-next-line no-await-in-loop
     const exists = await users.findOne({ displayId: candidate }, { projection: { _id: 1 } });
     if (!exists) return candidate;
   }
@@ -321,14 +329,25 @@ async function sendOtpSms(phone, code) {
     body: body.toString()
   });
 
-  const data = await response.json().catch(() => ({}));
+  const raw = await response.text();
+  let data = {};
+  try {
+    data = raw ? JSON.parse(raw) : {};
+  } catch (_err) {
+    data = {};
+  }
   const recipients = data?.SMSMessageData?.Recipients;
   const firstRecipient = Array.isArray(recipients) ? recipients[0] : null;
   const status = String(firstRecipient?.status || "").toLowerCase();
   const accepted = status.includes("success");
   if (!response.ok || !accepted) {
-    const details = firstRecipient?.status || data?.SMSMessageData?.Message || data?.errorMessage || JSON.stringify(data);
-    throw new Error(`Failed to send OTP SMS: ${details}`);
+    const details = firstRecipient?.status
+      || data?.SMSMessageData?.Message
+      || data?.errorMessage
+      || data?.error
+      || raw
+      || JSON.stringify(data);
+    throw new Error(`Failed to send OTP SMS: ${details} (status ${response.status})`);
   }
 
   return { mode: "africastalking" };
@@ -941,8 +960,6 @@ app.post("/api/payment/callback", async (req, res) => {
     const amountMatches = Number.isFinite(paidAmount) ? paidAmount === expectedAmount : true;
     const phoneMatches = (!expectedPhone || !paidPhone) ? true : paidPhone === expectedPhone;
 
-    // Daraja callback metadata may be partially missing in some live scenarios.
-    // Trust successful ResultCode and only hard-fail on a definite amount mismatch.
     if (!amountMatches) {
       await paymentsCol().updateOne(
         { _id: payment._id },
@@ -993,6 +1010,7 @@ app.get("/api/plots", async (req, res) => {
   const country = req.query.country || "";
   const county = req.query.county || req.query.town || "";
   const area = req.query.area || "";
+  const category = req.query.category || "";
 
   const filter = {};
   if (country) {
@@ -1003,6 +1021,9 @@ app.get("/api/plots", async (req, res) => {
   }
   if (area) {
     filter.area = area;
+  }
+  if (category) {
+    filter.category = category;
   }
 
   const rows = await plotsCol().find(filter).sort({ createdAt: -1, _id: -1 }).toArray();
@@ -1199,6 +1220,7 @@ app.post("/api/admin/plots", requireSecureAdmin, requireAuth, requireAdmin, asyn
   const {
     title,
     price,
+    category = "",
     country = "Kenya",
     county = req.body?.town || "",
     town,
@@ -1213,11 +1235,15 @@ app.post("/api/admin/plots", requireSecureAdmin, requireAuth, requireAdmin, asyn
   if (!title || !price || !county || !area || !caretaker || !whatsapp) {
     return res.status(400).json({ error: "Missing required fields" });
   }
+  if (category && !ALLOWED_CATEGORIES.has(String(category).trim())) {
+    return res.status(400).json({ error: "Invalid category" });
+  }
 
   const plot = {
     id: randomUUID(),
     title,
     price: Number(price),
+    category: String(category || "").trim(),
     country,
     county,
     town: county,
@@ -1243,6 +1269,7 @@ app.put("/api/admin/plots/:id", requireSecureAdmin, requireAuth, requireAdmin, a
   const {
     title = existing.title,
     price = existing.price,
+    category = existing.category || "",
     country = existing.country || "Kenya",
     county = existing.county || existing.town,
     area = existing.area,
@@ -1253,9 +1280,14 @@ app.put("/api/admin/plots/:id", requireSecureAdmin, requireAuth, requireAdmin, a
     videos = null
   } = req.body || {};
 
+  if (category && !ALLOWED_CATEGORIES.has(String(category).trim())) {
+    return res.status(400).json({ error: "Invalid category" });
+  }
+
   const setDoc = {
     title,
     price: Number(price),
+    category: String(category || "").trim(),
     country,
     county,
     town: county,

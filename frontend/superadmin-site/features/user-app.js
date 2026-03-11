@@ -33,16 +33,16 @@ const AREA_COORDS = {
 };
 
 const SAMPLE_PLOTS = [
-  { id: "sample-1", title: "Bedsitter - Katungo", price: 6500, country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2", "https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "" },
-  { id: "sample-2", title: "One Bedroom - Katungo", price: 9000, country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1598928506311-6f37b1369d11"], videos: ["https://www.w3schools.com/html/mov_bbb.mp4"], caretaker: "Locked", whatsapp: "Locked", description: "" },
-  { id: "sample-3", title: "Bedsitter - Mutituni", price: 7000, country: "Kenya", county: "Machakos", town: "Machakos", area: "Mutituni", images: ["https://images.unsplash.com/photo-1570129477492-45c003edd2be"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "" },
-  { id: "sample-4", title: "Studio - Town", price: 8000, country: "Kenya", county: "Machakos", town: "Machakos", area: "Town", images: ["https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "" },
-  { id: "sample-5", title: "One Bedroom - Rongai", price: 10000, country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Rongai", images: ["https://images.unsplash.com/photo-1570129477492-3c3d1f7eb20a"], videos: ["https://www.w3schools.com/html/mov_bbb.mp4"], caretaker: "Locked", whatsapp: "Locked", description: "" },
-  { id: "sample-6", title: "Bedsitter - South B", price: 6500, country: "Kenya", county: "Nairobi", town: "Nairobi", area: "South B", images: ["https://images.unsplash.com/photo-1600585154340-be6161a56a0c"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "" },
-  { id: "sample-7", title: "One Bedroom - Kasarani", price: 9000, country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Kasarani", images: ["https://images.unsplash.com/photo-1598928506311-6f37b1369d11"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "" },
-  { id: "sample-8", title: "Studio - Kasarani", price: 8500, country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Kasarani", images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "" },
-  { id: "sample-9", title: "Bedsitter - Katungo", price: 6000, country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1570129477492-45c003edd2be"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "" },
-  { id: "sample-10", title: "One Bedroom - Town", price: 9500, country: "Kenya", county: "Machakos", town: "Machakos", area: "Town", images: ["https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "" }
+  { id: "sample-1", title: "Bedsitter - Katungo", price: 6500, category: "Bedsitters", country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2", "https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-2", title: "One Bedroom - Katungo", price: 9000, category: "Rental Houses", country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1598928506311-6f37b1369d11"], videos: ["https://www.w3schools.com/html/mov_bbb.mp4"], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-3", title: "Bedsitter - Mutituni", price: 7000, category: "Bedsitters", country: "Kenya", county: "Machakos", town: "Machakos", area: "Mutituni", images: ["https://images.unsplash.com/photo-1570129477492-45c003edd2be"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-4", title: "Studio - Town", price: 8000, category: "Apartments", country: "Kenya", county: "Machakos", town: "Machakos", area: "Town", images: ["https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-5", title: "One Bedroom - Rongai", price: 10000, category: "Rental Houses", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Rongai", images: ["https://images.unsplash.com/photo-1570129477492-3c3d1f7eb20a"], videos: ["https://www.w3schools.com/html/mov_bbb.mp4"], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-6", title: "Bedsitter - South B", price: 6500, category: "Bedsitters", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "South B", images: ["https://images.unsplash.com/photo-1600585154340-be6161a56a0c"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-7", title: "One Bedroom - Kasarani", price: 9000, category: "Apartments", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Kasarani", images: ["https://images.unsplash.com/photo-1598928506311-6f37b1369d11"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-8", title: "Studio - Kasarani", price: 8500, category: "Apartments", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Kasarani", images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-9", title: "Bedsitter - Katungo", price: 6000, category: "Bedsitters", country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1570129477492-45c003edd2be"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-10", title: "One Bedroom - Town", price: 9500, category: "Rental Houses", country: "Kenya", county: "Machakos", town: "Machakos", area: "Town", images: ["https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" }
 ];
 
 async function ensureMapLibreAssets() {
@@ -193,13 +193,39 @@ function formatPhoneForWhatsApp(phone) {
   return digits;
 }
 
-function formatPhoneForTel(phone) {
-  const digits = String(phone || "").replace(/\D/g, "");
-  if (!digits) return "";
+  function formatPhoneForTel(phone) {
+    const digits = String(phone || "").replace(/\D/g, "");
+    if (!digits) return "";
   if (digits.startsWith("0")) return `+254${digits.slice(1)}`;
-  if (digits.startsWith("254")) return `+${digits}`;
-  return `+${digits}`;
-}
+    if (digits.startsWith("254")) return `+${digits}`;
+    return `+${digits}`;
+  }
+
+  function normalizePriority(plot) {
+    const raw = String(plot?.priority || plot?.priorityLevel || plot?.tier || "").toLowerCase().trim();
+    if (["top", "high", "vip", "featured"].includes(raw)) return "top";
+    if (["bottom", "low"].includes(raw)) return "bottom";
+    return "medium";
+  }
+
+  function sortByPriority(rows) {
+    const order = { top: 0, medium: 1, bottom: 2 };
+    return [...rows].sort((a, b) => {
+      const pa = normalizePriority(a);
+      const pb = normalizePriority(b);
+      const diff = order[pa] - order[pb];
+      if (diff !== 0) return diff;
+      return 0;
+    });
+  }
+
+  function groupByPriority(rows) {
+    const grouped = { top: [], medium: [], bottom: [] };
+    rows.forEach((plot) => {
+      grouped[normalizePriority(plot)].push(plot);
+    });
+    return grouped;
+  }
 
 function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
@@ -223,7 +249,7 @@ function App() {
   const [plots, setPlots] = useState([]);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({ country: "", county: "", area: "", minPrice: "", maxPrice: "" });
+  const [filters, setFilters] = useState({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
   const [countryConfirmed, setCountryConfirmed] = useState(false);
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
@@ -370,11 +396,15 @@ function App() {
       if (filters.maxPrice) query.set("maxPrice", filters.maxPrice);
       const data = await api(`/api/plots${query.toString() ? `?${query.toString()}` : ""}`);
       const rows = Array.isArray(data) ? data : [];
+      const category = String(filters.category || "").trim().toLowerCase();
+      const categoryFiltered = category
+        ? rows.filter((p) => String(p.category || "").trim().toLowerCase() === category)
+        : rows;
       const min = Number(filters.minPrice);
       const max = Number(filters.maxPrice);
       const hasMin = Number.isFinite(min);
       const hasMax = Number.isFinite(max);
-      const priceFiltered = rows.filter((p) => {
+      const priceFiltered = categoryFiltered.filter((p) => {
         const price = Number(p.price);
         if (!Number.isFinite(price)) return true;
         if (hasMin && price < min) return false;
@@ -398,9 +428,10 @@ function App() {
         (!filters.country || p.country === filters.country) &&
         (!filters.county || (p.county || p.town) === filters.county) &&
         (!filters.area || p.area === filters.area) &&
+        (!filters.category || p.category === filters.category) &&
         (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
         (!filters.maxPrice || p.price <= Number(filters.maxPrice))
-      );
+      ).map((p) => ({ ...p, priority: "bottom" }));
       setPlots(fallback);
       showMessage(`${err.message}. Showing sample plots.`, true);
     } finally {
@@ -536,7 +567,7 @@ function App() {
   function logoutUser() {
     persistSession("", null);
     setCountryConfirmed(false);
-    setFilters({ country: "", county: "", area: "", minPrice: "", maxPrice: "" });
+    setFilters({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
     setStatus(null);
     setPaymentLog([]);
     lastKnownActiveRef.current = false;
@@ -622,11 +653,11 @@ function App() {
 
   useEffect(() => {
     loadPlots();
-  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice, token]);
+  }, [filters.country, filters.county, filters.area, filters.category, filters.minPrice, filters.maxPrice, token]);
 
   useEffect(() => {
     setSelectedPlotId("");
-  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice]);
+  }, [filters.country, filters.county, filters.area, filters.category, filters.minPrice, filters.maxPrice]);
 
   useEffect(() => {
     loadStatus();
@@ -682,7 +713,9 @@ function App() {
   const remainingMs = status && status.active ? getRemainingMs(status.expiresAt) : 0;
   const countdown = formatRemaining(remainingMs);
   const currentYear = new Date().getFullYear();
-  const selectedPlot = plots.find((p) => p.id === selectedPlotId) || plots[0] || null;
+  const orderedPlots = sortByPriority(plots);
+  const groupedPlots = groupByPriority(orderedPlots);
+  const selectedPlot = orderedPlots.find((p) => p.id === selectedPlotId) || orderedPlots[0] || null;
   const selectedCoords = selectedPlot ? getPlotLngLat(selectedPlot) : getFilterLngLat(filters);
   const selectedLabel = selectedPlot
     ? selectedPlot.title
@@ -974,8 +1007,8 @@ function App() {
       <section id="user-search" className="glass section-card mb-5">
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-          <select className="input-modern p-3 rounded-xl" value=${filters.country} onChange=${(e) => setFilters({ country: e.target.value, county: "", area: "", minPrice: "", maxPrice: "" })}>
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+          <select className="input-modern p-3 rounded-xl" value=${filters.country} onChange=${(e) => setFilters({ country: e.target.value, county: "", area: "", category: "", minPrice: "", maxPrice: "" })}>
             <option value="">All Countries</option>
             ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
           </select>
@@ -986,6 +1019,19 @@ function App() {
           <select className="input-modern p-3 rounded-xl" value=${filters.area} onChange=${(e) => setFilters({ ...filters, area: e.target.value })}>
             <option value="">All Areas</option>
             ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
+          </select>
+          <select className="input-modern p-3 rounded-xl" value=${filters.category} onChange=${(e) => setFilters({ ...filters, category: e.target.value })}>
+            <option value="">All Categories</option>
+            <option value="Rental Houses">Rental Houses</option>
+            <option value="Bedsitters">Bedsitters</option>
+            <option value="Hostels">Hostels</option>
+            <option value="Apartments">Apartments</option>
+            <option value="Lodges">Lodges</option>
+            <option value="AirBnB">AirBnB</option>
+            <option value="Vacant Shops">Vacant Shops</option>
+            <option value="Office Spaces">Office Spaces</option>
+            <option value="Guest Houses">Guest Houses</option>
+            <option value="Plots for Sale">Plots for Sale</option>
           </select>
           <input
             className="input-modern p-3 rounded-xl"
@@ -1014,83 +1060,93 @@ function App() {
             <p className="section-kicker">Listings</p>
             <h2 className="section-title mb-0">Available Plots</h2>
           </div>
-          <p className="text-xs text-muted">${plots.length} result${plots.length === 1 ? "" : "s"}</p>
+          <p className="text-xs text-muted">${orderedPlots.length} result${orderedPlots.length === 1 ? "" : "s"}</p>
         </div>
 
         ${loading
           ? html`<p className="text-slate-300">Loading plots...</p>`
           : html`
-              <div className="plot-grid">
-                ${plots.map((plot, idx) => html`
-                ${(() => {
-                    const mediaUnlocked = !!(status && status.active);
-                    const caretakerDisplay = mediaUnlocked
-                      ? (plot.caretaker && plot.caretaker !== "Locked" ? plot.caretaker : "0756734298")
-                      : "Locked";
-                    const whatsappDisplay = mediaUnlocked
-                      ? (plot.whatsapp && plot.whatsapp !== "Locked" ? plot.whatsapp : "0756734298")
-                      : "Locked";
-                    const contactPhone = caretakerDisplay !== "Locked" ? caretakerDisplay : whatsappDisplay;
-                    const whatsappPhone = formatPhoneForWhatsApp(contactPhone);
-                    const callPhone = formatPhoneForTel(contactPhone);
-                    return html`
-                  <article
-                    key=${plot.id}
-                    className=${`glass plot-card ${selectedPlot && selectedPlot.id === plot.id ? "is-selected" : ""}`}
-                    style=${{ animationDelay: `${Math.min(idx * 45, 240)}ms` }}
-                    onClick=${() => setSelectedPlotId(plot.id)}
-                  >
-                    <div className="media-wrap mb-3">
-                      ${plot.images && plot.images.length
-                        ? html`<img
-                            src=${plot.images[0]}
-                            alt=${plot.title}
-                            className=${`plot-image ${mediaUnlocked ? "" : "media-locked"}`}
-                            onError=${(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1560185127-6ed189bf02f4"; }}
-                          />`
-                        : html`<div className=${`plot-image media-empty ${mediaUnlocked ? "" : "media-locked"}`}>No Image</div>`}
-                    </div>
-                    ${plot.videos && plot.videos.length
-                      ? html`<video controls className=${`plot-image mb-3 ${mediaUnlocked ? "" : "media-locked"}`}><source src=${plot.videos[0]} type="video/mp4" /></video>`
-                      : null}
-                    ${mediaUnlocked ? null : html`<p className="media-lock-note">Activate account</p>`}
-                    <h3 className="text-lg font-semibold leading-tight">${plot.title}</h3>
-                    <p className="plot-meta mt-1">${plot.country || "Kenya"} | ${plot.county || plot.town || "-"} | ${plot.area}</p>
-                    <p className="mt-2 font-bold text-lg">Ksh ${plot.price}</p>
-                    <p className="mt-2 text-sm text-slate-300">${plot.description || "No description added yet."}</p>
-                    ${mediaUnlocked
-                      ? html`
-                          <p className="mt-2 text-sm">Caretaker: ${contactPhone}</p>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <a
-                              className="rounded-lg px-3 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700"
-                              href=${whatsappPhone ? `https://wa.me/${whatsappPhone}` : "#"}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick=${(e) => {
-                                e.stopPropagation();
-                                if (!whatsappPhone) e.preventDefault();
-                              }}
-                            >
-                              whatsapp
-                            </a>
-                            <a
-                              className="rounded-lg px-3 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700"
-                              href=${callPhone ? `tel:${callPhone}` : "#"}
-                              onClick=${(e) => {
-                                e.stopPropagation();
-                                if (!callPhone) e.preventDefault();
-                              }}
-                            >
-                              phone
-                            </a>
+              ${(["top", "medium", "bottom"]).map((tier) => {
+                const label = tier === "top" ? "Top Priority" : tier === "medium" ? "Medium Priority" : "Bottom Priority";
+                const rows = groupedPlots[tier] || [];
+                if (!rows.length) return null;
+                return html`
+                  <div className="mb-4">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.18em] mb-2">${label}</p>
+                    <div className="plot-grid">
+                      ${rows.map((plot, idx) => html`
+                      ${(() => {
+                          const mediaUnlocked = !!(status && status.active);
+                          const caretakerDisplay = mediaUnlocked
+                            ? (plot.caretaker && plot.caretaker !== "Locked" ? plot.caretaker : "0756734298")
+                            : "Locked";
+                          const whatsappDisplay = mediaUnlocked
+                            ? (plot.whatsapp && plot.whatsapp !== "Locked" ? plot.whatsapp : "0756734298")
+                            : "Locked";
+                          const contactPhone = caretakerDisplay !== "Locked" ? caretakerDisplay : whatsappDisplay;
+                          const whatsappPhone = formatPhoneForWhatsApp(contactPhone);
+                          const callPhone = formatPhoneForTel(contactPhone);
+                          return html`
+                        <article
+                          key=${plot.id}
+                          className=${`glass plot-card ${selectedPlot && selectedPlot.id === plot.id ? "is-selected" : ""}`}
+                          style=${{ animationDelay: `${Math.min(idx * 45, 240)}ms` }}
+                          onClick=${() => setSelectedPlotId(plot.id)}
+                        >
+                          <div className="media-wrap mb-3">
+                            ${plot.images && plot.images.length
+                              ? html`<img
+                                  src=${plot.images[0]}
+                                  alt=${plot.title}
+                                  className=${`plot-image ${mediaUnlocked ? "" : "media-locked"}`}
+                                  onError=${(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1560185127-6ed189bf02f4"; }}
+                                />`
+                              : html`<div className=${`plot-image media-empty ${mediaUnlocked ? "" : "media-locked"}`}>No Image</div>`}
                           </div>
-                        `
-                      : html`<p className="mt-2 text-sm text-amber-700">Contacts hidden until account activation.</p>`}
-                  </article>
-                `})()}
-                `)}
-              </div>
+                          ${plot.videos && plot.videos.length
+                            ? html`<video controls className=${`plot-image mb-3 ${mediaUnlocked ? "" : "media-locked"}`}><source src=${plot.videos[0]} type="video/mp4" /></video>`
+                            : null}
+                          ${mediaUnlocked ? null : html`<p className="media-lock-note">Activate account</p>`}
+                          <h3 className="text-lg font-semibold leading-tight">${plot.title}</h3>
+                          <p className="plot-meta mt-1">${plot.country || "Kenya"} | ${plot.county || plot.town || "-"} | ${plot.area}</p>
+                          <p className="mt-2 font-bold text-lg">Ksh ${plot.price}</p>
+                          <p className="mt-2 text-sm text-slate-300">${plot.description || "No description added yet."}</p>
+                          ${mediaUnlocked
+                            ? html`
+                                <p className="mt-2 text-sm">Caretaker: ${contactPhone}</p>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  <a
+                                    className="rounded-lg px-3 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700"
+                                    href=${whatsappPhone ? `https://wa.me/${whatsappPhone}` : "#"}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick=${(e) => {
+                                      e.stopPropagation();
+                                      if (!whatsappPhone) e.preventDefault();
+                                    }}
+                                  >
+                                    whatsapp
+                                  </a>
+                                  <a
+                                    className="rounded-lg px-3 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700"
+                                    href=${callPhone ? `tel:${callPhone}` : "#"}
+                                    onClick=${(e) => {
+                                      e.stopPropagation();
+                                      if (!callPhone) e.preventDefault();
+                                    }}
+                                  >
+                                    phone
+                                  </a>
+                                </div>
+                              `
+                            : html`<p className="mt-2 text-sm text-amber-700">Contacts hidden until account activation.</p>`}
+                        </article>
+                      `})()}
+                      `)}
+                    </div>
+                  </div>
+                `;
+              })}
             `}
       </section>
 
