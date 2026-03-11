@@ -216,6 +216,35 @@ body {
   box-shadow: 0 0 0 3px rgba(79, 127, 227, 0.2);
 }
 
+.area-combo {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  border: 1px solid #cad2e5;
+  border-radius: 12px;
+  background: #f3f6fd;
+  overflow: hidden;
+}
+
+.area-combo-input,
+.area-combo-select {
+  border: none;
+  background: transparent;
+  padding: 12px 14px;
+  min-height: 46px;
+  color: inherit;
+}
+
+.area-combo-input:focus,
+.area-combo-select:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.area-combo:focus-within {
+  border-color: #4f7fe3;
+  box-shadow: 0 0 0 3px rgba(79, 127, 227, 0.2);
+}
+
 .btn-success {
   background: linear-gradient(135deg, var(--accent-2) 0%, var(--accent) 100%);
   color: #fff;
