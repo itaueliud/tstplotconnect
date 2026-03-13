@@ -92,7 +92,7 @@ function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [message, setMessage] = useState({ text: "", error: false });
-  const messageTimerRef = useRef(null);
+  const messageTimerRef = React.useRef(null);
   const [uploadedImages, setUploadedImages] = useState([]);
   const [plots, setPlots] = useState([]);
   const [users, setUsers] = useState([]);
