@@ -598,17 +598,18 @@ function App() {
         if (hasMax && price > max) return false;
         return true;
       });
-      const sampleFiltered = SAMPLE_PLOTS.filter((p) =>
-        (!filters.country || p.country === filters.country) &&
-        (!filters.county || (p.county || p.town) === filters.county) &&
-        (!filters.area || p.area === filters.area) &&
-        (!filters.category || p.category === filters.category) &&
-        (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
-        (!filters.maxPrice || p.price <= Number(filters.maxPrice))
-      ).map((p) => ({ ...p, priority: "bottom" }));
 
-      // If we got any real plots from the API, show them; otherwise fall back to sample.
-      setPlots(priceFiltered.length ? priceFiltered : sampleFiltered);
+      // Use API results when available. If the API is reachable but returns 0 rows, keep the list empty so the UI doesn't fall back to sample plots.
+      const newPlots = priceFiltered;
+      console.log(
+        "[loadPlots] setting plots from",
+        newPlots.length ? "api" : "api-empty",
+        "count",
+        newPlots.length,
+        "firstTitles",
+        newPlots.slice(0, 5).map((p) => p.title)
+      );
+      setPlots(newPlots);
     } catch (err) {
       const fallback = SAMPLE_PLOTS.filter((p) =>
         (!filters.country || p.country === filters.country) &&
