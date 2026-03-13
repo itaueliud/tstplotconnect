@@ -217,6 +217,10 @@ function mapPlot(plot, unlocked) {
   };
 }
 
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function isRequestSecure(req) {
   const forwardedProto = req.headers["x-forwarded-proto"];
   if (typeof forwardedProto === "string" && forwardedProto.split(",")[0].trim() === "https") {
@@ -1059,23 +1063,47 @@ app.post("/api/payment/callback", async (req, res) => {
 
 app.get("/api/plots", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  const country = req.query.country || "";
-  const county = req.query.county || req.query.town || "";
-  const area = req.query.area || "";
-  const category = req.query.category || "";
+  const country = String(req.query.country || "").trim();
+  const county = String(req.query.county || req.query.town || "").trim();
+  const area = String(req.query.area || "").trim();
+  const category = String(req.query.category || "").trim();
+  const minPrice = Number(req.query.minPrice);
+  const maxPrice = Number(req.query.maxPrice);
+  const hasMin = Number.isFinite(minPrice);
+  const hasMax = Number.isFinite(maxPrice);
 
   const filter = {};
+  const and = [];
   if (country) {
-    filter.country = country;
+    const countryRegex = new RegExp(`^${escapeRegex(country)}$`, "i");
+    and.push({
+      $or: [
+        { country: countryRegex },
+        { country: { $exists: false } },
+        { country: "" }
+      ]
+    });
   }
   if (county) {
-    filter.$or = [{ county }, { town: county }];
+    const countyRegex = new RegExp(`^${escapeRegex(county)}$`, "i");
+    and.push({ $or: [{ county: countyRegex }, { town: countyRegex }] });
   }
   if (area) {
-    filter.area = area;
+    const areaRegex = new RegExp(`^${escapeRegex(area)}$`, "i");
+    and.push({ area: areaRegex });
   }
   if (category) {
-    filter.category = category;
+    const categoryRegex = new RegExp(`^${escapeRegex(category)}$`, "i");
+    and.push({ category: categoryRegex });
+  }
+  if (hasMin || hasMax) {
+    const price = {};
+    if (hasMin) price.$gte = minPrice;
+    if (hasMax) price.$lte = maxPrice;
+    and.push({ price });
+  }
+  if (and.length) {
+    filter.$and = and;
   }
 
   const rows = await plotsCol().find(filter).sort({ createdAt: -1, _id: -1 }).toArray();
@@ -1284,25 +1312,34 @@ app.post("/api/admin/plots", requireSecureAdmin, requireAuth, requireAdmin, asyn
     videos = []
   } = req.body || {};
 
-  if (!title || !price || !county || !area || !caretaker || !whatsapp) {
+  const cleanTitle = String(title || "").trim();
+  const cleanCategory = String(category || "").trim();
+  const cleanCountry = String(country || "").trim() || "Kenya";
+  const cleanCounty = String(county || "").trim();
+  const cleanArea = String(area || "").trim();
+  const cleanDescription = String(description || "").trim();
+  const cleanCaretaker = String(caretaker || "").trim();
+  const cleanWhatsapp = String(whatsapp || "").trim();
+
+  if (!cleanTitle || !price || !cleanCounty || !cleanArea || !cleanCaretaker || !cleanWhatsapp) {
     return res.status(400).json({ error: "Missing required fields" });
   }
-  if (category && !ALLOWED_CATEGORIES.has(String(category).trim())) {
+  if (cleanCategory && !ALLOWED_CATEGORIES.has(cleanCategory)) {
     return res.status(400).json({ error: "Invalid category" });
   }
 
   const plot = {
     id: randomUUID(),
-    title,
+    title: cleanTitle,
     price: Number(price),
-    category: String(category || "").trim(),
-    country,
-    county,
-    town: county,
-    area,
-    description,
-    caretaker,
-    whatsapp,
+    category: cleanCategory,
+    country: cleanCountry,
+    county: cleanCounty,
+    town: cleanCounty,
+    area: cleanArea,
+    description: cleanDescription,
+    caretaker: cleanCaretaker,
+    whatsapp: cleanWhatsapp,
     images: (images || []).filter(Boolean),
     videos: (videos || []).filter(Boolean),
     createdAt: new Date()
@@ -1332,21 +1369,30 @@ app.put("/api/admin/plots/:id", requireSecureAdmin, requireAuth, requireAdmin, a
     videos = null
   } = req.body || {};
 
-  if (category && !ALLOWED_CATEGORIES.has(String(category).trim())) {
+  const cleanTitle = String(title || "").trim();
+  const cleanCategory = String(category || "").trim();
+  const cleanCountry = String(country || "").trim() || "Kenya";
+  const cleanCounty = String(county || "").trim();
+  const cleanArea = String(area || "").trim();
+  const cleanDescription = String(description || "").trim();
+  const cleanCaretaker = String(caretaker || "").trim();
+  const cleanWhatsapp = String(whatsapp || "").trim();
+
+  if (cleanCategory && !ALLOWED_CATEGORIES.has(cleanCategory)) {
     return res.status(400).json({ error: "Invalid category" });
   }
 
   const setDoc = {
-    title,
+    title: cleanTitle,
     price: Number(price),
-    category: String(category || "").trim(),
-    country,
-    county,
-    town: county,
-    area,
-    description,
-    caretaker,
-    whatsapp
+    category: cleanCategory,
+    country: cleanCountry,
+    county: cleanCounty,
+    town: cleanCounty,
+    area: cleanArea,
+    description: cleanDescription,
+    caretaker: cleanCaretaker,
+    whatsapp: cleanWhatsapp
   };
 
   if (images !== null) {
