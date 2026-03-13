@@ -606,7 +606,9 @@ function App() {
         (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
         (!filters.maxPrice || p.price <= Number(filters.maxPrice))
       ).map((p) => ({ ...p, priority: "bottom" }));
-      setPlots([...priceFiltered, ...sampleFiltered]);
+
+      // If we got any real plots from the API, show them; otherwise fall back to sample.
+      setPlots(priceFiltered.length ? priceFiltered : sampleFiltered);
     } catch (err) {
       const fallback = SAMPLE_PLOTS.filter((p) =>
         (!filters.country || p.country === filters.country) &&
