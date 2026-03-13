@@ -367,12 +367,12 @@ function App() {
     if (!isSuperAdmin) return showMessage("Super admin login required.", true);
     setBusy(true);
     try {
-      await api("/api/super-admin/locations/county", {
+      const data = await api("/api/super-admin/locations/county", {
         method: "POST",
         body: JSON.stringify({ country: newCountyCountry, county: newCountyName.trim() })
       });
       setNewCountyName("");
-      showMessage("County added.");
+      showMessage(data.message || "County added.");
       await loadLocationMetadata();
     } catch (err) {
       showMessage(err.message, true);
@@ -385,12 +385,12 @@ function App() {
     if (!isSuperAdmin) return showMessage("Super admin login required.", true);
     setBusy(true);
     try {
-      await api("/api/super-admin/locations/area", {
+      const data = await api("/api/super-admin/locations/area", {
         method: "POST",
         body: JSON.stringify({ country: newAreaCountry, county: newAreaCounty, area: newAreaName.trim() })
       });
       setNewAreaName("");
-      showMessage("Area added.");
+      showMessage(data.message || "Area added.");
       await loadLocationMetadata();
     } catch (err) {
       showMessage(err.message, true);
@@ -745,6 +745,7 @@ function App() {
     if (!isSuperAdmin) return showMessage("Super admin login required.", true);
     if (!rows.length) return showMessage(`No ${label.toLowerCase()} records to export.`, true);
     exportFn();
+    showMessage("export success");
     if (!window.confirm(`Export complete. Delete ${rows.length} ${label.toLowerCase()} records now?`)) return;
 
     setBusy(true);

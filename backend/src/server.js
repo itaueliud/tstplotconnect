@@ -1423,7 +1423,7 @@ app.delete("/api/admin/plots/:id", requireSecureAdmin, requireAuth, requireAdmin
   if (!result.deletedCount) {
     return res.status(404).json({ error: "Plot not found" });
   }
-  return res.status(204).send();
+  return res.json({ message: "plot deleted successfully" });
 });
 
 app.post("/api/admin/users", requireSecureAdmin, requireAuth, requireAdmin, async (req, res) => {
@@ -1697,7 +1697,7 @@ app.post("/api/super-admin/locations/county", requireSecureAdmin, requireAuth, r
     { upsert: true }
   );
 
-  return res.json({ message: "County added successfully." });
+  return res.json({ message: "country added successfully" });
 });
 
 app.put("/api/super-admin/locations/county", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (req, res) => {
@@ -1782,7 +1782,7 @@ app.post("/api/super-admin/locations/area", requireSecureAdmin, requireAuth, req
     { upsert: true }
   );
 
-  return res.json({ message: "Area added successfully." });
+  return res.json({ message: "area added successfully" });
 });
 
 app.put("/api/super-admin/locations/area", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (req, res) => {
