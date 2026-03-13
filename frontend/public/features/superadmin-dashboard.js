@@ -30,6 +30,10 @@ function inferApiBase() {
   return saved || API;
 }
 
+function isLocalApiBase(value) {
+  return /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/i.test(String(value || ""));
+}
+
 function formatDate(value) {
   if (!value) return "-";
   const d = new Date(value);
@@ -152,6 +156,12 @@ function App() {
     () => (apiBaseInput || "").trim() || detectedApiBase || inferApiBase(),
     [apiBaseInput, detectedApiBase]
   );
+  const isLocalPage = useMemo(() => {
+    const loc = window.location;
+    const hostIsLocal = /^(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/i.test(loc.hostname);
+    return loc.protocol === "file:" || hostIsLocal;
+  }, []);
+  const isApiMismatch = !isLocalPage && apiBase !== API;
 
   useEffect(() => {
     localStorage.removeItem("adminToken");
@@ -593,6 +603,9 @@ function App() {
 
   async function addPlot() {
     if (!isAdminAuthenticated) return showMessage("Admin login required.", true);
+    if (isApiMismatch) {
+      return showMessage("Backend URL mismatch. Switch to the default backend before creating plots.", true);
+    }
     setBusy(true);
     try {
       const payload = {
@@ -1217,6 +1230,29 @@ function App() {
           </aside>
 
           <div className="admin-content">
+            ${isApiMismatch
+              ? html`
+                  <div className="glass mb-4 rounded-2xl border border-amber-400/40 bg-amber-100/70 p-4 text-amber-900">
+                    <p className="font-semibold">Backend URL mismatch</p>
+                    <p className="text-sm">Your superadmin UI is pointed at ${apiBase}. The user site uses ${API}. Switch to the default backend so new plots appear for users.</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="btn-success px-3 py-2 rounded-xl"
+                        onClick=${() => {
+                          setApiBaseInput(API);
+                          setDetectedApiBase(null);
+                          localStorage.setItem("apiBase", API);
+                          showMessage("Backend URL reset to default.");
+                        }}
+                      >
+                        Use Default Backend
+                      </button>
+                      <span className="text-xs text-amber-800">Default: ${API}</span>
+                    </div>
+                  </div>
+                `
+              : null}
             ${message.text
               ? html`
                   <div
