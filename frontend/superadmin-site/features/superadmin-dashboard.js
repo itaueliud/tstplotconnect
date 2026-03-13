@@ -72,6 +72,7 @@ function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [message, setMessage] = useState({ text: "", error: false });
+  const messageTimerRef = useRef(null);
   const [plots, setPlots] = useState([]);
   const [users, setUsers] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -152,6 +153,12 @@ function App() {
 
   function showMessage(text, error = false) {
     setMessage({ text, error });
+    if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    if (text) {
+      messageTimerRef.current = setTimeout(() => {
+        setMessage({ text: "", error: false });
+      }, 4000);
+    }
   }
 
   async function api(path, options = {}, authToken = null) {
@@ -1167,6 +1174,17 @@ function App() {
           </aside>
 
           <div className="admin-content">
+            ${message.text
+              ? html`
+                  <div
+                    className=${`toast ${message.error ? "toast-error" : "toast-success"}`}
+                    role=${message.error ? "alert" : "status"}
+                    aria-live=${message.error ? "assertive" : "polite"}
+                  >
+                    ${message.text}
+                  </div>
+                `
+              : null}
         <section id="dashboard-home" className="hero-panel glass fade-in p-6 md:p-8 rounded-3xl mb-6">
           <p className="hero-kicker">SUPER ADMIN COMMAND CENTER</p>
           <h2 className="hero-title text-3xl md:text-4xl font-bold mb-2">Manage Listings, Users, and Payments</h2>
