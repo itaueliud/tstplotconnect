@@ -589,8 +589,9 @@ function App() {
         : rows;
       const min = Number(filters.minPrice);
       const max = Number(filters.maxPrice);
-      const hasMin = Number.isFinite(min);
-      const hasMax = Number.isFinite(max);
+      const hasMin = filters.minPrice !== "" && Number.isFinite(min);
+      const hasMax = filters.maxPrice !== "" && Number.isFinite(max);
+      console.log("[loadPlots] filter min/max", { min: filters.minPrice, max: filters.maxPrice, hasMin, hasMax });
       const priceFiltered = categoryFiltered.filter((p) => {
         const price = Number(p.price);
         if (!Number.isFinite(price)) return true;
