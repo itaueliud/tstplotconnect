@@ -342,6 +342,39 @@ body {
   border-radius: 8px;
 }
 
+.media-wrap {
+  position: relative;
+}
+
+.media-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(15, 23, 42, 0.72);
+  color: #e2e8f0;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.media-nav:hover {
+  background: rgba(15, 23, 42, 0.88);
+}
+
+.media-prev {
+  left: 0.5rem;
+}
+
+.media-next {
+  right: 0.5rem;
+}
+
 .media-locked {
   filter: blur(6px);
   user-select: none;

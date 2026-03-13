@@ -20,6 +20,13 @@ function inferApiBase() {
     return API;
   }
   const saved = localStorage.getItem("apiBase");
+  if (saved) {
+    const savedIsLocal = /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/i.test(saved);
+    const savedIsHttp = /^http:\/\//i.test(saved);
+    if (savedIsLocal || savedIsHttp) {
+      return API;
+    }
+  }
   return saved || API;
 }
 
@@ -35,6 +42,15 @@ function commaUrls(text) {
     .split(",")
     .map((x) => x.trim())
     .filter(Boolean);
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Failed to read file."));
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
 }
 
 function csvSafe(value) {
@@ -73,6 +89,7 @@ function App() {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [message, setMessage] = useState({ text: "", error: false });
   const messageTimerRef = useRef(null);
+  const [uploadedImages, setUploadedImages] = useState([]);
   const [plots, setPlots] = useState([]);
   const [users, setUsers] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -144,6 +161,24 @@ function App() {
       messageTimerRef.current = setTimeout(() => {
         setMessage({ text: "", error: false });
       }, 4000);
+    }
+  }
+
+  async function handleImageFiles(files) {
+    const maxBytes = 2 * 1024 * 1024;
+    if (!files || !files.length) return;
+    const accepted = files.filter((file) => file.size <= maxBytes);
+    if (accepted.length !== files.length) {
+      showMessage("Some images were skipped (max size 2MB each).", true);
+    }
+    if (!accepted.length) return;
+
+    try {
+      const dataUrls = await Promise.all(accepted.map((file) => fileToDataUrl(file)));
+      setUploadedImages((prev) => [...prev, ...dataUrls]);
+      showMessage(`${dataUrls.length} image${dataUrls.length === 1 ? "" : "s"} added.`);
+    } catch (_err) {
+      showMessage("Failed to add selected images.", true);
     }
   }
 
@@ -462,7 +497,7 @@ function App() {
         caretaker: plotForm.caretaker.trim(),
         whatsapp: plotForm.whatsapp.trim(),
         description: plotForm.description.trim(),
-        images: commaUrls(plotForm.images),
+        images: [...commaUrls(plotForm.images), ...uploadedImages],
         videos: commaUrls(plotForm.videos)
       };
       await api("/api/admin/plots", { method: "POST", body: JSON.stringify(payload) });
@@ -478,8 +513,13 @@ function App() {
         images: "",
         videos: ""
       });
+      setUploadedImages([]);
       showMessage("Plot created.");
-      await Promise.all([loadPlots(), loadAnalytics()]);
+      try {
+        await Promise.all([loadPlots(), loadAnalytics()]);
+      } catch (err) {
+        showMessage(`Plot created, but refresh failed: ${err.message}`, true);
+      }
     } catch (err) {
       showMessage(err.message, true);
     } finally {
@@ -988,6 +1028,21 @@ function App() {
                   <input className="input-modern p-3 rounded-xl" placeholder="WhatsApp phone" value=${plotForm.whatsapp} onInput=${(e) => setPlotForm({ ...plotForm, whatsapp: e.target.value })} />
                   <textarea className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Description" value=${plotForm.description} onInput=${(e) => setPlotForm({ ...plotForm, description: e.target.value })}></textarea>
                   <input className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Image URLs (comma separated)" value=${plotForm.images} onInput=${(e) => setPlotForm({ ...plotForm, images: e.target.value })} />
+                  <input
+                    className="input-modern p-3 rounded-xl md:col-span-2"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange=${async (e) => {
+                      const files = Array.from(e.target.files || []);
+                      await handleImageFiles(files);
+                      e.target.value = "";
+                    }}
+                  />
+                  <p className="text-xs text-muted md:col-span-2">You can paste image URLs or upload images (max 2MB each).</p>
+                  ${uploadedImages.length
+                    ? html`<p className="text-xs text-emerald-400 md:col-span-2">Uploaded images: ${uploadedImages.length}</p>`
+                    : null}
                   <input className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Video URLs (comma separated)" value=${plotForm.videos} onInput=${(e) => setPlotForm({ ...plotForm, videos: e.target.value })} />
                   <button className="btn-success py-3 rounded-xl md:col-span-2" onClick=${addPlot} disabled=${busy}>Create Plot</button>
                 </div>

@@ -20,6 +20,13 @@ function inferApiBase() {
     return API;
   }
   const saved = localStorage.getItem("apiBase");
+  if (saved) {
+    const savedIsLocal = /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/i.test(saved);
+    const savedIsHttp = /^http:\/\//i.test(saved);
+    if (savedIsLocal || savedIsHttp) {
+      return API;
+    }
+  }
   return saved || API;
 }
 
@@ -73,6 +80,7 @@ function App() {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [message, setMessage] = useState({ text: "", error: false });
   const messageTimerRef = useRef(null);
+  const [uploadedImages, setUploadedImages] = useState([]);
   const [plots, setPlots] = useState([]);
   const [users, setUsers] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -172,8 +180,7 @@ function App() {
 
     try {
       const dataUrls = await Promise.all(accepted.map((file) => fileToDataUrl(file)));
-      const merged = [...commaUrls(plotForm.images), ...dataUrls].join(", ");
-      setPlotForm((prev) => ({ ...prev, images: merged }));
+      setUploadedImages((prev) => [...prev, ...dataUrls]);
       showMessage(`${dataUrls.length} image${dataUrls.length === 1 ? "" : "s"} added.`);
     } catch (_err) {
       showMessage("Failed to add selected images.", true);
@@ -495,7 +502,7 @@ function App() {
         caretaker: plotForm.caretaker.trim(),
         whatsapp: plotForm.whatsapp.trim(),
         description: plotForm.description.trim(),
-        images: commaUrls(plotForm.images),
+        images: [...commaUrls(plotForm.images), ...uploadedImages],
         videos: commaUrls(plotForm.videos)
       };
       await api("/api/admin/plots", { method: "POST", body: JSON.stringify(payload) });
@@ -511,8 +518,13 @@ function App() {
         images: "",
         videos: ""
       });
+      setUploadedImages([]);
       showMessage("Plot created.");
-      await Promise.all([loadPlots(), loadAnalytics()]);
+      try {
+        await Promise.all([loadPlots(), loadAnalytics()]);
+      } catch (err) {
+        showMessage(`Plot created, but refresh failed: ${err.message}`, true);
+      }
     } catch (err) {
       showMessage(err.message, true);
     } finally {
@@ -1032,6 +1044,9 @@ function App() {
                     }}
                   />
                   <p className="text-xs text-muted md:col-span-2">You can paste image URLs or upload images (max 2MB each).</p>
+                  ${uploadedImages.length
+                    ? html`<p className="text-xs text-emerald-400 md:col-span-2">Uploaded images: ${uploadedImages.length}</p>`
+                    : null}
                   <input className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Video URLs (comma separated)" value=${plotForm.videos} onInput=${(e) => setPlotForm({ ...plotForm, videos: e.target.value })} />
                   <button className="btn-success py-3 rounded-xl md:col-span-2" onClick=${addPlot} disabled=${busy}>Create Plot</button>
                 </div>

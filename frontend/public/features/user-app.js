@@ -276,6 +276,7 @@ function App() {
   const [countryConfirmed, setCountryConfirmed] = useState(Boolean(initialFilters.country));
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
+  const [imageIndexByPlotId, setImageIndexByPlotId] = useState({});
   const [nowTs, setNowTs] = useState(Date.now());
   const [activeNav, setActiveNav] = useState("user-access");
   const [paymentLog, setPaymentLog] = useState([]);
@@ -304,6 +305,18 @@ function App() {
         setMsg({ text: "", error: false });
       }, 4000);
     }
+  }
+
+  function getImageIndex(plot) {
+    const images = Array.isArray(plot.images) ? plot.images : [];
+    if (!images.length) return 0;
+    const current = imageIndexByPlotId[plot.id] || 0;
+    const safe = Number.isFinite(current) ? current : 0;
+    return ((safe % images.length) + images.length) % images.length;
+  }
+
+  function setImageIndex(plotId, index) {
+    setImageIndexByPlotId((prev) => ({ ...prev, [plotId]: index }));
   }
 
   function handleCountryInputChange(value) {
@@ -1405,6 +1418,9 @@ function App() {
                           const contactPhone = caretakerDisplay !== "Locked" ? caretakerDisplay : whatsappDisplay;
                           const whatsappPhone = formatPhoneForWhatsApp(contactPhone);
                           const callPhone = formatPhoneForTel(contactPhone);
+                          const images = Array.isArray(plot.images) ? plot.images : [];
+                          const activeImageIndex = getImageIndex(plot);
+                          const activeImage = images[activeImageIndex] || "";
                           return html`
                         <article
                           key=${plot.id}
@@ -1413,14 +1429,40 @@ function App() {
                           onClick=${() => setSelectedPlotId(plot.id)}
                         >
                           <div className="media-wrap mb-3">
-                            ${plot.images && plot.images.length
+                            ${images.length
                               ? html`<img
-                                  src=${plot.images[0]}
+                                  src=${activeImage}
                                   alt=${plot.title}
                                   className=${`plot-image ${mediaUnlocked ? "" : "media-locked"}`}
                                   onError=${(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1560185127-6ed189bf02f4"; }}
                                 />`
                               : html`<div className=${`plot-image media-empty ${mediaUnlocked ? "" : "media-locked"}`}>No Image</div>`}
+                            ${images.length > 1
+                              ? html`
+                                  <button
+                                    type="button"
+                                    className="media-nav media-prev"
+                                    aria-label="Previous image"
+                                    onClick=${(e) => {
+                                      e.stopPropagation();
+                                      setImageIndex(plot.id, activeImageIndex - 1);
+                                    }}
+                                  >
+                                    &lt;
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="media-nav media-next"
+                                    aria-label="Next image"
+                                    onClick=${(e) => {
+                                      e.stopPropagation();
+                                      setImageIndex(plot.id, activeImageIndex + 1);
+                                    }}
+                                  >
+                                    &gt;
+                                  </button>
+                                `
+                              : null}
                           </div>
                           ${plot.videos && plot.videos.length
                             ? html`<video controls className=${`plot-image mb-3 ${mediaUnlocked ? "" : "media-locked"}`}><source src=${plot.videos[0]} type="video/mp4" /></video>`
