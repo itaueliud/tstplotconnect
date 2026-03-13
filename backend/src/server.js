@@ -82,6 +82,17 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
+
+// Ensure CORS headers are always sent back for allowed origins (including errors)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && (ALLOWED_ORIGINS.has(origin) || isPrivateLanOrigin(origin) || isTrustedVercelOrigin(origin))) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+  next();
+});
+
 app.options("*", cors());
 app.use(express.json());
 
