@@ -268,6 +268,10 @@ function App() {
   const [plots, setPlots] = useState([]);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    console.log("[render] plots", plots.length, plots.slice(0, 6).map((p) => p.title));
+  }, [plots]);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
   const [filters, setFilters] = useState({ ...initialFilters, category: initialFilters.category || "" });
   const [countryInput, setCountryInput] = useState("");
