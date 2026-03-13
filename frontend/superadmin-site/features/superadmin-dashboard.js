@@ -585,7 +585,7 @@ function App() {
         images: "",
         videos: ""
       });
-      showMessage("Plot created.");
+      showMessage("Plot added successfully.");
       await Promise.all([loadPlots(), loadAnalytics()]);
     } catch (err) {
       showMessage(err.message, true);
