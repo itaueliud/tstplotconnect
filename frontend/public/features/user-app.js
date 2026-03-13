@@ -229,11 +229,13 @@ function formatPhoneForWhatsApp(phone) {
 
 function getInitialFiltersFromUrl() {
   if (typeof window === "undefined") {
-    return { country: "", county: "", area: "", minPrice: "", maxPrice: "" };
+    return { country: "Kenya", county: "", area: "", minPrice: "", maxPrice: "" };
   }
   const params = new URLSearchParams(window.location.search || "");
+  const countryFromUrl = String(params.get("country") || "").trim();
+  const country = countryFromUrl || "Kenya";
   return {
-    country: String(params.get("country") || "").trim(),
+    country,
     county: String(params.get("county") || "").trim(),
     area: String(params.get("area") || "").trim(),
     minPrice: "",
@@ -273,7 +275,7 @@ function App() {
   const [areaInput, setAreaInput] = useState("");
   const [categoryInput, setCategoryInput] = useState("");
   const [openField, setOpenField] = useState("");
-  const [countryConfirmed, setCountryConfirmed] = useState(Boolean(initialFilters.country));
+  const [countryConfirmed, setCountryConfirmed] = useState(true);
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
   const [imageIndexByPlotId, setImageIndexByPlotId] = useState({});
@@ -373,8 +375,7 @@ function App() {
   }
 
   function clearFilters() {
-    setFilters({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
-    setCountryInput("");
+    setFilters((prev) => ({ ...prev, county: "", area: "", category: "", minPrice: "", maxPrice: "" }));
     setCountyInput("");
     setAreaInput("");
     setCategoryInput("");
