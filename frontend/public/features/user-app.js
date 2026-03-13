@@ -582,7 +582,7 @@ function App() {
       if (filters.maxPrice) query.set("maxPrice", filters.maxPrice);
       const data = await api(`/api/plots${query.toString() ? `?${query.toString()}` : ""}`);
       const rows = Array.isArray(data) ? data : [];
-      console.log("[loadPlots] rows", rows.length, "filters", filters, "firstTitles", rows.slice(0, 5).map((p) => p.title));
+      console.log("[loadPlots] rows", rows.length, "filters", JSON.stringify(filters), "firstTitles", rows.slice(0, 5).map((p) => p.title));
       const category = String(filters.category || "").trim().toLowerCase();
       const categoryFiltered = category
         ? rows.filter((p) => String(p.category || "").trim().toLowerCase() === category)
