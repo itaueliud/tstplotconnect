@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "https://esm.sh/react@18.2.0";
+import React, { useEffect, useMemo, useRef, useState } from "https://esm.sh/react@18.2.0";
 import { createRoot } from "https://esm.sh/react-dom@18.2.0/client";
 import htm from "https://esm.sh/htm@3.1.1";
 
@@ -72,6 +72,7 @@ function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [message, setMessage] = useState({ text: "", error: false });
+  const messageTimerRef = useRef(null);
   const [plots, setPlots] = useState([]);
   const [users, setUsers] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -152,6 +153,12 @@ function App() {
 
   function showMessage(text, error = false) {
     setMessage({ text, error });
+    if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    if (text) {
+      messageTimerRef.current = setTimeout(() => {
+        setMessage({ text: "", error: false });
+      }, 4000);
+    }
   }
 
   async function api(path, options = {}, authToken = null) {
@@ -594,6 +601,7 @@ function App() {
     try {
       await api(`/api/admin/plots/${encodeURIComponent(plotId)}`, { method: "DELETE" });
       await Promise.all([loadPlots(), loadAnalytics()]);
+      showMessage("Plot deleted successfully.");
     } catch (err) {
       showMessage(err.message, true);
     } finally {
@@ -860,6 +868,7 @@ function App() {
       await api("/api/admin/activate", { method: "POST", body: JSON.stringify({ userId }) });
       setManualActivateUserId("");
       await Promise.all([loadUsers(), loadPayments(), loadAnalytics(), loadActiveAccounts()]);
+      showMessage("Account activated successfully.");
     } catch (err) {
       showMessage(err.message, true);
     } finally {
@@ -873,6 +882,7 @@ function App() {
     try {
       await api("/api/admin/revoke", { method: "POST", body: JSON.stringify({ userId }) });
       await Promise.all([loadUsers(), loadPayments(), loadAnalytics(), loadActiveAccounts()]);
+      showMessage("Account revoked successfully.");
     } catch (err) {
       showMessage(err.message, true);
     } finally {
@@ -1167,6 +1177,17 @@ function App() {
           </aside>
 
           <div className="admin-content">
+            ${message.text
+              ? html`
+                  <div
+                    className=${`toast ${message.error ? "toast-error" : "toast-success"}`}
+                    role=${message.error ? "alert" : "status"}
+                    aria-live=${message.error ? "assertive" : "polite"}
+                  >
+                    ${message.text}
+                  </div>
+                `
+              : null}
         <section id="dashboard-home" className="hero-panel glass fade-in p-6 md:p-8 rounded-3xl mb-6">
           <p className="hero-kicker">SUPER ADMIN COMMAND CENTER</p>
           <h2 className="hero-title text-3xl md:text-4xl font-bold mb-2">Manage Listings, Users, and Payments</h2>

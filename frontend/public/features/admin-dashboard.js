@@ -143,7 +143,7 @@ function App() {
     if (text) {
       messageTimerRef.current = setTimeout(() => {
         setMessage({ text: "", error: false });
-      }, 5000);
+      }, 4000);
     }
   }
 
@@ -685,6 +685,7 @@ function App() {
       await api("/api/admin/activate", { method: "POST", body: JSON.stringify({ userId }) });
       setManualActivateUserId("");
       await Promise.all([loadUsers(), loadPayments(), loadAnalytics(), loadActiveAccounts()]);
+      showMessage("Account activated successfully.");
     } catch (err) {
       showMessage(err.message, true);
     } finally {
@@ -698,6 +699,7 @@ function App() {
     try {
       await api("/api/admin/revoke", { method: "POST", body: JSON.stringify({ userId }) });
       await Promise.all([loadUsers(), loadPayments(), loadAnalytics(), loadActiveAccounts()]);
+      showMessage("Account revoked successfully.");
     } catch (err) {
       showMessage(err.message, true);
     } finally {

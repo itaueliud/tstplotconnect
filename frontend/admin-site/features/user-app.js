@@ -232,6 +232,7 @@ function App() {
   const REFRESH_MS = 30000;
   const [apiBase, setApiBase] = useState(API);
   const [msg, setMsg] = useState({ text: "", error: false });
+  const messageTimerRef = useRef(null);
   const [token, setToken] = useState("");
   const [userProfile, setUserProfile] = useState(null);
   const [authMode, setAuthMode] = useState("register");
@@ -280,6 +281,12 @@ function App() {
 
   function showMessage(text, error = false) {
     setMsg({ text, error });
+    if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    if (text) {
+      messageTimerRef.current = setTimeout(() => {
+        setMsg({ text: "", error: false });
+      }, 4000);
+    }
   }
 
   function handleCountryInputChange(value) {
