@@ -1271,69 +1271,48 @@ function App() {
                 <input
                   className="input-modern combo-single-input"
                   placeholder="All Countries"
-                  list="user-country-options"
                   value=${countryInput}
                   onInput=${(e) => handleCountryInputChange(e.target.value)}
                   onFocus=${() => setOpenField("country")}
                   onBlur=${() => setTimeout(() => setOpenField(""), 120)}
+                  autoComplete="off"
                 />
-                <datalist id="user-country-options">
-                  ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
-                </datalist>
                 ${renderSuggestions("country", availableCountries, countryInput, (value) => handleCountryInputChange(value))}
               </div>
               <div className="combo-single">
                 <input
                   className="input-modern combo-single-input"
                   placeholder="All Counties"
-                  list="user-county-options"
                   value=${countyInput}
                   onInput=${(e) => handleCountyInputChange(e.target.value)}
                   onFocus=${() => setOpenField("county")}
                   onBlur=${() => setTimeout(() => setOpenField(""), 120)}
+                  autoComplete="off"
                 />
-                <datalist id="user-county-options">
-                  ${counties.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
-                </datalist>
                 ${renderSuggestions("county", counties, countyInput, (value) => handleCountyInputChange(value))}
               </div>
               <div className="combo-single">
                 <input
                   className="input-modern combo-single-input"
                   placeholder="Type or select area"
-                  list="user-area-options"
                   value=${areaInput}
                   onInput=${(e) => handleAreaInputChange(e.target.value)}
                   onFocus=${() => setOpenField("area")}
                   onBlur=${() => setTimeout(() => setOpenField(""), 120)}
+                  autoComplete="off"
                 />
-                <datalist id="user-area-options">
-                  ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
-                </datalist>
                 ${renderSuggestions("area", areas, areaInput, (value) => handleAreaInputChange(value))}
               </div>
               <div className="combo-single">
                 <input
                   className="input-modern combo-single-input"
                   placeholder="All Categories"
-                  list="user-category-options"
                   value=${categoryInput}
                   onInput=${(e) => handleCategoryInputChange(e.target.value)}
                   onFocus=${() => setOpenField("category")}
                   onBlur=${() => setTimeout(() => setOpenField(""), 120)}
+                  autoComplete="off"
                 />
-                <datalist id="user-category-options">
-                  <option value="Rental Houses"></option>
-                  <option value="Bedsitters"></option>
-                  <option value="Hostels"></option>
-                  <option value="Apartments"></option>
-                  <option value="Lodges"></option>
-                  <option value="AirBnB"></option>
-                  <option value="Vacant Shops"></option>
-                  <option value="Office Spaces"></option>
-                  <option value="Guest Houses"></option>
-                  <option value="Plots for Sale"></option>
-                </datalist>
                 ${renderSuggestions(
                   "category",
                   [
