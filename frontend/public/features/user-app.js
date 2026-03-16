@@ -273,6 +273,7 @@ function App() {
   const [categoryInput, setCategoryInput] = useState("");
   const [openField, setOpenField] = useState("");
   const [countryConfirmed, setCountryConfirmed] = useState(Boolean(initialFilters.country));
+  const [clickedField, setClickedField] = useState("");
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
   const [nowTs, setNowTs] = useState(Date.now());
@@ -404,6 +405,11 @@ function App() {
               type="button"
               className="combo-suggestion"
               onMouseDown=${(e) => e.preventDefault()}
+              onTouchStart=${(e) => {
+                e.preventDefault();
+                onSelect(item);
+                setOpenField("");
+              }}
               onClick=${() => {
                 onSelect(item);
                 setOpenField("");
@@ -958,6 +964,22 @@ function App() {
     return () => window.removeEventListener("resize", syncMobileNavState);
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function onDocumentClick(e) {
+      if (!e || !e.target) return;
+      // If a combo input or suggestions container was clicked, keep it open
+      const el = e.target instanceof Element ? e.target : null;
+      if (!el) return;
+      const combo = el.closest && el.closest('.combo-single');
+      if (!combo) {
+        setOpenField('');
+      }
+    }
+    document.addEventListener('click', onDocumentClick);
+    return () => document.removeEventListener('click', onDocumentClick);
+  }, []);
+
   const remainingMs = status && status.active ? getRemainingMs(status.expiresAt) : 0;
   const countdown = formatRemaining(remainingMs);
   const currentYear = new Date().getFullYear();
@@ -1274,6 +1296,7 @@ function App() {
                   value=${countryInput}
                   onInput=${(e) => handleCountryInputChange(e.target.value)}
                   onFocus=${() => setOpenField("country")}
+                  onClick=${() => setOpenField(openField === "country" ? "" : "country")}
                   onBlur=${() => setTimeout(() => setOpenField(""), 120)}
                   autoComplete="off"
                 />
@@ -1286,6 +1309,7 @@ function App() {
                   value=${countyInput}
                   onInput=${(e) => handleCountyInputChange(e.target.value)}
                   onFocus=${() => setOpenField("county")}
+                  onClick=${() => setOpenField(openField === "county" ? "" : "county")}
                   onBlur=${() => setTimeout(() => setOpenField(""), 120)}
                   autoComplete="off"
                 />
@@ -1298,6 +1322,7 @@ function App() {
                   value=${areaInput}
                   onInput=${(e) => handleAreaInputChange(e.target.value)}
                   onFocus=${() => setOpenField("area")}
+                  onClick=${() => setOpenField(openField === "area" ? "" : "area")}
                   onBlur=${() => setTimeout(() => setOpenField(""), 120)}
                   autoComplete="off"
                 />
@@ -1310,6 +1335,7 @@ function App() {
                   value=${categoryInput}
                   onInput=${(e) => handleCategoryInputChange(e.target.value)}
                   onFocus=${() => setOpenField("category")}
+                  onClick=${() => setOpenField(openField === "category" ? "" : "category")}
                   onBlur=${() => setTimeout(() => setOpenField(""), 120)}
                   autoComplete="off"
                 />
