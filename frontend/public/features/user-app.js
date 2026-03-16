@@ -1287,110 +1287,137 @@ function App() {
       <section id="user-search" className="glass section-card mb-5">
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-              <div className="combo-single">
-                <input
-                  className="input-modern combo-single-input"
-                  placeholder="All Countries"
-                  list="user-country-options"
-                  value=${countryInput}
-                  onInput=${(e) => handleCountryInputChange(e.target.value)}
-                  onFocus=${() => setOpenField("country")}
-                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
-                />
-                <datalist id="user-country-options">
-                  ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
-                </datalist>
-                ${renderSuggestions("country", availableCountries, countryInput, (value) => handleCountryInputChange(value))}
-              </div>
-              <div className="combo-single">
-                <input
-                  className="input-modern combo-single-input"
-                  placeholder="All Counties"
-                  list="user-county-options"
-                  value=${countyInput}
-                  onInput=${(e) => handleCountyInputChange(e.target.value)}
-                  onFocus=${() => setOpenField("county")}
-                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
-                />
-                <datalist id="user-county-options">
-                  ${counties.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
-                </datalist>
-                ${renderSuggestions("county", counties, countyInput, (value) => handleCountyInputChange(value))}
-              </div>
-              <div className="combo-single">
-                <input
-                  className="input-modern combo-single-input"
-                  placeholder="Type or select area"
-                  list="user-area-options"
-                  value=${areaInput}
-                  onInput=${(e) => handleAreaInputChange(e.target.value)}
-                  onFocus=${() => setOpenField("area")}
-                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
-                />
-                <datalist id="user-area-options">
-                  ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
-                </datalist>
-                ${renderSuggestions("area", areas, areaInput, (value) => handleAreaInputChange(value))}
-              </div>
-              <div className="combo-single">
-                <input
-                  className="input-modern combo-single-input"
-                  placeholder="All Categories"
-                  list="user-category-options"
-                  value=${categoryInput}
-                  onInput=${(e) => handleCategoryInputChange(e.target.value)}
-                  onFocus=${() => setOpenField("category")}
-                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
-                />
-                <datalist id="user-category-options">
-                  <option value="Rental Houses"></option>
-                  <option value="Bedsitters"></option>
-                  <option value="Hostels"></option>
-                  <option value="Apartments"></option>
-                  <option value="Lodges"></option>
-                  <option value="AirBnB"></option>
-                  <option value="Vacant Shops"></option>
-                  <option value="Office Spaces"></option>
-                  <option value="Guest Houses"></option>
-                  <option value="Plots for Sale"></option>
-                </datalist>
-                ${renderSuggestions(
-                  "category",
-                  [
-                    "Rental Houses",
-                    "Bedsitters",
-                    "Hostels",
-                    "Apartments",
-                    "Lodges",
-                    "AirBnB",
-                    "Vacant Shops",
-                    "Office Spaces",
-                    "Guest Houses",
-                    "Plots for Sale"
-                  ],
-                  categoryInput,
-                  (value) => handleCategoryInputChange(value)
-                )}
-              </div>
+        <p className="text-xs text-muted mb-3">Type to search or select from dropdown</p>
+        
+        <!-- Mobile-friendly filter layout -->
+        <div className="search-filter-container">
+          <!-- Country Filter -->
+          <div className="filter-group">
+            <label className="filter-label">Country</label>
+            <div className="combo-single">
               <input
-                className="input-modern p-3 rounded-xl"
-                type="number"
-            inputMode="numeric"
-            min="0"
-            placeholder="Min price"
-            value=${filters.minPrice}
-            onInput=${(e) => setFilters({ ...filters, minPrice: e.target.value })}
-          />
-          <input
-            className="input-modern p-3 rounded-xl"
-            type="number"
-            inputMode="numeric"
-            min="0"
-            placeholder="Max price"
-            value=${filters.maxPrice}
-            onInput=${(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-          />
+                className="input-modern combo-input"
+                placeholder="Type or select..."
+                value=${countryInput}
+                onInput=${(e) => handleCountryInputChange(e.target.value)}
+                onFocus=${() => setOpenField("country")}
+                onBlur=${() => setTimeout(() => setOpenField(""), 150)}
+              />
+              ${renderSuggestions("country", availableCountries, countryInput, (value) => {
+                handleCountryInputChange(value);
+                setOpenField("");
+              })}
+            </div>
+          </div>
+
+          <!-- County Filter -->
+          <div className="filter-group">
+            <label className="filter-label">County</label>
+            <div className="combo-single">
+              <input
+                className="input-modern combo-input"
+                placeholder="Type or select..."
+                value=${countyInput}
+                onInput=${(e) => handleCountyInputChange(e.target.value)}
+                onFocus=${() => setOpenField("county")}
+                onBlur=${() => setTimeout(() => setOpenField(""), 150)}
+                disabled=${!filters.country}
+              />
+              ${renderSuggestions("county", counties, countyInput, (value) => {
+                handleCountyInputChange(value);
+                setOpenField("");
+              })}
+            </div>
+          </div>
+
+          <!-- Area Filter -->
+          <div className="filter-group">
+            <label className="filter-label">Area</label>
+            <div className="combo-single">
+              <input
+                className="input-modern combo-input"
+                placeholder="Type or select..."
+                value=${areaInput}
+                onInput=${(e) => handleAreaInputChange(e.target.value)}
+                onFocus=${() => setOpenField("area")}
+                onBlur=${() => setTimeout(() => setOpenField(""), 150)}
+                disabled=${!filters.county}
+              />
+              ${renderSuggestions("area", areas, areaInput, (value) => {
+                handleAreaInputChange(value);
+                setOpenField("");
+              })}
+            </div>
+          </div>
+
+          <!-- Category Filter -->
+          <div className="filter-group">
+            <label className="filter-label">Category</label>
+            <div className="combo-single">
+              <input
+                className="input-modern combo-input"
+                placeholder="Type or select..."
+                value=${categoryInput}
+                onInput=${(e) => handleCategoryInputChange(e.target.value)}
+                onFocus=${() => setOpenField("category")}
+                onBlur=${() => setTimeout(() => setOpenField(""), 150)}
+              />
+              ${renderSuggestions(
+                "category",
+                [
+                  "Rental Houses",
+                  "Bedsitters",
+                  "Hostels",
+                  "Apartments",
+                  "Lodges",
+                  "AirBnB",
+                  "Vacant Shops",
+                  "Office Spaces",
+                  "Guest Houses",
+                  "Plots for Sale"
+                ],
+                categoryInput,
+                (value) => {
+                  handleCategoryInputChange(value);
+                  setOpenField("");
+                }
+              )}
+            </div>
+          </div>
+
+          <!-- Price Range Filters -->
+          <div className="filter-group">
+            <label className="filter-label">Min Price (Ksh)</label>
+            <input
+              className="input-modern"
+              type="number"
+              inputMode="numeric"
+              min="0"
+              placeholder="0"
+              value=${filters.minPrice}
+              onInput=${(e) => setFilters({ ...filters, minPrice: e.target.value })}
+            />
+          </div>
+
+          <div className="filter-group">
+            <label className="filter-label">Max Price (Ksh)</label>
+            <input
+              className="input-modern"
+              type="number"
+              inputMode="numeric"
+              min="0"
+              placeholder="No limit"
+              value=${filters.maxPrice}
+              onInput=${(e) => setFilters({ ...filters, maxPrice: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <!-- Clear Filters Button -->
+        <div className="filter-actions">
+          <button className="btn-soft rounded-xl px-4 py-2 text-sm" onClick=${clearFilters}>
+            Clear All Filters
+          </button>
         </div>
       </section>
 
