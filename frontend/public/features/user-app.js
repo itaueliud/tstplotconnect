@@ -411,7 +411,11 @@ function App() {
 
   function renderSuggestions(field, options, inputValue, onSelect) {
     if (openField !== field) return null;
-    const items = getFilteredOptions(options, inputValue);
+    const list = Array.isArray(options) ? options.filter(Boolean) : [];
+    if (!list.length) return null;
+    const items = inputValue.trim() 
+      ? getFilteredOptions(options, inputValue)
+      : list.slice(0, 8);
     if (!items.length) return null;
     return html`
       <div className="combo-suggestions">
