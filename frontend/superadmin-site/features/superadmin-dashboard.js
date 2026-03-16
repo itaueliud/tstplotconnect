@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "https://esm.sh/react@18.2.0";
+import React, { useEffect, useMemo, useRef, useState } from "https://esm.sh/react@18.2.0";
 import { createRoot } from "https://esm.sh/react-dom@18.2.0/client";
 import htm from "https://esm.sh/htm@3.1.1";
 
@@ -72,6 +72,7 @@ function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [message, setMessage] = useState({ text: "", error: false });
+  const messageTimerRef = React.useRef(null);
   const [plots, setPlots] = useState([]);
   const [users, setUsers] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -152,6 +153,12 @@ function App() {
 
   function showMessage(text, error = false) {
     setMessage({ text, error });
+    if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    if (text) {
+      messageTimerRef.current = setTimeout(() => {
+        setMessage({ text: "", error: false });
+      }, 4000);
+    }
   }
 
   async function api(path, options = {}, authToken = null) {
@@ -315,12 +322,12 @@ function App() {
     if (!isSuperAdmin) return showMessage("Super admin login required.", true);
     setBusy(true);
     try {
-      await api("/api/super-admin/locations/county", {
+      const data = await api("/api/super-admin/locations/county", {
         method: "POST",
         body: JSON.stringify({ country: newCountyCountry, county: newCountyName.trim() })
       });
       setNewCountyName("");
-      showMessage("County added.");
+      showMessage(data.message || "County added.");
       await loadLocationMetadata();
     } catch (err) {
       showMessage(err.message, true);
@@ -333,12 +340,12 @@ function App() {
     if (!isSuperAdmin) return showMessage("Super admin login required.", true);
     setBusy(true);
     try {
-      await api("/api/super-admin/locations/area", {
+      const data = await api("/api/super-admin/locations/area", {
         method: "POST",
         body: JSON.stringify({ country: newAreaCountry, county: newAreaCounty, area: newAreaName.trim() })
       });
       setNewAreaName("");
-      showMessage("Area added.");
+      showMessage(data.message || "Area added.");
       await loadLocationMetadata();
     } catch (err) {
       showMessage(err.message, true);
@@ -578,7 +585,7 @@ function App() {
         images: "",
         videos: ""
       });
-      showMessage("Plot created.");
+      showMessage("Plot added successfully.");
       await Promise.all([loadPlots(), loadAnalytics()]);
     } catch (err) {
       showMessage(err.message, true);
@@ -684,6 +691,7 @@ function App() {
     if (!isSuperAdmin) return showMessage("Super admin login required.", true);
     if (!rows.length) return showMessage(`No ${label.toLowerCase()} records to export.`, true);
     exportFn();
+    showMessage("export success");
     if (!window.confirm(`Export complete. Delete ${rows.length} ${label.toLowerCase()} records now?`)) return;
 
     setBusy(true);
@@ -1167,6 +1175,17 @@ function App() {
           </aside>
 
           <div className="admin-content">
+            ${message.text
+              ? html`
+                  <div
+                    className=${`toast ${message.error ? "toast-error" : "toast-success"}`}
+                    role=${message.error ? "alert" : "status"}
+                    aria-live=${message.error ? "assertive" : "polite"}
+                  >
+                    ${message.text}
+                  </div>
+                `
+              : null}
         <section id="dashboard-home" className="hero-panel glass fade-in p-6 md:p-8 rounded-3xl mb-6">
           <p className="hero-kicker">SUPER ADMIN COMMAND CENTER</p>
           <h2 className="hero-title text-3xl md:text-4xl font-bold mb-2">Manage Listings, Users, and Payments</h2>

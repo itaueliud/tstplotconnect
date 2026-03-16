@@ -227,9 +227,26 @@ function formatPhoneForWhatsApp(phone) {
     return grouped;
   }
 
+function getInitialFiltersFromUrl() {
+  if (typeof window === "undefined") {
+    return { country: "Kenya", county: "", area: "", minPrice: "", maxPrice: "" };
+  }
+  const params = new URLSearchParams(window.location.search || "");
+  const countryFromUrl = String(params.get("country") || "").trim();
+  const country = countryFromUrl || "Kenya";
+  return {
+    country,
+    county: String(params.get("county") || "").trim(),
+    area: String(params.get("area") || "").trim(),
+    minPrice: "",
+    maxPrice: ""
+  };
+}
+
 function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
   const REFRESH_MS = 30000;
+  const initialFilters = getInitialFiltersFromUrl();
   const [apiBase, setApiBase] = useState(API);
   const [msg, setMsg] = useState({ text: "", error: false });
   const messageTimerRef = useRef(null);
@@ -251,12 +268,14 @@ function App() {
   const [plots, setPlots] = useState([]);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
+  const [confirmingPayment, setConfirmingPayment] = useState(false);
+  const [filters, setFilters] = useState({ ...initialFilters, category: initialFilters.category || "" });
   const [countryInput, setCountryInput] = useState("");
   const [countyInput, setCountyInput] = useState("");
   const [areaInput, setAreaInput] = useState("");
   const [categoryInput, setCategoryInput] = useState("");
-  const [countryConfirmed, setCountryConfirmed] = useState(false);
+  const [openField, setOpenField] = useState("");
+  const [countryConfirmed, setCountryConfirmed] = useState(true);
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
   const [imageIndexByPlotId, setImageIndexByPlotId] = useState({});
@@ -355,6 +374,62 @@ function App() {
     });
   }
 
+  function clearFilters() {
+    setFilters((prev) => ({ ...prev, county: "", area: "", category: "", minPrice: "", maxPrice: "" }));
+    setCountyInput("");
+    setAreaInput("");
+    setCategoryInput("");
+  }
+
+  function getActiveFiltersLabel() {
+    const parts = [];
+    if (filters.country) parts.push(`Country: ${filters.country}`);
+    if (filters.county) parts.push(`County: ${filters.county}`);
+    if (filters.area) parts.push(`Area: ${filters.area}`);
+    if (filters.category) parts.push(`Category: ${filters.category}`);
+    if (filters.minPrice) parts.push(`Min: ${filters.minPrice}`);
+    if (filters.maxPrice) parts.push(`Max: ${filters.maxPrice}`);
+    return parts.length ? parts.join(" | ") : "None";
+  }
+
+  function normalizeText(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  function getFilteredOptions(options, inputValue, limit = 8) {
+    const query = normalizeText(inputValue);
+    const list = Array.isArray(options) ? options.filter(Boolean) : [];
+    const filtered = query
+      ? list.filter((item) => normalizeText(item).includes(query))
+      : list;
+    return filtered.slice(0, limit);
+  }
+
+  function renderSuggestions(field, options, inputValue, onSelect) {
+    if (openField !== field) return null;
+    const items = getFilteredOptions(options, inputValue);
+    if (!items.length) return null;
+    return html`
+      <div className="combo-suggestions">
+        ${items.map(
+          (item) => html`
+            <button
+              type="button"
+              className="combo-suggestion"
+              onMouseDown=${(e) => e.preventDefault()}
+              onClick=${() => {
+                onSelect(item);
+                setOpenField("");
+              }}
+            >
+              ${item}
+            </button>
+          `
+        )}
+      </div>
+    `;
+  }
+
   function persistSession(nextToken, user) {
     setToken(nextToken || "");
     setUserProfile(user || null);
@@ -365,6 +440,34 @@ function App() {
       localStorage.removeItem("userToken");
       localStorage.removeItem("userProfile");
     }
+  }
+
+  function paymentHideKey(user) {
+    const userId = user?.id || user?.displayId || "anon";
+    return `hiddenPaymentIds:${userId}`;
+  }
+
+  function getHiddenPaymentIds() {
+    try {
+      const raw = localStorage.getItem(paymentHideKey(userProfile));
+      const parsed = JSON.parse(raw || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_err) {
+      return [];
+    }
+  }
+
+  function setHiddenPaymentIds(ids) {
+    localStorage.setItem(paymentHideKey(userProfile), JSON.stringify(ids));
+  }
+
+  function hidePaymentInUi(paymentId) {
+    const current = getHiddenPaymentIds();
+    if (!current.includes(paymentId)) {
+      current.push(paymentId);
+      setHiddenPaymentIds(current);
+    }
+    setPaymentLog((prev) => prev.filter((p) => p.id !== paymentId));
   }
 
   function addPaymentLog(statusValue, note) {
@@ -522,13 +625,16 @@ function App() {
     }
     try {
       const rows = await api("/api/user/payments", {}, authToken);
-      const mapped = (Array.isArray(rows) ? rows : []).map((p) => ({
-        id: p.id,
-        timestamp: p.timestamp,
-        amount: p.amount,
-        status: p.status,
-        note: p.validationError || p.validationWarning || (p.status === "Completed" ? "Payment confirmed." : ""),
-        mpesaReceipt: p.mpesaReceipt
+      const hidden = new Set(getHiddenPaymentIds());
+      const mapped = (Array.isArray(rows) ? rows : [])
+        .filter((p) => !hidden.has(p.id))
+        .map((p) => ({
+          id: p.id,
+          timestamp: p.timestamp,
+          amount: p.amount,
+          status: p.status,
+          note: p.validationError || p.validationWarning || (p.status === "Completed" ? "Payment confirmed." : ""),
+          mpesaReceipt: p.mpesaReceipt
       }));
       setPaymentLog(mapped);
     } catch (_err) {}
@@ -701,6 +807,29 @@ function App() {
     await pay();
   }
 
+  async function confirmPaymentNow() {
+    if (!token) {
+      showMessage("Register or log in first.", true);
+      return;
+    }
+    setConfirmingPayment(true);
+    try {
+      const freshStatus = await loadStatus(token);
+      await loadPaymentLog(token);
+      if (freshStatus && freshStatus.active) {
+        setNowTs(Date.now());
+        await loadPlots();
+        showMessage("Payment confirmed. Contacts unlocked for 24 hours.");
+      } else {
+        showMessage("Payment not confirmed yet. Complete STK on your phone, then tap Confirm Payment again.", true);
+      }
+    } catch (err) {
+      showMessage(err.message || "Failed to confirm payment status.", true);
+    } finally {
+      setConfirmingPayment(false);
+    }
+  }
+
   async function loadStatus(authToken = null) {
     if (!authToken && !token) {
       setStatus(null);
@@ -864,6 +993,7 @@ function App() {
         { id: "user-about", label: "About" }
       ]
     : [{ id: "user-access", label: "Access" }];
+  const isAboutOpen = isAuthenticated && activeNav === "user-about";
 
   if (!isAuthenticated && !hasChosenCountry) {
     return html`
@@ -885,7 +1015,6 @@ function App() {
                 onChange=${(e) => {
                   setCountryConfirmed(false);
                   setFilters({ country: e.target.value, county: "", area: "", minPrice: "", maxPrice: "" });
-                  setAreaInput("");
                 }}
               >
                 <option value="">Choose country</option>
@@ -937,9 +1066,12 @@ function App() {
           <div className="sidebar-list">
             ${userNavItems.map((item) => html`
               <a
-                href=${item.href || `#${item.id}`}
+                href=${item.id === "user-about" ? "#" : (item.href || `#${item.id}`)}
                 className=${`sidebar-link ${activeNav === item.id ? "is-active" : ""}`}
-                onClick=${() => {
+                onClick=${(e) => {
+                  if (item.id === "user-about") {
+                    e.preventDefault();
+                  }
                   if (!item.href) {
                     setActiveNav(item.id);
                   }
@@ -977,6 +1109,11 @@ function App() {
                 ${status && status.active
                   ? null
                   : html`<button className="btn-success rounded-xl p-3" onClick=${pay} disabled=${loading}>Activate Account (Ksh 50)</button>`}
+                ${status && status.active
+                  ? null
+                  : html`<button className="btn-soft rounded-xl p-3" onClick=${confirmPaymentNow} disabled=${confirmingPayment}>
+                      ${confirmingPayment ? "Refreshing..." : "Refresh"}
+                    </button>`}
                 <button className="btn-soft rounded-xl p-3" onClick=${logoutUser}>Log Out</button>
               </div>
             `
@@ -1136,70 +1273,100 @@ function App() {
 
       ${isAuthenticated
         ? html`
+      ${!isAboutOpen
+        ? html`
       <section id="user-search" className="glass section-card mb-5">
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-          <div className="combo-single">
-            <input
-              className="input-modern combo-single-input"
-              placeholder="All Countries"
-              list="user-country-options"
-              value=${countryInput}
-              onInput=${(e) => handleCountryInputChange(e.target.value)}
-            />
-            <datalist id="user-country-options">
-              ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
-            </datalist>
-          </div>
-          <div className="combo-single">
-            <input
-              className="input-modern combo-single-input"
-              placeholder="All Counties"
-              list="user-county-options"
-              value=${countyInput}
-              onInput=${(e) => handleCountyInputChange(e.target.value)}
-            />
-            <datalist id="user-county-options">
-              ${counties.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
-            </datalist>
-          </div>
-          <div className="combo-single md:col-span-2">
-            <input
-              className="input-modern combo-single-input"
-              placeholder="Type or select area"
-              list="user-area-options"
-              value=${areaInput}
-              onInput=${(e) => handleAreaInputChange(e.target.value)}
-            />
-            <datalist id="user-area-options">
-              ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
-            </datalist>
-          </div>
-          <div className="combo-single">
-            <input
-              className="input-modern combo-single-input"
-              placeholder="All Categories"
-              list="user-category-options"
-              value=${categoryInput}
-              onInput=${(e) => handleCategoryInputChange(e.target.value)}
-            />
-            <datalist id="user-category-options">
-              <option value="Rental Houses"></option>
-              <option value="Bedsitters"></option>
-              <option value="Hostels"></option>
-              <option value="Apartments"></option>
-              <option value="Lodges"></option>
-              <option value="AirBnB"></option>
-              <option value="Vacant Shops"></option>
-              <option value="Office Spaces"></option>
-              <option value="Guest Houses"></option>
-              <option value="Plots for Sale"></option>
-            </datalist>
-          </div>
-          <input
-            className="input-modern p-3 rounded-xl"
-            type="number"
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+              <div className="combo-single">
+                <input
+                  className="input-modern combo-single-input"
+                  placeholder="All Countries"
+                  list="user-country-options"
+                  value=${countryInput}
+                  onInput=${(e) => handleCountryInputChange(e.target.value)}
+                  onFocus=${() => setOpenField("country")}
+                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
+                />
+                <datalist id="user-country-options">
+                  ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+                </datalist>
+                ${renderSuggestions("country", availableCountries, countryInput, (value) => handleCountryInputChange(value))}
+              </div>
+              <div className="combo-single">
+                <input
+                  className="input-modern combo-single-input"
+                  placeholder="All Counties"
+                  list="user-county-options"
+                  value=${countyInput}
+                  onInput=${(e) => handleCountyInputChange(e.target.value)}
+                  onFocus=${() => setOpenField("county")}
+                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
+                />
+                <datalist id="user-county-options">
+                  ${counties.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
+                </datalist>
+                ${renderSuggestions("county", counties, countyInput, (value) => handleCountyInputChange(value))}
+              </div>
+              <div className="combo-single">
+                <input
+                  className="input-modern combo-single-input"
+                  placeholder="Type or select area"
+                  list="user-area-options"
+                  value=${areaInput}
+                  onInput=${(e) => handleAreaInputChange(e.target.value)}
+                  onFocus=${() => setOpenField("area")}
+                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
+                />
+                <datalist id="user-area-options">
+                  ${areas.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
+                </datalist>
+                ${renderSuggestions("area", areas, areaInput, (value) => handleAreaInputChange(value))}
+              </div>
+              <div className="combo-single">
+                <input
+                  className="input-modern combo-single-input"
+                  placeholder="All Categories"
+                  list="user-category-options"
+                  value=${categoryInput}
+                  onInput=${(e) => handleCategoryInputChange(e.target.value)}
+                  onFocus=${() => setOpenField("category")}
+                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
+                />
+                <datalist id="user-category-options">
+                  <option value="Rental Houses"></option>
+                  <option value="Bedsitters"></option>
+                  <option value="Hostels"></option>
+                  <option value="Apartments"></option>
+                  <option value="Lodges"></option>
+                  <option value="AirBnB"></option>
+                  <option value="Vacant Shops"></option>
+                  <option value="Office Spaces"></option>
+                  <option value="Guest Houses"></option>
+                  <option value="Plots for Sale"></option>
+                </datalist>
+                ${renderSuggestions(
+                  "category",
+                  [
+                    "Rental Houses",
+                    "Bedsitters",
+                    "Hostels",
+                    "Apartments",
+                    "Lodges",
+                    "AirBnB",
+                    "Vacant Shops",
+                    "Office Spaces",
+                    "Guest Houses",
+                    "Plots for Sale"
+                  ],
+                  categoryInput,
+                  (value) => handleCategoryInputChange(value)
+                )}
+              </div>
+              <input
+                className="input-modern p-3 rounded-xl"
+                type="number"
             inputMode="numeric"
             min="0"
             placeholder="Min price"
@@ -1223,8 +1390,12 @@ function App() {
           <div>
             <p className="section-kicker">Listings</p>
             <h2 className="section-title mb-0">Available Plots</h2>
+            <p className="text-xs text-muted">Active filters: ${getActiveFiltersLabel()}</p>
           </div>
-          <p className="text-xs text-muted">${orderedPlots.length} result${orderedPlots.length === 1 ? "" : "s"}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-muted">${orderedPlots.length} result${orderedPlots.length === 1 ? "" : "s"}</p>
+            <button className="btn-soft px-3 py-1 rounded-lg" onClick=${clearFilters}>Clear Filters</button>
+          </div>
         </div>
 
         ${loading
@@ -1378,6 +1549,14 @@ function App() {
                       <span className=${`pay-pill pay-${String(p.status || "").toLowerCase()}`}>${p.status}</span>
                       <span>Ksh ${p.amount}</span>
                       <span>${new Date(p.timestamp).toLocaleString()}</span>
+                      <button
+                        type="button"
+                        className="btn-chip btn-chip-danger"
+                        onClick=${() => hidePaymentInUi(p.id)}
+                        aria-label="Remove payment from view"
+                      >
+                        Delete
+                      </button>
                     </p>
                     <p className="payment-log-note">${p.note}</p>
                   </div>
@@ -1404,25 +1583,34 @@ function App() {
           </div>
         </div>
       </section>
+          `
+        : null}
 
-      <section id="user-about" className="glass section-card mb-2">
-        <p className="section-kicker">About</p>
-        <h2 className="section-title">About TST PlotConnect</h2>
-        <p className="faq-a mb-3">
-          TST PlotConnect helps you find verified plots and rentals across Kenya with clear locations,
-          honest pricing, and direct contact access after activation.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="input-modern rounded-xl p-3">
-            <p className="text-muted text-xs">What we offer</p>
-            <p className="font-semibold">Verified listings, location filters, and map-based browsing.</p>
-          </div>
-          <div className="input-modern rounded-xl p-3">
-            <p className="text-muted text-xs">Why it matters</p>
-            <p className="font-semibold">Reduce fraud, save time, and make confident property decisions.</p>
-          </div>
-        </div>
-      </section>
+      ${isAboutOpen
+        ? html`
+            <section id="user-about" className="glass section-card mb-2">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="section-kicker">About</p>
+                  <h2 className="section-title mb-0">About TST PlotConnect</h2>
+                </div>
+                <button
+                  type="button"
+                  className="btn-soft rounded-xl px-3 py-2"
+                  onClick=${() => setActiveNav("user-access")}
+                >
+                  Close About
+                </button>
+              </div>
+              <iframe
+                src="/about"
+                title="About TST PlotConnect"
+                className="w-full rounded-xl border border-slate-700/60"
+                style=${{ minHeight: "75vh", background: "#fff" }}
+              ></iframe>
+            </section>
+          `
+        : null}
 
       <footer className="user-footer">
         <div className="footer-grid">
@@ -1462,7 +1650,7 @@ function App() {
           </div>
         </div>
         <div className="footer-bottom">
-          <p className="footer-copy">(c) ${currentYear} TST PlotConnect. All rights reserved. Created by Fluxbyte.</p>
+          <p className="footer-copy">(c) ${currentYear} TST PlotConnect. All rights reserved. A TechSwiftTrix platform.</p>
           <a href="#user-access" className="back-to-top">Back to top</a>
         </div>
       </footer>

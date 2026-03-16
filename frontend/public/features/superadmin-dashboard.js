@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "https://esm.sh/react@18.2.0";
+import React, { useEffect, useMemo, useRef, useState } from "https://esm.sh/react@18.2.0";
 import { createRoot } from "https://esm.sh/react-dom@18.2.0/client";
 import htm from "https://esm.sh/htm@3.1.1";
 
@@ -20,7 +20,18 @@ function inferApiBase() {
     return API;
   }
   const saved = localStorage.getItem("apiBase");
+  if (saved) {
+    const savedIsLocal = /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/i.test(saved);
+    const savedIsHttp = /^http:\/\//i.test(saved);
+    if (savedIsLocal || savedIsHttp) {
+      return API;
+    }
+  }
   return saved || API;
+}
+
+function isLocalApiBase(value) {
+  return /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/i.test(String(value || ""));
 }
 
 function formatDate(value) {
@@ -35,6 +46,15 @@ function commaUrls(text) {
     .split(",")
     .map((x) => x.trim())
     .filter(Boolean);
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Failed to read file."));
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
 }
 
 function csvSafe(value) {
@@ -72,6 +92,8 @@ function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [message, setMessage] = useState({ text: "", error: false });
+  const messageTimerRef = React.useRef(null);
+  const [uploadedImages, setUploadedImages] = useState([]);
   const [plots, setPlots] = useState([]);
   const [users, setUsers] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -134,6 +156,12 @@ function App() {
     () => (apiBaseInput || "").trim() || detectedApiBase || inferApiBase(),
     [apiBaseInput, detectedApiBase]
   );
+  const isLocalPage = useMemo(() => {
+    const loc = window.location;
+    const hostIsLocal = /^(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/i.test(loc.hostname);
+    return loc.protocol === "file:" || hostIsLocal;
+  }, []);
+  const isApiMismatch = !isLocalPage && apiBase !== API;
 
   useEffect(() => {
     localStorage.removeItem("adminToken");
@@ -152,6 +180,30 @@ function App() {
 
   function showMessage(text, error = false) {
     setMessage({ text, error });
+    if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    if (text) {
+      messageTimerRef.current = setTimeout(() => {
+        setMessage({ text: "", error: false });
+      }, 4000);
+    }
+  }
+
+  async function handleImageFiles(files) {
+    const maxBytes = 2 * 1024 * 1024;
+    if (!files || !files.length) return;
+    const accepted = files.filter((file) => file.size <= maxBytes);
+    if (accepted.length !== files.length) {
+      showMessage("Some images were skipped (max size 2MB each).", true);
+    }
+    if (!accepted.length) return;
+
+    try {
+      const dataUrls = await Promise.all(accepted.map((file) => fileToDataUrl(file)));
+      setUploadedImages((prev) => [...prev, ...dataUrls]);
+      showMessage(`${dataUrls.length} image${dataUrls.length === 1 ? "" : "s"} added.`);
+    } catch (_err) {
+      showMessage("Failed to add selected images.", true);
+    }
   }
 
   async function api(path, options = {}, authToken = null) {
@@ -315,12 +367,12 @@ function App() {
     if (!isSuperAdmin) return showMessage("Super admin login required.", true);
     setBusy(true);
     try {
-      await api("/api/super-admin/locations/county", {
+      const data = await api("/api/super-admin/locations/county", {
         method: "POST",
         body: JSON.stringify({ country: newCountyCountry, county: newCountyName.trim() })
       });
       setNewCountyName("");
-      showMessage("County added.");
+      showMessage(data.message || "County added.");
       await loadLocationMetadata();
     } catch (err) {
       showMessage(err.message, true);
@@ -333,12 +385,12 @@ function App() {
     if (!isSuperAdmin) return showMessage("Super admin login required.", true);
     setBusy(true);
     try {
-      await api("/api/super-admin/locations/area", {
+      const data = await api("/api/super-admin/locations/area", {
         method: "POST",
         body: JSON.stringify({ country: newAreaCountry, county: newAreaCounty, area: newAreaName.trim() })
       });
       setNewAreaName("");
-      showMessage("Area added.");
+      showMessage(data.message || "Area added.");
       await loadLocationMetadata();
     } catch (err) {
       showMessage(err.message, true);
@@ -551,6 +603,9 @@ function App() {
 
   async function addPlot() {
     if (!isAdminAuthenticated) return showMessage("Admin login required.", true);
+    if (isApiMismatch) {
+      return showMessage("Backend URL mismatch. Switch to the default backend before creating plots.", true);
+    }
     setBusy(true);
     try {
       const payload = {
@@ -562,7 +617,7 @@ function App() {
         caretaker: plotForm.caretaker.trim(),
         whatsapp: plotForm.whatsapp.trim(),
         description: plotForm.description.trim(),
-        images: commaUrls(plotForm.images),
+        images: [...commaUrls(plotForm.images), ...uploadedImages],
         videos: commaUrls(plotForm.videos)
       };
       await api("/api/admin/plots", { method: "POST", body: JSON.stringify(payload) });
@@ -578,8 +633,13 @@ function App() {
         images: "",
         videos: ""
       });
-      showMessage("Plot created.");
-      await Promise.all([loadPlots(), loadAnalytics()]);
+      setUploadedImages([]);
+      showMessage("Plot added successfully.");
+      try {
+        await Promise.all([loadPlots(), loadAnalytics()]);
+      } catch (err) {
+        showMessage(`Plot created, but refresh failed: ${err.message}`, true);
+      }
     } catch (err) {
       showMessage(err.message, true);
     } finally {
@@ -594,6 +654,7 @@ function App() {
     try {
       await api(`/api/admin/plots/${encodeURIComponent(plotId)}`, { method: "DELETE" });
       await Promise.all([loadPlots(), loadAnalytics()]);
+      showMessage("Plot deleted successfully.");
     } catch (err) {
       showMessage(err.message, true);
     } finally {
@@ -684,6 +745,7 @@ function App() {
     if (!isSuperAdmin) return showMessage("Super admin login required.", true);
     if (!rows.length) return showMessage(`No ${label.toLowerCase()} records to export.`, true);
     exportFn();
+    showMessage("export success");
     if (!window.confirm(`Export complete. Delete ${rows.length} ${label.toLowerCase()} records now?`)) return;
 
     setBusy(true);
@@ -860,6 +922,7 @@ function App() {
       await api("/api/admin/activate", { method: "POST", body: JSON.stringify({ userId }) });
       setManualActivateUserId("");
       await Promise.all([loadUsers(), loadPayments(), loadAnalytics(), loadActiveAccounts()]);
+      showMessage("Account activated successfully.");
     } catch (err) {
       showMessage(err.message, true);
     } finally {
@@ -873,6 +936,7 @@ function App() {
     try {
       await api("/api/admin/revoke", { method: "POST", body: JSON.stringify({ userId }) });
       await Promise.all([loadUsers(), loadPayments(), loadAnalytics(), loadActiveAccounts()]);
+      showMessage("Account revoked successfully.");
     } catch (err) {
       showMessage(err.message, true);
     } finally {
@@ -1167,6 +1231,40 @@ function App() {
           </aside>
 
           <div className="admin-content">
+            ${isApiMismatch
+              ? html`
+                  <div className="glass mb-4 rounded-2xl border border-amber-400/40 bg-amber-100/70 p-4 text-amber-900">
+                    <p className="font-semibold">Backend URL mismatch</p>
+                    <p className="text-sm">Your superadmin UI is pointed at ${apiBase}. The user site uses ${API}. Switch to the default backend so new plots appear for users.</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="btn-success px-3 py-2 rounded-xl"
+                        onClick=${() => {
+                          setApiBaseInput(API);
+                          setDetectedApiBase(null);
+                          localStorage.setItem("apiBase", API);
+                          showMessage("Backend URL reset to default.");
+                        }}
+                      >
+                        Use Default Backend
+                      </button>
+                      <span className="text-xs text-amber-800">Default: ${API}</span>
+                    </div>
+                  </div>
+                `
+              : null}
+            ${message.text
+              ? html`
+                  <div
+                    className=${`toast ${message.error ? "toast-error" : "toast-success"}`}
+                    role=${message.error ? "alert" : "status"}
+                    aria-live=${message.error ? "assertive" : "polite"}
+                  >
+                    ${message.text}
+                  </div>
+                `
+              : null}
         <section id="dashboard-home" className="hero-panel glass fade-in p-6 md:p-8 rounded-3xl mb-6">
           <p className="hero-kicker">SUPER ADMIN COMMAND CENTER</p>
           <h2 className="hero-title text-3xl md:text-4xl font-bold mb-2">Manage Listings, Users, and Payments</h2>
@@ -1220,6 +1318,21 @@ function App() {
                   <input className="input-modern p-3 rounded-xl" placeholder="WhatsApp phone" value=${plotForm.whatsapp} onInput=${(e) => setPlotForm({ ...plotForm, whatsapp: e.target.value })} />
                   <textarea className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Description" value=${plotForm.description} onInput=${(e) => setPlotForm({ ...plotForm, description: e.target.value })}></textarea>
                   <input className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Image URLs (comma separated)" value=${plotForm.images} onInput=${(e) => setPlotForm({ ...plotForm, images: e.target.value })} />
+                  <input
+                    className="input-modern p-3 rounded-xl md:col-span-2"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange=${async (e) => {
+                      const files = Array.from(e.target.files || []);
+                      await handleImageFiles(files);
+                      e.target.value = "";
+                    }}
+                  />
+                  <p className="text-xs text-muted md:col-span-2">You can paste image URLs or upload images (max 2MB each).</p>
+                  ${uploadedImages.length
+                    ? html`<p className="text-xs text-emerald-400 md:col-span-2">Uploaded images: ${uploadedImages.length}</p>`
+                    : null}
                   <input className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Video URLs (comma separated)" value=${plotForm.videos} onInput=${(e) => setPlotForm({ ...plotForm, videos: e.target.value })} />
                   <button className="btn-success py-3 rounded-xl md:col-span-2" onClick=${addPlot} disabled=${busy}>Create Plot</button>
                 </div>
