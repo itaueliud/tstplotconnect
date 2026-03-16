@@ -387,7 +387,15 @@ function App() {
   function renderSuggestions(field, options, inputValue, onSelect) {
     if (openField !== field) return null;
     const items = getFilteredOptions(options, inputValue);
-    if (!items.length) return null;
+    if (!items.length) {
+      return html`
+        <div className="combo-suggestions">
+          <div style=${{ padding: "10px 12px", color: "#9ca3af", fontSize: "0.9rem" }}>
+            No results found
+          </div>
+        </div>
+      `;
+    }
     return html`
       <div className="combo-suggestions">
         ${items.map(
@@ -400,6 +408,7 @@ function App() {
                 onSelect(item);
                 setOpenField("");
               }}
+              key=${item}
             >
               ${item}
             </button>

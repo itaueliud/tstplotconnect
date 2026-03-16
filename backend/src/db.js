@@ -106,11 +106,9 @@ async function migrateUsers() {
       setDoc.id = randomUUID();
     }
     if (!user.displayId) {
-      // Best-effort unique display id for legacy users.
       let displayId = null;
       for (let i = 0; i < 10; i += 1) {
         const candidate = `U${Math.floor(100000 + Math.random() * 900000)}`;
-        // eslint-disable-next-line no-await-in-loop
         const exists = await users.findOne({ displayId: candidate }, { projection: { _id: 1 } });
         if (!exists) {
           displayId = candidate;
@@ -304,7 +302,6 @@ async function seedAdminUser() {
     return;
   }
 
-  // If super admin exists under another phone, normalize it back to default credentials.
   const existingSuper = await db.collection("users").findOne({ is_super_admin: 1 });
   if (existingSuper) {
     await db.collection("users").updateOne(
