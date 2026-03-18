@@ -855,6 +855,8 @@ function App() {
     if (priceInput === null) return;
     const category = window.prompt("Category:", plot.category || "");
     if (category === null) return;
+    const priority = window.prompt("Priority (top, medium, bottom):", plot.priority || "medium");
+    if (priority === null) return;
     const town = window.prompt("Town/County:", plot.town || plot.county || "");
     if (town === null) return;
     const area = window.prompt("Area:", plot.area || "");
@@ -876,6 +878,7 @@ function App() {
         title: title.trim(),
         price: Number(priceInput),
         category: category.trim(),
+        priority: String(priority || "medium").trim().toLowerCase() || "medium",
         town: town.trim(),
         area: area.trim(),
         caretaker: caretaker.trim(),

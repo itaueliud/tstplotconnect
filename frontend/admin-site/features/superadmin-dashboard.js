@@ -770,6 +770,8 @@ function App() {
     if (title === null) return;
     const priceInput = window.prompt("Price (Ksh):", String(plot.price));
     if (priceInput === null) return;
+    const priority = window.prompt("Priority (top, medium, bottom):", plot.priority || "medium");
+    if (priority === null) return;
     const town = window.prompt("Town/County:", plot.town || plot.county || "");
     if (town === null) return;
     const area = window.prompt("Area:", plot.area || "");
@@ -790,6 +792,7 @@ function App() {
       const payload = {
         title: title.trim(),
         price: Number(priceInput),
+        priority: String(priority || "medium").trim().toLowerCase() || "medium",
         town: town.trim(),
         area: area.trim(),
         caretaker: caretaker.trim(),
