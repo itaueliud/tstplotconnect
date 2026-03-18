@@ -372,8 +372,14 @@ function App() {
   }
 
   function clearFilters() {
-    setFilters({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
-    setCountryInput("");
+    setFilters((prev) => ({
+      ...prev,
+      county: "",
+      area: "",
+      category: "",
+      minPrice: "",
+      maxPrice: ""
+    }));
     setCountyInput("");
     setAreaInput("");
     setCategoryInput("");
@@ -1076,6 +1082,7 @@ function App() {
     : (filters.area || filters.county || filters.country || "Selected Location");
   const isAuthenticated = Boolean(token);
   const hasChosenCountry = Boolean(filters.country) && countryConfirmed;
+  const searchGridClass = hasChosenCountry ? "grid grid-cols-1 md:grid-cols-5 gap-3" : "grid grid-cols-1 md:grid-cols-6 gap-3";
   const userNavItems = isAuthenticated
     ? [
         { id: "user-access", label: "Access" },
@@ -1374,32 +1381,34 @@ function App() {
       <section id="user-search" className="glass section-card mb-5">
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-              <div className="combo-single">
-                <input
-                  className="input-modern combo-single-input"
-                  placeholder="All Countries"
-                  value=${countryInput}
-                  onInput=${(e) => {
-                    const v = e.target.value;
-                    setCountryInput(v);
-                    setCountryConfirmed(false);
-                    // fetch remote suggestions
-                    debouncedFetchCountries(v);
-                    // also keep local filter behavior
-                    setFilters((prev) => {
-                      if (!v) return { ...prev, country: "", county: "", area: "" };
-                      const match = availableCountries.find((c) => String(c).toLowerCase() === v.toLowerCase());
-                      return { ...prev, country: match || "", county: "", area: "" };
-                    });
-                  }}
-                  onFocus=${() => { setOpenField("country"); debouncedFetchCountries(countryInput || ""); }}
-                  onClick=${() => { setOpenField(openField === "country" ? "" : "country"); debouncedFetchCountries(countryInput || ""); }}
-                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
-                  autoComplete="off"
-                />
-                ${renderSuggestions("country", remoteCountries.length ? remoteCountries : availableCountries, countryInput, (value) => { handleCountryInputChange(value); setRemoteCounties([]); debouncedFetchCounties(value, ""); })}
-              </div>
+            <div className=${searchGridClass}>
+              ${hasChosenCountry
+                ? null
+                : html`
+                    <div className="combo-single">
+                      <input
+                        className="input-modern combo-single-input"
+                        placeholder="All Countries"
+                        value=${countryInput}
+                        onInput=${(e) => {
+                          const v = e.target.value;
+                          setCountryInput(v);
+                          setCountryConfirmed(false);
+                          debouncedFetchCountries(v);
+                          setFilters((prev) => {
+                            if (!v) return { ...prev, country: "", county: "", area: "" };
+                            const match = availableCountries.find((c) => String(c).toLowerCase() === v.toLowerCase());
+                            return { ...prev, country: match || "", county: "", area: "" };
+                          });
+                        }}
+                        onFocus=${() => { setOpenField("country"); debouncedFetchCountries(countryInput || ""); }}
+                        onClick=${() => { setOpenField(openField === "country" ? "" : "country"); debouncedFetchCountries(countryInput || ""); }}
+                        onBlur=${() => setTimeout(() => setOpenField(""), 120)}
+                        autoComplete="off"
+                      />
+                      ${renderSuggestions("country", remoteCountries.length ? remoteCountries : availableCountries, countryInput, (value) => { handleCountryInputChange(value); setRemoteCounties([]); debouncedFetchCounties(value, ""); })}
+                    </div>
+                  `}
               <div className="combo-single">
                 <input
                   className="input-modern combo-single-input"
