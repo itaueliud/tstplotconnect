@@ -241,12 +241,20 @@ function formatPhoneForWhatsApp(phone) {
   }
 
 function getInitialFiltersFromUrl() {
+  const storedCountry = (() => {
+    if (typeof window === "undefined") return "";
+    try {
+      return String(localStorage.getItem("userSelectedCountry") || "").trim();
+    } catch (_err) {
+      return "";
+    }
+  })();
   if (typeof window === "undefined") {
     return { country: "", county: "", area: "", minPrice: "", maxPrice: "" };
   }
   const params = new URLSearchParams(window.location.search || "");
   return {
-    country: String(params.get("country") || "").trim(),
+    country: String(params.get("country") || storedCountry || "").trim(),
     county: String(params.get("county") || "").trim(),
     area: String(params.get("area") || "").trim(),
     minPrice: "",
@@ -398,13 +406,13 @@ function App() {
     return String(value || "").trim().toLowerCase();
   }
 
-  function getFilteredOptions(options, inputValue, limit = 8) {
+  function getFilteredOptions(options, inputValue, limit = Infinity) {
     const query = normalizeText(inputValue);
     const list = Array.isArray(options) ? options.filter(Boolean) : [];
     const filtered = query
       ? list.filter((item) => normalizeText(item).includes(query))
       : list;
-    return filtered.slice(0, limit);
+    return Number.isFinite(limit) ? filtered.slice(0, limit) : filtered;
   }
 
   // --- New: debounce helper and server-backed fetchers for Option B endpoints ---
@@ -516,6 +524,7 @@ function App() {
     } else {
       localStorage.removeItem("userToken");
       localStorage.removeItem("userProfile");
+      localStorage.removeItem("userSelectedCountry");
     }
   }
 
@@ -1094,6 +1103,9 @@ function App() {
                 className="btn-success rounded-xl p-3"
                 disabled=${!filters.country}
                 onClick=${() => {
+                  try {
+                    localStorage.setItem("userSelectedCountry", filters.country || "");
+                  } catch (_err) {}
                   setCountryConfirmed(true);
                   setActiveNav("user-access");
                   showMessage("Country selected. Please register or log in.");
