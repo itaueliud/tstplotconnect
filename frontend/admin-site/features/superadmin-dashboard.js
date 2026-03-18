@@ -72,6 +72,7 @@ function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [message, setMessage] = useState({ text: "", error: false });
+  const [uploadedImages, setUploadedImages] = useState([]);
   const [plots, setPlots] = useState([]);
   const [users, setUsers] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -123,6 +124,8 @@ function App() {
   const [plotForm, setPlotForm] = useState({
     title: "",
     price: "",
+    category: "",
+    priority: "medium",
     town: "",
     area: "",
     caretaker: "",
@@ -154,6 +157,38 @@ function App() {
 
   function showMessage(text, error = false) {
     setMessage({ text, error });
+  }
+
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error("Failed to read image file."));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleImageFiles(fileList) {
+    const files = Array.from(fileList || []).filter((file) => file && file.type && file.type.startsWith("image/"));
+    if (!files.length) {
+      showMessage("Please select image files.", true);
+      return;
+    }
+
+    const maxBytes = 2 * 1024 * 1024;
+    const accepted = files.filter((file) => file.size <= maxBytes);
+    if (accepted.length !== files.length) {
+      showMessage("Some images were skipped (max size 2MB each).", true);
+    }
+    if (!accepted.length) return;
+
+    try {
+      const dataUrls = await Promise.all(accepted.map((file) => fileToDataUrl(file)));
+      setUploadedImages((prev) => [...prev, ...dataUrls]);
+      showMessage(`${dataUrls.length} image${dataUrls.length === 1 ? "" : "s"} added.`);
+    } catch (_err) {
+      showMessage("Failed to add selected images.", true);
+    }
   }
 
   async function api(path, options = {}, authToken = null) {
@@ -558,18 +593,22 @@ function App() {
       const payload = {
         title: plotForm.title.trim(),
         price: Number(plotForm.price),
+        category: plotForm.category.trim(),
+        priority: plotForm.priority || "medium",
         town: plotForm.town.trim(),
         area: plotForm.area.trim(),
         caretaker: plotForm.caretaker.trim(),
         whatsapp: plotForm.whatsapp.trim(),
         description: plotForm.description.trim(),
-        images: commaUrls(plotForm.images),
+        images: [...commaUrls(plotForm.images), ...uploadedImages],
         videos: commaUrls(plotForm.videos)
       };
       await api("/api/admin/plots", { method: "POST", body: JSON.stringify(payload) });
       setPlotForm({
         title: "",
         price: "",
+        category: "",
+        priority: "medium",
         town: "",
         area: "",
         caretaker: "",
@@ -578,6 +617,7 @@ function App() {
         images: "",
         videos: ""
       });
+      setUploadedImages([]);
       showMessage("Plot added successfully.");
       await Promise.all([loadPlots(), loadAnalytics()]);
     } catch (err) {
@@ -1100,6 +1140,24 @@ function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input className="input-modern p-3 rounded-xl" placeholder="Title" value=${plotForm.title} onInput=${(e) => setPlotForm({ ...plotForm, title: e.target.value })} />
                   <input className="input-modern p-3 rounded-xl" type="number" placeholder="Price (Ksh)" value=${plotForm.price} onInput=${(e) => setPlotForm({ ...plotForm, price: e.target.value })} />
+                  <select className="input-modern p-3 rounded-xl" value=${plotForm.category} onChange=${(e) => setPlotForm({ ...plotForm, category: e.target.value })}>
+                    <option value="">Category</option>
+                    <option value="Rental Houses">Rental Houses</option>
+                    <option value="Bedsitters">Bedsitters</option>
+                    <option value="Hostels">Hostels</option>
+                    <option value="Apartments">Apartments</option>
+                    <option value="Lodges">Lodges</option>
+                    <option value="AirBnB">AirBnB</option>
+                    <option value="Vacant Shops">Vacant Shops</option>
+                    <option value="Office Spaces">Office Spaces</option>
+                    <option value="Guest Houses">Guest Houses</option>
+                    <option value="Plots for Sale">Plots for Sale</option>
+                  </select>
+                  <select className="input-modern p-3 rounded-xl" value=${plotForm.priority} onChange=${(e) => setPlotForm({ ...plotForm, priority: e.target.value })}>
+                    <option value="top">Top priority</option>
+                    <option value="medium">Middle priority</option>
+                    <option value="bottom">Bottom priority</option>
+                  </select>
                   <select
                     className="input-modern p-3 rounded-xl"
                     value=${plotForm.town}
@@ -1122,6 +1180,20 @@ function App() {
                   <input className="input-modern p-3 rounded-xl" placeholder="WhatsApp phone" value=${plotForm.whatsapp} onInput=${(e) => setPlotForm({ ...plotForm, whatsapp: e.target.value })} />
                   <textarea className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Description" value=${plotForm.description} onInput=${(e) => setPlotForm({ ...plotForm, description: e.target.value })}></textarea>
                   <input className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Image URLs (comma separated)" value=${plotForm.images} onInput=${(e) => setPlotForm({ ...plotForm, images: e.target.value })} />
+                  <input
+                    className="input-modern p-3 rounded-xl md:col-span-2"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange=${async (e) => {
+                      await handleImageFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                  <p className="text-xs text-muted md:col-span-2">You can paste image URLs or upload images (max 2MB each).</p>
+                  ${uploadedImages.length
+                    ? html`<p className="text-xs text-emerald-400 md:col-span-2">Uploaded images: ${uploadedImages.length}</p>`
+                    : null}
                   <input className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Video URLs (comma separated)" value=${plotForm.videos} onInput=${(e) => setPlotForm({ ...plotForm, videos: e.target.value })} />
                   <button className="btn-success py-3 rounded-xl md:col-span-2" onClick=${addPlot} disabled=${busy}>Create Plot</button>
                 </div>

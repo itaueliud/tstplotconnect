@@ -120,6 +120,7 @@ function App() {
     title: "",
     price: "",
     category: "",
+    priority: "medium",
     town: "",
     area: "",
     caretaker: "",
@@ -510,6 +511,7 @@ function App() {
         title: plotForm.title.trim(),
         price: Number(plotForm.price),
         category: plotForm.category.trim(),
+        priority: plotForm.priority || "medium",
         town: plotForm.town.trim(),
         area: plotForm.area.trim(),
         caretaker: plotForm.caretaker.trim(),
@@ -523,6 +525,7 @@ function App() {
         title: "",
         price: "",
         category: "",
+        priority: "medium",
         town: "",
         area: "",
         caretaker: "",
@@ -1047,6 +1050,11 @@ function App() {
                     <option value="Office Spaces">Office Spaces</option>
                     <option value="Guest Houses">Guest Houses</option>
                     <option value="Plots for Sale">Plots for Sale</option>
+                  </select>
+                  <select className="input-modern p-3 rounded-xl" value=${plotForm.priority} onChange=${(e) => setPlotForm({ ...plotForm, priority: e.target.value })}>
+                    <option value="top">Top priority</option>
+                    <option value="medium">Middle priority</option>
+                    <option value="bottom">Bottom priority</option>
                   </select>
                   <select
                     className="input-modern p-3 rounded-xl"

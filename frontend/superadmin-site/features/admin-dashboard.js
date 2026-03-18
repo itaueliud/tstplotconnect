@@ -106,6 +106,8 @@ function App() {
   const [plotForm, setPlotForm] = useState({
     title: "",
     price: "",
+    category: "",
+    priority: "medium",
     town: "",
     area: "",
     caretaker: "",
@@ -481,6 +483,8 @@ function App() {
       const payload = {
         title: plotForm.title.trim(),
         price: Number(plotForm.price),
+        category: plotForm.category.trim(),
+        priority: plotForm.priority || "medium",
         town: plotForm.town.trim(),
         area: plotForm.area.trim(),
         caretaker: plotForm.caretaker.trim(),
@@ -493,6 +497,8 @@ function App() {
       setPlotForm({
         title: "",
         price: "",
+        category: "",
+        priority: "medium",
         town: "",
         area: "",
         caretaker: "",
@@ -959,6 +965,24 @@ function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input className="input-modern p-3 rounded-xl" placeholder="Title" value=${plotForm.title} onInput=${(e) => setPlotForm({ ...plotForm, title: e.target.value })} />
                   <input className="input-modern p-3 rounded-xl" type="number" placeholder="Price (Ksh)" value=${plotForm.price} onInput=${(e) => setPlotForm({ ...plotForm, price: e.target.value })} />
+                  <select className="input-modern p-3 rounded-xl" value=${plotForm.category} onChange=${(e) => setPlotForm({ ...plotForm, category: e.target.value })}>
+                    <option value="">Category</option>
+                    <option value="Rental Houses">Rental Houses</option>
+                    <option value="Bedsitters">Bedsitters</option>
+                    <option value="Hostels">Hostels</option>
+                    <option value="Apartments">Apartments</option>
+                    <option value="Lodges">Lodges</option>
+                    <option value="AirBnB">AirBnB</option>
+                    <option value="Vacant Shops">Vacant Shops</option>
+                    <option value="Office Spaces">Office Spaces</option>
+                    <option value="Guest Houses">Guest Houses</option>
+                    <option value="Plots for Sale">Plots for Sale</option>
+                  </select>
+                  <select className="input-modern p-3 rounded-xl" value=${plotForm.priority} onChange=${(e) => setPlotForm({ ...plotForm, priority: e.target.value })}>
+                    <option value="top">Top priority</option>
+                    <option value="medium">Middle priority</option>
+                    <option value="bottom">Bottom priority</option>
+                  </select>
                   <select
                     className="input-modern p-3 rounded-xl"
                     value=${plotForm.town}

@@ -188,6 +188,12 @@ body {
   scroll-margin-top: 96px;
 }
 
+.user-content #user-search {
+  position: relative;
+  z-index: 30;
+  overflow: visible;
+}
+
 .section-card {
   background: var(--surface-strong);
   border: 1px solid rgba(160, 181, 209, 0.35);
@@ -236,6 +242,11 @@ body {
 .combo-single {
   position: relative;
   width: 100%;
+  z-index: 1;
+}
+
+.combo-single:focus-within {
+  z-index: 40;
 }
 
 .combo-single-input {
@@ -307,8 +318,12 @@ body {
   border: 1px solid #d1d5db;
   background: #ffffff;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  max-height: 300px;
+  max-height: min(300px, 45vh);
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   width: 100%;
 }
 
@@ -895,6 +910,10 @@ body {
   .map-container {
     height: min(48vh, 320px);
   }
+
+  .combo-suggestions {
+    max-height: min(40vh, 260px);
+  }
 }
 
 .toast {
@@ -934,4 +953,3 @@ body {
     transform: translateY(0);
   }
 }
-
