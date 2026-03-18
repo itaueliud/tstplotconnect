@@ -493,11 +493,6 @@ function App() {
               type="button"
               className="combo-suggestion"
               onMouseDown=${(e) => e.preventDefault()}
-              onTouchStart=${(e) => {
-                e.preventDefault();
-                onSelect(item);
-                setOpenField("");
-              }}
               onClick=${() => {
                 onSelect(item);
                 setOpenField("");
