@@ -423,7 +423,7 @@ function App() {
   async function fetchCountries(query) {
     latestCountryQuery = String(query || "");
     try {
-      const url = `/api/metadata/countries${query ? `?query=${encodeURIComponent(query)}` : ""}`;
+      const url = `${apiBase}/api/metadata/countries${query ? `?query=${encodeURIComponent(query)}` : ""}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to load countries");
       const data = await res.json();
@@ -438,7 +438,7 @@ function App() {
   async function fetchCounties(country, query) {
     latestCountyQuery = `${country}::${String(query || "")}`;
     try {
-      const url = `/api/metadata/counties?country=${encodeURIComponent(country || "")}${query ? `&query=${encodeURIComponent(query)}` : ""}`;
+      const url = `${apiBase}/api/metadata/counties?country=${encodeURIComponent(country || "")}${query ? `&query=${encodeURIComponent(query)}` : ""}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to load counties");
       const data = await res.json();
@@ -452,7 +452,7 @@ function App() {
   async function fetchAreas(county, query) {
     latestAreaQuery = `${county}::${String(query || "")}`;
     try {
-      const url = `/api/metadata/areas?county=${encodeURIComponent(county || "")}${query ? `&query=${encodeURIComponent(query)}` : ""}`;
+      const url = `${apiBase}/api/metadata/areas?county=${encodeURIComponent(county || "")}${query ? `&query=${encodeURIComponent(query)}` : ""}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to load areas");
       const data = await res.json();
@@ -660,15 +660,17 @@ function App() {
       const categoryFiltered = category
         ? rows.filter((p) => String(p.category || "").trim().toLowerCase() === category)
         : rows;
-      const min = Number(filters.minPrice);
-      const max = Number(filters.maxPrice);
-      const hasMin = Number.isFinite(min);
-      const hasMax = Number.isFinite(max);
+      const minPriceValue = String(filters.minPrice ?? "").trim();
+      const maxPriceValue = String(filters.maxPrice ?? "").trim();
+      const hasMin = minPriceValue !== "";
+      const hasMax = maxPriceValue !== "";
+      const min = hasMin ? Number(minPriceValue) : null;
+      const max = hasMax ? Number(maxPriceValue) : null;
       const priceFiltered = categoryFiltered.filter((p) => {
         const price = Number(p.price);
         if (!Number.isFinite(price)) return true;
-        if (hasMin && price < min) return false;
-        if (hasMax && price > max) return false;
+        if (hasMin && Number.isFinite(min) && price < min) return false;
+        if (hasMax && Number.isFinite(max) && price > max) return false;
         return true;
       });
       setPlots(priceFiltered);

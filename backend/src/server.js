@@ -159,6 +159,43 @@ async function getLocationMetadata() {
   };
 }
 
+async function syncPlotLocationMetadata(country, county, area) {
+  const countryName = String(country || "").trim() || "Kenya";
+  const countyName = String(county || "").trim();
+  const areaName = String(area || "").trim();
+  if (!countyName) return;
+
+  const meta = await getLocationMetadata();
+  const countries = new Set(Array.isArray(meta.countries) ? meta.countries : []);
+  countries.add(countryName);
+
+  const countiesByCountry = { ...(meta.countiesByCountry || {}) };
+  const countySet = new Set(Array.isArray(countiesByCountry[countryName]) ? countiesByCountry[countryName] : []);
+  countySet.add(countyName);
+  countiesByCountry[countryName] = Array.from(countySet).sort((a, b) => a.localeCompare(b));
+
+  const areasByCounty = { ...(meta.areasByCounty || {}) };
+  const areaSet = new Set(Array.isArray(areasByCounty[countyName]) ? areasByCounty[countyName] : []);
+  if (areaName) {
+    areaSet.add(areaName);
+  }
+  areasByCounty[countyName] = Array.from(areaSet).sort((a, b) => a.localeCompare(b));
+
+  await locationMetadataCol().updateOne(
+    { key: "default" },
+    {
+      $set: {
+        countries: Array.from(countries),
+        countiesByCountry,
+        areasByCounty,
+        updatedAt: new Date()
+      },
+      $setOnInsert: { key: "default", createdAt: new Date() }
+    },
+    { upsert: true }
+  );
+}
+
 function normalizeLocationMetadata(meta) {
   const countries = Array.isArray(meta.countries) ? meta.countries : [];
   const countiesByCountry = meta.countiesByCountry && typeof meta.countiesByCountry === "object"
@@ -222,6 +259,7 @@ function mapPlot(plot, unlocked) {
     description: plot.description || "",
     images: Array.isArray(plot.images) ? plot.images : [],
     videos: Array.isArray(plot.videos) ? plot.videos : [],
+    priority: plot.priority || "medium",
     caretaker: unlocked ? plot.caretaker : "Locked",
     whatsapp: unlocked ? plot.whatsapp : "Locked",
     unlocked
@@ -1312,6 +1350,7 @@ app.post("/api/admin/plots", requireSecureAdmin, requireAuth, requireAdmin, asyn
     title,
     price,
     category = "",
+    priority = "medium",
     country = "Kenya",
     county = req.body?.town || "",
     town,
@@ -1328,6 +1367,7 @@ app.post("/api/admin/plots", requireSecureAdmin, requireAuth, requireAdmin, asyn
   const cleanCountry = String(country || "").trim() || "Kenya";
   const cleanCounty = String(county || "").trim();
   const cleanArea = String(area || "").trim();
+  const cleanPriority = String(priority || "medium").trim().toLowerCase() || "medium";
   const cleanDescription = String(description || "").trim();
   const cleanCaretaker = String(caretaker || "").trim();
   const cleanWhatsapp = String(whatsapp || "").trim();
@@ -1348,6 +1388,7 @@ app.post("/api/admin/plots", requireSecureAdmin, requireAuth, requireAdmin, asyn
     county: cleanCounty,
     town: cleanCounty,
     area: cleanArea,
+    priority: ["top", "medium", "bottom"].includes(cleanPriority) ? cleanPriority : "medium",
     description: cleanDescription,
     caretaker: cleanCaretaker,
     whatsapp: cleanWhatsapp,
@@ -1357,6 +1398,7 @@ app.post("/api/admin/plots", requireSecureAdmin, requireAuth, requireAdmin, asyn
   };
 
   await plotsCol().insertOne(plot);
+  await syncPlotLocationMetadata(plot.country, plot.county, plot.area);
   return res.status(201).json(mapPlot(plot, true));
 });
 
@@ -1370,6 +1412,7 @@ app.put("/api/admin/plots/:id", requireSecureAdmin, requireAuth, requireAdmin, a
     title = existing.title,
     price = existing.price,
     category = existing.category || "",
+    priority = existing.priority || "medium",
     country = existing.country || "Kenya",
     county = existing.county || existing.town,
     area = existing.area,
@@ -1385,6 +1428,7 @@ app.put("/api/admin/plots/:id", requireSecureAdmin, requireAuth, requireAdmin, a
   const cleanCountry = String(country || "").trim() || "Kenya";
   const cleanCounty = String(county || "").trim();
   const cleanArea = String(area || "").trim();
+  const cleanPriority = String(priority || "medium").trim().toLowerCase() || "medium";
   const cleanDescription = String(description || "").trim();
   const cleanCaretaker = String(caretaker || "").trim();
   const cleanWhatsapp = String(whatsapp || "").trim();
@@ -1401,6 +1445,7 @@ app.put("/api/admin/plots/:id", requireSecureAdmin, requireAuth, requireAdmin, a
     county: cleanCounty,
     town: cleanCounty,
     area: cleanArea,
+    priority: ["top", "medium", "bottom"].includes(cleanPriority) ? cleanPriority : "medium",
     description: cleanDescription,
     caretaker: cleanCaretaker,
     whatsapp: cleanWhatsapp
@@ -1414,6 +1459,7 @@ app.put("/api/admin/plots/:id", requireSecureAdmin, requireAuth, requireAdmin, a
   }
 
   await plotsCol().updateOne({ id: req.params.id }, { $set: setDoc });
+  await syncPlotLocationMetadata(setDoc.country, setDoc.county, setDoc.area);
   const updated = await plotsCol().findOne({ id: req.params.id });
   return res.json(mapPlot(updated, true));
 });
