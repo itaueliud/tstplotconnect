@@ -32,19 +32,6 @@ const AREA_COORDS = {
   "Nairobi|Kasarani": [36.8913, -1.2281]
 };
 
-const SAMPLE_PLOTS = [
-  { id: "sample-1", title: "Bedsitter - Katungo", price: 6500, category: "Bedsitters", country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2", "https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-2", title: "One Bedroom - Katungo", price: 9000, category: "Rental Houses", country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1598928506311-6f37b1369d11"], videos: ["https://www.w3schools.com/html/mov_bbb.mp4"], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-3", title: "Bedsitter - Mutituni", price: 7000, category: "Bedsitters", country: "Kenya", county: "Machakos", town: "Machakos", area: "Mutituni", images: ["https://images.unsplash.com/photo-1570129477492-45c003edd2be"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-4", title: "Studio - Town", price: 8000, category: "Apartments", country: "Kenya", county: "Machakos", town: "Machakos", area: "Town", images: ["https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-5", title: "One Bedroom - Rongai", price: 10000, category: "Rental Houses", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Rongai", images: ["https://images.unsplash.com/photo-1570129477492-3c3d1f7eb20a"], videos: ["https://www.w3schools.com/html/mov_bbb.mp4"], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-6", title: "Bedsitter - South B", price: 6500, category: "Bedsitters", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "South B", images: ["https://images.unsplash.com/photo-1600585154340-be6161a56a0c"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-7", title: "One Bedroom - Kasarani", price: 9000, category: "Apartments", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Kasarani", images: ["https://images.unsplash.com/photo-1598928506311-6f37b1369d11"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-8", title: "Studio - Kasarani", price: 8500, category: "Apartments", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Kasarani", images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-9", title: "Bedsitter - Katungo", price: 6000, category: "Bedsitters", country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1570129477492-45c003edd2be"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-10", title: "One Bedroom - Town", price: 9500, category: "Rental Houses", country: "Kenya", county: "Machakos", town: "Machakos", area: "Town", images: ["https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" }
-];
-
 async function ensureMapLibreAssets() {
   if (window.maplibregl) return window.maplibregl;
 
@@ -300,34 +287,39 @@ function App() {
     setMsg({ text, error });
   }
 
-  function handleCountryInputChange(value) {
+  function handleCountryInputChange(value, fromRemote = false) {
     const next = String(value || "");
     setCountryInput(next);
     setFilters((prev) => {
       if (!next) return { ...prev, country: "", county: "", area: "" };
-      const match = availableCountries.find((c) => String(c).toLowerCase() === next.toLowerCase());
+      const source = fromRemote ? (remoteCountries.length ? remoteCountries : availableCountries) : availableCountries;
+      const match = source.find((c) => String(c).toLowerCase() === next.toLowerCase());
       return { ...prev, country: match || "", county: "", area: "" };
     });
   }
 
-  function handleCountyInputChange(value) {
+  function handleCountyInputChange(value, fromRemote = false) {
     const next = String(value || "");
     setCountyInput(next);
     setFilters((prev) => {
       if (!next) return { ...prev, county: "", area: "" };
-      const match = counties.find((c) => String(c).toLowerCase() === next.toLowerCase());
+      const country = filters.country || prev.country || countryInput;
+      const source = fromRemote ? (remoteCounties.length ? remoteCounties : (meta.countiesByCountry?.[country] || [])) : (meta.countiesByCountry?.[country] || []);
+      const match = source.find((c) => String(c).toLowerCase() === next.toLowerCase());
       return { ...prev, county: match || "", area: "" };
     });
   }
 
-  function handleAreaInputChange(value) {
+  function handleAreaInputChange(value, fromRemote = false) {
     const next = String(value || "");
     setAreaInput(next);
     setFilters((prev) => {
       if (!next) {
         return { ...prev, area: "" };
       }
-      const match = areas.find((a) => String(a).toLowerCase() === next.toLowerCase());
+      const county = filters.county || prev.county || countyInput;
+      const source = fromRemote ? (remoteAreas.length ? remoteAreas : (meta.areasByCounty?.[county] || [])) : (meta.areasByCounty?.[county] || []);
+      const match = source.find((a) => String(a).toLowerCase() === next.toLowerCase());
       return { ...prev, area: match || "" };
     });
   }
@@ -384,6 +376,72 @@ function App() {
       : list;
     return filtered.slice(0, limit);
   }
+
+  // --- New: debounce helper and server-backed fetchers for Option B endpoints ---
+  function debounce(fn, wait = 300) {
+    let t = null;
+    return (...args) => {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => fn(...args), wait);
+    };
+  }
+
+  const [remoteCountries, setRemoteCountries] = useState([]);
+  const [remoteCounties, setRemoteCounties] = useState([]);
+  const [remoteAreas, setRemoteAreas] = useState([]);
+
+  let latestCountryQuery = "";
+  let latestCountyQuery = "";
+  let latestAreaQuery = "";
+
+  async function fetchCountries(query) {
+    latestCountryQuery = String(query || "");
+    try {
+      const url = `/api/metadata/countries${query ? `?query=${encodeURIComponent(query)}` : ""}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to load countries");
+      const data = await res.json();
+      if (latestCountryQuery !== String(query || "")) return; // stale
+      setRemoteCountries(Array.isArray(data) ? data : []);
+    } catch (_err) {
+      // fallback to local meta
+      setRemoteCountries(availableCountries || []);
+    }
+  }
+
+  async function fetchCounties(country, query) {
+    latestCountyQuery = `${country}::${String(query || "")}`;
+    try {
+      const url = `/api/metadata/counties?country=${encodeURIComponent(country || "")}${query ? `&query=${encodeURIComponent(query)}` : ""}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to load counties");
+      const data = await res.json();
+      if (latestCountyQuery !== `${country}::${String(query || "")}`) return;
+      setRemoteCounties(Array.isArray(data) ? data : []);
+    } catch (_err) {
+      setRemoteCounties(meta.countiesByCountry?.[country] || []);
+    }
+  }
+
+  async function fetchAreas(county, query) {
+    latestAreaQuery = `${county}::${String(query || "")}`;
+    try {
+      const url = `/api/metadata/areas?county=${encodeURIComponent(county || "")}${query ? `&query=${encodeURIComponent(query)}` : ""}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to load areas");
+      const data = await res.json();
+      if (latestAreaQuery !== `${county}::${String(query || "")}`) return;
+      setRemoteAreas(Array.isArray(data) ? data : []);
+    } catch (_err) {
+      setRemoteAreas(meta.areasByCounty?.[county] || []);
+    }
+  }
+
+  const debouncedFetchCountries = debounce((q) => fetchCountries(q), 300);
+  const debouncedFetchCounties = debounce((country, q) => fetchCounties(country, q), 300);
+  const debouncedFetchAreas = debounce((county, q) => fetchAreas(county, q), 300);
+
+  // --- end new additions ---
 
   function renderSuggestions(field, options, inputValue, onSelect) {
     if (openField !== field) return null;
@@ -587,26 +645,10 @@ function App() {
         if (hasMax && price > max) return false;
         return true;
       });
-      const sampleFiltered = SAMPLE_PLOTS.filter((p) =>
-        (!filters.country || p.country === filters.country) &&
-        (!filters.county || (p.county || p.town) === filters.county) &&
-        (!filters.area || p.area === filters.area) &&
-        (!filters.category || p.category === filters.category) &&
-        (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
-        (!filters.maxPrice || p.price <= Number(filters.maxPrice))
-      ).map((p) => ({ ...p, priority: "bottom" }));
-      setPlots([...priceFiltered, ...sampleFiltered]);
+      setPlots(priceFiltered);
     } catch (err) {
-      const fallback = SAMPLE_PLOTS.filter((p) =>
-        (!filters.country || p.country === filters.country) &&
-        (!filters.county || (p.county || p.town) === filters.county) &&
-        (!filters.area || p.area === filters.area) &&
-        (!filters.category || p.category === filters.category) &&
-        (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
-        (!filters.maxPrice || p.price <= Number(filters.maxPrice))
-      ).map((p) => ({ ...p, priority: "bottom" }));
-      setPlots(fallback);
-      showMessage(`${err.message}. Showing sample plots.`, true);
+      setPlots([]);
+      showMessage(`${err.message}. Failed to load plots from server.`, true);
     } finally {
       setLoading(false);
     }
@@ -1019,17 +1061,19 @@ function App() {
             <h2 className="section-title">Select Country</h2>
             <p className="text-sm text-slate-300 mb-3">Choose your country to continue to registration or login.</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <select
-                className="input-modern p-3 rounded-xl md:col-span-2"
-                value=${filters.country}
-                onChange=${(e) => {
-                  setCountryConfirmed(false);
-                  setFilters({ country: e.target.value, county: "", area: "", minPrice: "", maxPrice: "" });
-                }}
-              >
-                <option value="">Choose country</option>
-                ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
-              </select>
+              <div className="combo-single md:col-span-2">
+                <input
+                  className="input-modern combo-single-input"
+                  placeholder="Select country"
+                  value=${countryInput}
+                  onInput=${(e) => { handleCountryInputChange(e.target.value); setCountryConfirmed(false); }}
+                  onFocus=${() => setOpenField("country")}
+                  onClick=${() => setOpenField(openField === "country" ? "" : "country")}
+                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
+                  autoComplete="off"
+                />
+                ${renderSuggestions("country", availableCountries, countryInput, (value) => handleCountryInputChange(value))}
+              </div>
               <button
                 className="btn-success rounded-xl p-3"
                 disabled=${!filters.country}
@@ -1294,39 +1338,72 @@ function App() {
                   className="input-modern combo-single-input"
                   placeholder="All Countries"
                   value=${countryInput}
-                  onInput=${(e) => handleCountryInputChange(e.target.value)}
-                  onFocus=${() => setOpenField("country")}
-                  onClick=${() => setOpenField(openField === "country" ? "" : "country")}
+                  onInput=${(e) => {
+                    const v = e.target.value;
+                    setCountryInput(v);
+                    setCountryConfirmed(false);
+                    // fetch remote suggestions
+                    debouncedFetchCountries(v);
+                    // also keep local filter behavior
+                    setFilters((prev) => {
+                      if (!v) return { ...prev, country: "", county: "", area: "" };
+                      const match = availableCountries.find((c) => String(c).toLowerCase() === v.toLowerCase());
+                      return { ...prev, country: match || "", county: "", area: "" };
+                    });
+                  }}
+                  onFocus=${() => { setOpenField("country"); debouncedFetchCountries(countryInput || ""); }}
+                  onClick=${() => { setOpenField(openField === "country" ? "" : "country"); debouncedFetchCountries(countryInput || ""); }}
                   onBlur=${() => setTimeout(() => setOpenField(""), 120)}
                   autoComplete="off"
                 />
-                ${renderSuggestions("country", availableCountries, countryInput, (value) => handleCountryInputChange(value))}
+                ${renderSuggestions("country", remoteCountries.length ? remoteCountries : availableCountries, countryInput, (value) => { handleCountryInputChange(value); setRemoteCounties([]); debouncedFetchCounties(value, ""); })}
               </div>
               <div className="combo-single">
                 <input
                   className="input-modern combo-single-input"
                   placeholder="All Counties"
                   value=${countyInput}
-                  onInput=${(e) => handleCountyInputChange(e.target.value)}
-                  onFocus=${() => setOpenField("county")}
-                  onClick=${() => setOpenField(openField === "county" ? "" : "county")}
+                  onInput=${(e) => {
+                    const v = e.target.value;
+                    setCountyInput(v);
+                    // fetch remote counties for selected country
+                    const country = filters.country || countryInput;
+                    debouncedFetchCounties(country, v);
+                    setFilters((prev) => {
+                      if (!v) return { ...prev, county: "", area: "" };
+                      const match = (meta.countiesByCountry?.[country] || []).find((c) => String(c).toLowerCase() === v.toLowerCase());
+                      return { ...prev, county: match || "", area: "" };
+                    });
+                  }}
+                  onFocus=${() => { setOpenField("county"); debouncedFetchCounties(filters.country || countryInput, countyInput || ""); }}
+                  onClick=${() => { setOpenField(openField === "county" ? "" : "county"); debouncedFetchCounties(filters.country || countryInput, countyInput || ""); }}
                   onBlur=${() => setTimeout(() => setOpenField(""), 120)}
                   autoComplete="off"
                 />
-                ${renderSuggestions("county", counties, countyInput, (value) => handleCountyInputChange(value))}
+                ${renderSuggestions("county", remoteCounties.length ? remoteCounties : counties, countyInput, (value) => { handleCountyInputChange(value); debouncedFetchAreas(value, ""); })}
               </div>
               <div className="combo-single">
                 <input
                   className="input-modern combo-single-input"
                   placeholder="Type or select area"
                   value=${areaInput}
-                  onInput=${(e) => handleAreaInputChange(e.target.value)}
-                  onFocus=${() => setOpenField("area")}
-                  onClick=${() => setOpenField(openField === "area" ? "" : "area")}
+                  onInput=${(e) => {
+                    const v = e.target.value;
+                    setAreaInput(v);
+                    const county = filters.county || countyInput;
+                    debouncedFetchAreas(county, v);
+                    setFilters((prev) => {
+                      if (!v) return { ...prev, area: "" };
+                      const match = (meta.areasByCounty?.[county] || []).find((a) => String(a).toLowerCase() === v.toLowerCase());
+                      return { ...prev, area: match || "" };
+                    });
+                  }}
+                  onFocus=${() => { setOpenField("area"); debouncedFetchAreas(filters.county || countyInput, areaInput || ""); }}
+                  onClick=${() => { setOpenField(openField === "area" ? "" : "area"); debouncedFetchAreas(filters.county || countyInput, areaInput || ""); }}
                   onBlur=${() => setTimeout(() => setOpenField(""), 120)}
                   autoComplete="off"
                 />
-                ${renderSuggestions("area", areas, areaInput, (value) => handleAreaInputChange(value))}
+                ${renderSuggestions("area", remoteAreas.length ? remoteAreas : areas, areaInput, (value) => { handleAreaInputChange(value); })}
               </div>
               <div className="combo-single">
                 <input
