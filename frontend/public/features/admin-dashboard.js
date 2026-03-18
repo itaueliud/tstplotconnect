@@ -134,6 +134,7 @@ function App() {
     caretaker: "",
     whatsapp: "",
     description: "",
+    priority: "medium",
     images: "",
     videos: ""
   });
@@ -510,6 +511,7 @@ function App() {
         caretaker: plotForm.caretaker.trim(),
         whatsapp: plotForm.whatsapp.trim(),
         description: plotForm.description.trim(),
+        priority: plotForm.priority || "medium",
         images: [...commaUrls(plotForm.images), ...uploadedImages],
         videos: commaUrls(plotForm.videos)
       };
@@ -523,6 +525,7 @@ function App() {
         caretaker: "",
         whatsapp: "",
         description: "",
+        priority: "medium",
         images: "",
         videos: ""
       });
@@ -1064,6 +1067,11 @@ function App() {
                   <input className="input-modern p-3 rounded-xl" placeholder="Caretaker phone" value=${plotForm.caretaker} onInput=${(e) => setPlotForm({ ...plotForm, caretaker: e.target.value })} />
                   <input className="input-modern p-3 rounded-xl" placeholder="WhatsApp phone" value=${plotForm.whatsapp} onInput=${(e) => setPlotForm({ ...plotForm, whatsapp: e.target.value })} />
                   <textarea className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Description" value=${plotForm.description} onInput=${(e) => setPlotForm({ ...plotForm, description: e.target.value })}></textarea>
+                  <select className="input-modern p-3 rounded-xl" value=${plotForm.priority} onChange=${(e) => setPlotForm({ ...plotForm, priority: e.target.value })}>
+                    <option value="top">Top priority</option>
+                    <option value="medium">Middle priority</option>
+                    <option value="bottom">Bottom priority</option>
+                  </select>
                   <input className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Image URLs (comma separated)" value=${plotForm.images} onInput=${(e) => setPlotForm({ ...plotForm, images: e.target.value })} />
                   <input
                     className="input-modern p-3 rounded-xl md:col-span-2"
