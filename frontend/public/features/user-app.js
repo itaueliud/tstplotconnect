@@ -1007,10 +1007,28 @@ function App() {
   }, [filters.country, countryInput]);
 
   useEffect(() => {
+    if (!filters.country) {
+      setRemoteCounties([]);
+      return;
+    }
+    setRemoteCounties(meta.countiesByCountry?.[filters.country] || []);
+    debouncedFetchCounties(filters.country, "");
+  }, [filters.country, meta]);
+
+  useEffect(() => {
     if (filters.county && countyInput !== filters.county) {
       setCountyInput(filters.county);
     }
   }, [filters.county, countyInput]);
+
+  useEffect(() => {
+    if (!filters.county) {
+      setRemoteAreas([]);
+      return;
+    }
+    setRemoteAreas(meta.areasByCounty?.[filters.county] || []);
+    debouncedFetchAreas(filters.county, "");
+  }, [filters.county, meta]);
 
   useEffect(() => {
     if (filters.category && categoryInput !== filters.category) {
