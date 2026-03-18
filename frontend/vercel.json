@@ -3,13 +3,39 @@
     { "source": "/about.html", "destination": "/about", "permanent": true },
     { "source": "/blog.html", "destination": "/blogs", "permanent": true },
     { "source": "/contact.html", "destination": "/contacts", "permanent": true },
-    { "source": "/plots.html", "destination": "/plots", "permanent": true }
+    { "source": "/plots.html", "destination": "/plots", "permanent": true },
+    { "source": "/nairobi-hostels.html", "destination": "/nairobi-hostels", "permanent": true },
+    { "source": "/machakos-hostels.html", "destination": "/machakos-hostels", "permanent": true },
+    { "source": "/kiambu-hostels.html", "destination": "/kiambu-hostels", "permanent": true },
+    { "source": "/thika-hostels.html", "destination": "/thika-hostels", "permanent": true },
+    { "source": "/mombasa-hostels.html", "destination": "/mombasa-hostels", "permanent": true },
+    { "source": "/nairobi-bedsitters.html", "destination": "/nairobi-bedsitters", "permanent": true },
+    { "source": "/machakos-lodges.html", "destination": "/machakos-lodges", "permanent": true },
+    { "source": "/nairobi-lodges.html", "destination": "/nairobi-lodges", "permanent": true },
+    { "source": "/kitui-hostels.html", "destination": "/kitui-hostels", "permanent": true },
+    { "source": "/embu-hostels.html", "destination": "/embu-hostels", "permanent": true },
+    { "source": "/makueni-hostels.html", "destination": "/makueni-hostels", "permanent": true },
+    { "source": "/kajiado-hostels.html", "destination": "/kajiado-hostels", "permanent": true },
+    { "source": "/uasin-gishu-hostels.html", "destination": "/uasin-gishu-hostels", "permanent": true }
   ],
   "rewrites": [
     { "source": "/about", "destination": "/about.html" },
     { "source": "/blogs", "destination": "/blog.html" },
     { "source": "/blog-post", "destination": "/blog-post.html" },
     { "source": "/plots", "destination": "/plots.html" },
-    { "source": "/contacts", "destination": "/contact.html" }
+    { "source": "/contacts", "destination": "/contact.html" },
+    { "source": "/nairobi-hostels", "destination": "/nairobi-hostels.html" },
+    { "source": "/machakos-hostels", "destination": "/machakos-hostels.html" },
+    { "source": "/kiambu-hostels", "destination": "/kiambu-hostels.html" },
+    { "source": "/thika-hostels", "destination": "/thika-hostels.html" },
+    { "source": "/mombasa-hostels", "destination": "/mombasa-hostels.html" },
+    { "source": "/nairobi-bedsitters", "destination": "/nairobi-bedsitters.html" },
+    { "source": "/machakos-lodges", "destination": "/machakos-lodges.html" },
+    { "source": "/nairobi-lodges", "destination": "/nairobi-lodges.html" },
+    { "source": "/kitui-hostels", "destination": "/kitui-hostels.html" },
+    { "source": "/embu-hostels", "destination": "/embu-hostels.html" },
+    { "source": "/makueni-hostels", "destination": "/makueni-hostels.html" },
+    { "source": "/kajiado-hostels", "destination": "/kajiado-hostels.html" },
+    { "source": "/uasin-gishu-hostels", "destination": "/uasin-gishu-hostels.html" }
   ]
 }

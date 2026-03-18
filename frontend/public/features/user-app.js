@@ -256,7 +256,6 @@ function getInitialFiltersFromUrl() {
 
 function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
-  const REFRESH_MS = 30000;
   const initialFilters = getInitialFiltersFromUrl();
   const [apiBase, setApiBase] = useState(inferApiBase());
   const [msg, setMsg] = useState({ text: "", error: false });
@@ -294,7 +293,6 @@ function App() {
   const [paymentLog, setPaymentLog] = useState([]);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const lastKnownActiveRef = useRef(false);
-  const refreshInFlightRef = useRef(false);
 
   const counties = useMemo(
     () => (filters.country ? meta.countiesByCountry[filters.country] || [] : []),
@@ -1006,33 +1004,6 @@ function App() {
   }, [filters.category, categoryInput]);
 
   useEffect(() => {
-    let mounted = true;
-
-    const refresh = async () => {
-      if (!mounted || document.hidden || refreshInFlightRef.current) return;
-      refreshInFlightRef.current = true;
-      try {
-        await loadMetadata();
-        await loadPlots();
-      } finally {
-        refreshInFlightRef.current = false;
-      }
-    };
-
-    refresh();
-    const timer = setInterval(refresh, REFRESH_MS);
-    const onVisible = () => {
-      if (!document.hidden) refresh();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      mounted = false;
-      clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice, token, apiBase]);
-
-  useEffect(() => {
     function syncHash() {
       const hash = (window.location.hash || "").replace(/^#/, "");
       setActiveNav(hash || "user-access");
@@ -1082,7 +1053,8 @@ function App() {
     : (filters.area || filters.county || filters.country || "Selected Location");
   const isAuthenticated = Boolean(token);
   const hasChosenCountry = Boolean(filters.country) && countryConfirmed;
-  const searchGridClass = hasChosenCountry ? "grid grid-cols-1 md:grid-cols-5 gap-3" : "grid grid-cols-1 md:grid-cols-6 gap-3";
+  const hasLockedCountryFilter = Boolean(filters.country);
+  const searchGridClass = hasLockedCountryFilter ? "grid grid-cols-1 md:grid-cols-5 gap-3" : "grid grid-cols-1 md:grid-cols-6 gap-3";
   const userNavItems = isAuthenticated
     ? [
         { id: "user-access", label: "Access" },
@@ -1382,7 +1354,7 @@ function App() {
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
             <div className=${searchGridClass}>
-              ${hasChosenCountry
+              ${hasLockedCountryFilter
                 ? null
                 : html`
                     <div className="combo-single">
