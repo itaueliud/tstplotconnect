@@ -9,6 +9,32 @@ const SUPPORT_WHATSAPP = "254768622994";
 const API = (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_API_URL)
   || (typeof window !== "undefined" && window.NEXT_PUBLIC_API_URL)
   || DEFAULT_API_BASE;
+function inferApiBase() {
+  if (typeof window === "undefined") return API;
+  const loc = window.location;
+  const isLocalHost = /^(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/i.test(loc.hostname);
+  const isLocal = loc.protocol === "file:" || isLocalHost;
+  if (isLocal) {
+    try {
+      localStorage.removeItem("apiBase");
+    } catch (_err) {}
+    return API;
+  }
+  let saved = "";
+  try {
+    saved = localStorage.getItem("apiBase") || "";
+  } catch (_err) {
+    saved = "";
+  }
+  if (saved) {
+    const savedIsLocal = /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/i.test(saved);
+    const savedIsHttp = /^http:\/\//i.test(saved);
+    if (savedIsLocal || savedIsHttp) {
+      return API;
+    }
+  }
+  return saved || API;
+}
 const DEFAULT_MAP_CENTER = [37.9062, -0.0236]; // [lng, lat]
 const SUPPORTED_COUNTRIES = ["Kenya", "Uganda", "Tanzania", "Rwanda"];
 const COUNTRY_COORDS = {
@@ -232,7 +258,7 @@ function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
   const REFRESH_MS = 30000;
   const initialFilters = getInitialFiltersFromUrl();
-  const [apiBase, setApiBase] = useState(API);
+  const [apiBase, setApiBase] = useState(inferApiBase());
   const [msg, setMsg] = useState({ text: "", error: false });
   const [token, setToken] = useState("");
   const [userProfile, setUserProfile] = useState(null);
@@ -897,8 +923,22 @@ function App() {
   }, []);
 
   useEffect(() => {
+    function syncApiBase(event) {
+      if (event && event.key && event.key !== "apiBase") return;
+      setApiBase(inferApiBase());
+    }
+    window.addEventListener("storage", syncApiBase);
+    return () => window.removeEventListener("storage", syncApiBase);
+  }, []);
+
+  useEffect(() => {
+    loadMetadata();
     loadPlots();
-  }, [filters.country, filters.county, filters.area, filters.category, filters.minPrice, filters.maxPrice, token]);
+  }, [apiBase]);
+
+  useEffect(() => {
+    loadPlots();
+  }, [filters.country, filters.county, filters.area, filters.category, filters.minPrice, filters.maxPrice, token, apiBase]);
 
   useEffect(() => {
     setSelectedPlotId("");
@@ -982,7 +1022,7 @@ function App() {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice, token]);
+  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice, token, apiBase]);
 
   useEffect(() => {
     function syncHash() {
