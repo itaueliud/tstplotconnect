@@ -241,14 +241,7 @@ function formatPhoneForWhatsApp(phone) {
   }
 
 function getInitialFiltersFromUrl() {
-  const storedCountry = (() => {
-    if (typeof window === "undefined") return "";
-    try {
-      return String(localStorage.getItem("userSelectedCountry") || "").trim();
-    } catch (_err) {
-      return "";
-    }
-  })();
+  const storedCountry = getStoredSelectedCountry();
   if (typeof window === "undefined") {
     return { country: "", county: "", area: "", minPrice: "", maxPrice: "" };
   }
@@ -260,6 +253,15 @@ function getInitialFiltersFromUrl() {
     minPrice: "",
     maxPrice: ""
   };
+}
+
+function getStoredSelectedCountry() {
+  if (typeof window === "undefined") return "";
+  try {
+    return String(localStorage.getItem("userSelectedCountry") || "").trim();
+  } catch (_err) {
+    return "";
+  }
 }
 
 function App() {
@@ -933,6 +935,15 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!token || filters.country) return;
+    const storedCountry = getStoredSelectedCountry();
+    if (!storedCountry) return;
+    setFilters((prev) => ({ ...prev, country: storedCountry }));
+    setCountryInput(storedCountry);
+    setCountryConfirmed(true);
+  }, [token, filters.country]);
+
+  useEffect(() => {
     function syncApiBase(event) {
       if (event && event.key && event.key !== "apiBase") return;
       setApiBase(inferApiBase());
@@ -1057,8 +1068,7 @@ function App() {
     : (filters.area || filters.county || filters.country || "Selected Location");
   const isAuthenticated = Boolean(token);
   const hasChosenCountry = Boolean(filters.country) && countryConfirmed;
-  const hasLockedCountryFilter = Boolean(filters.country);
-  const searchGridClass = hasLockedCountryFilter ? "grid grid-cols-1 md:grid-cols-5 gap-3" : "grid grid-cols-1 md:grid-cols-6 gap-3";
+  const searchGridClass = "grid grid-cols-1 md:grid-cols-5 gap-3";
   const userNavItems = isAuthenticated
     ? [
         { id: "user-access", label: "Access" },
@@ -1361,33 +1371,6 @@ function App() {
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
             <div className=${searchGridClass}>
-              ${hasLockedCountryFilter
-                ? null
-                : html`
-                    <div className="combo-single">
-                      <input
-                        className="input-modern combo-single-input"
-                        placeholder="All Countries"
-                        value=${countryInput}
-                        onInput=${(e) => {
-                          const v = e.target.value;
-                          setCountryInput(v);
-                          setCountryConfirmed(false);
-                          debouncedFetchCountries(v);
-                          setFilters((prev) => {
-                            if (!v) return { ...prev, country: "", county: "", area: "" };
-                            const match = availableCountries.find((c) => String(c).toLowerCase() === v.toLowerCase());
-                            return { ...prev, country: match || "", county: "", area: "" };
-                          });
-                        }}
-                        onFocus=${() => { setOpenField("country"); debouncedFetchCountries(countryInput || ""); }}
-                        onClick=${() => { setOpenField(openField === "country" ? "" : "country"); debouncedFetchCountries(countryInput || ""); }}
-                        onBlur=${() => setTimeout(() => setOpenField(""), 120)}
-                        autoComplete="off"
-                      />
-                      ${renderSuggestions("country", remoteCountries.length ? remoteCountries : availableCountries, countryInput, (value) => { handleCountryInputChange(value); setRemoteCounties([]); debouncedFetchCounties(value, ""); })}
-                    </div>
-                  `}
               <div className="combo-single">
                 <input
                   className="input-modern combo-single-input"
