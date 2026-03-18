@@ -1395,23 +1395,43 @@ function App() {
         <h2 className="section-title">Search By Location</h2>
             <div className=${searchGridClass}>
               <div className="combo-single">
-                <select
-                  className="input-modern combo-select"
-                  value=${filters.county || ""}
-                  onFocus=${() => debouncedFetchCounties(filters.country, "")}
-                  onChange=${(e) => {
-                    const value = e.target.value;
-                    handleCountyInputChange(value, true);
-                    setOpenField("");
-                    debouncedFetchAreas(value, "");
+                <input
+                  className="input-modern combo-single-input"
+                  placeholder="All Counties"
+                  value=${countyInput}
+                  onInput=${(e) => {
+                    const v = e.target.value;
+                    setCountyInput(v);
+                    const country = filters.country || countryInput;
+                    debouncedFetchCounties(country, v);
+                    setFilters((prev) => {
+                      if (!v) return { ...prev, county: "", area: "" };
+                      const source = remoteCounties.length ? remoteCounties : (meta.countiesByCountry?.[country] || []);
+                      const match = source.find((c) => String(c).toLowerCase() === v.toLowerCase());
+                      return { ...prev, county: match || "", area: "" };
+                    });
                   }}
+                  onFocus=${() => {
+                    setOpenField("county");
+                    debouncedFetchCounties(filters.country, countyInput || "");
+                  }}
+                  onClick=${() => {
+                    setOpenField(openField === "county" ? "" : "county");
+                    debouncedFetchCounties(filters.country, countyInput || "");
+                  }}
+                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
+                  autoComplete="off"
                   disabled=${!filters.country}
-                >
-                  <option value="">All Counties</option>
-                  ${(remoteCounties.length ? remoteCounties : counties).map(
-                    (county) => html`<option key=${county} value=${county}>${county}</option>`
-                  )}
-                </select>
+                />
+                ${renderSuggestions(
+                  "county",
+                  remoteCounties.length ? remoteCounties : counties,
+                  countyInput,
+                  (value) => {
+                    handleCountyInputChange(value, true);
+                    debouncedFetchAreas(value, "");
+                  }
+                )}
               </div>
               <div className="combo-single">
                 <input
