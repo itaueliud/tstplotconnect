@@ -937,11 +937,16 @@ function App() {
   useEffect(() => {
     if (!token || filters.country) return;
     const storedCountry = getStoredSelectedCountry();
-    if (!storedCountry) return;
-    setFilters((prev) => ({ ...prev, country: storedCountry }));
-    setCountryInput(storedCountry);
+    const fallbackCountry = storedCountry
+      || (availableCountries.includes("Kenya") ? "Kenya" : availableCountries[0] || "");
+    if (!fallbackCountry) return;
+    try {
+      localStorage.setItem("userSelectedCountry", fallbackCountry);
+    } catch (_err) {}
+    setFilters((prev) => ({ ...prev, country: fallbackCountry }));
+    setCountryInput(fallbackCountry);
     setCountryConfirmed(true);
-  }, [token, filters.country]);
+  }, [token, filters.country, availableCountries]);
 
   useEffect(() => {
     function syncApiBase(event) {
