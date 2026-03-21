@@ -26,6 +26,10 @@ const SMS_MODE = (process.env.SMS_MODE || "mock").toLowerCase();
 const AFRICASTALKING_API_KEY = String(process.env.AFRICASTALKING_API_KEY || "").trim();
 const AFRICASTALKING_USERNAME = String(process.env.AFRICASTALKING_USERNAME || "sandbox").trim();
 const AFRICASTALKING_SENDER_ID = String(process.env.AFRICASTALKING_SENDER_ID || "").trim();
+const EXTRA_ALLOWED_ORIGINS = String(process.env.EXTRA_ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 const ALLOWED_CATEGORIES = new Set([
   "Rental Houses",
   "Bedsitters",
@@ -61,6 +65,10 @@ const ALLOWED_ORIGINS = new Set([
   "http://127.0.0.1:5502",
   "http://127.0.0.1:5503"
 ]);
+
+for (const origin of EXTRA_ALLOWED_ORIGINS) {
+  ALLOWED_ORIGINS.add(origin);
+}
 
 function isPrivateLanOrigin(origin) {
   return /^https?:\/\/(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/i.test(origin);
@@ -118,6 +126,10 @@ function locationMetadataCol() {
 
 function otpCodesCol() {
   return getDb().collection("otp_codes");
+}
+
+function accountDeletionRequestsCol() {
+  return getDb().collection("account_deletion_requests");
 }
 
 async function getLocationMetadata() {
@@ -507,6 +519,47 @@ app.get("/api/public/config", (_req, res) => {
   });
 });
 
+app.post("/api/account-deletion-request", async (req, res) => {
+  const { name, phone, email, reason, source } = req.body || {};
+  const trimmedName = String(name || "").trim();
+  const trimmedPhone = String(phone || "").trim();
+  const trimmedEmail = String(email || "").trim();
+  const trimmedReason = String(reason || "").trim();
+  const trimmedSource = String(source || "web").trim().toLowerCase();
+
+  if (!trimmedName || trimmedName.length < 2) {
+    return res.status(400).json({ error: "Full name is required." });
+  }
+  if (!trimmedPhone) {
+    return res.status(400).json({ error: "Phone number is required." });
+  }
+
+  const normalizedPhone = canonicalPhone(trimmedPhone);
+  const existingUser = await usersCol().findOne(
+    { phone: { $in: getPhoneVariants(normalizedPhone) } },
+    { projection: { id: 1, phone: 1, name: 1 } }
+  );
+
+  const requestDoc = {
+    id: randomUUID(),
+    name: trimmedName,
+    phone: normalizedPhone,
+    email: trimmedEmail || "",
+    reason: trimmedReason || "",
+    source: trimmedSource || "web",
+    userId: existingUser?.id || "",
+    matchedUserPhone: existingUser?.phone || "",
+    status: "Pending",
+    createdAt: new Date()
+  };
+
+  await accountDeletionRequestsCol().insertOne(requestDoc);
+
+  return res.status(201).json({
+    message: "Your account deletion request has been received. Our team will review and process it."
+  });
+});
+
 app.post("/api/register", (_req, res) => {
   return res.status(410).json({
     error: "Registration disabled. Use /api/user/session."
@@ -520,7 +573,7 @@ app.post("/api/user/session", async (req, res) => {
 });
 
 app.post("/api/user/register", async (req, res) => {
-  const { name, phone, password } = req.body || {};
+  const { name, country, phone, password } = req.body || {};
   if (!name || String(name).trim().length < 2) {
     return res.status(400).json({ error: "Name is required" });
   }
@@ -549,9 +602,11 @@ app.post("/api/user/register", async (req, res) => {
 
   const displayId = existing?.displayId || await generateUserDisplayId();
   const hash = bcrypt.hashSync(String(password), 10);
+  const normalizedCountry = String(country || existing?.country || "Kenya").trim() || "Kenya";
 
   const userDoc = {
     name: String(name).trim(),
+    country: normalizedCountry,
     phone: normalizedPhone,
     password: hash,
     displayId,
@@ -585,6 +640,7 @@ app.post("/api/user/register", async (req, res) => {
       id: user.id,
       displayId: user.displayId,
       name: user.name || "",
+      country: user.country || "Kenya",
       phone: user.phone,
       isAdmin: !!user.is_admin,
       isSuperAdmin: !!user.is_super_admin,
@@ -618,6 +674,7 @@ app.post("/api/user/login", async (req, res) => {
       id: user.id,
       displayId: user.displayId || user.id,
       name: user.name || "",
+      country: user.country || "Kenya",
       phone: user.phone,
       isAdmin: !!user.is_admin,
       isSuperAdmin: !!user.is_super_admin,

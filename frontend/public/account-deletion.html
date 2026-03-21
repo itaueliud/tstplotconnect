@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Deletion | TST PlotConnect</title>
+  <meta name="description" content="Request deletion of your TST PlotConnect account and associated user data.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://www.tst-plotconnect.com/account-deletion">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TST PlotConnect">
+  <meta property="og:title" content="Account Deletion | TST PlotConnect">
+  <meta property="og:description" content="Request deletion of your TST PlotConnect account and associated user data.">
+  <meta property="og:url" content="https://www.tst-plotconnect.com/account-deletion">
+  <meta property="og:image" content="https://www.tst-plotconnect.com/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/user.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen text-slate-900 bg-slate-50">
+  <main class="max-w-4xl mx-auto px-6 py-12">
+    <section class="glass rounded-3xl p-6 md:p-8">
+      <p class="text-sm uppercase tracking-[0.2em] text-slate-500 mb-3">Google Play Account Deletion</p>
+      <h1 class="text-3xl md:text-4xl font-bold mb-4 text-slate-900">Delete your PlotConnect account</h1>
+      <p class="text-slate-700 mb-8">
+        Use this page to request deletion of your TST PlotConnect account and associated user data.
+        You can also open this page from the mobile app under <strong>Profile - Delete Account</strong>.
+      </p>
+
+      <div class="grid gap-6 md:grid-cols-2 mb-8">
+        <section class="section-card">
+          <h2 class="text-xl font-semibold text-slate-900 mb-3">What account deletion means</h2>
+          <p class="text-slate-700">
+            When we process your request, your account will be marked for deletion and access to account-based features will be removed.
+          </p>
+        </section>
+        <section class="section-card">
+          <h2 class="text-xl font-semibold text-slate-900 mb-3">What data is deleted</h2>
+          <ul class="list-disc pl-6 space-y-2 text-slate-700">
+            <li>Your account profile details such as name, phone number, and country.</li>
+            <li>Your login credentials and account access records.</li>
+            <li>Your payment activation linkage and account-specific history where it can be deleted.</li>
+          </ul>
+        </section>
+        <section class="section-card md:col-span-2">
+          <h2 class="text-xl font-semibold text-slate-900 mb-3">What data may be retained</h2>
+          <ul class="list-disc pl-6 space-y-2 text-slate-700">
+            <li>Records we must keep for legal, tax, fraud-prevention, dispute-resolution, or security reasons.</li>
+            <li>Operational logs or limited transaction references required to investigate abuse or comply with obligations.</li>
+          </ul>
+        </section>
+      </div>
+
+      <section class="section-card">
+        <h2 class="text-xl font-semibold text-slate-900 mb-4">Submit a deletion request</h2>
+        <form id="deletion-form" class="grid gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2" for="name">Full name</label>
+            <input id="name" name="name" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500" required />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2" for="phone">Phone number used on PlotConnect</label>
+            <input id="phone" name="phone" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500" required />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2" for="email">Email address (optional)</label>
+            <input id="email" name="email" type="email" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2" for="reason">Reason (optional)</label>
+            <textarea id="reason" name="reason" rows="4" class="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"></textarea>
+          </div>
+          <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <button id="submit-btn" type="submit" class="rounded-2xl bg-sky-700 px-5 py-3 text-white font-semibold hover:bg-sky-800 transition-colors">
+              Submit deletion request
+            </button>
+            <a class="text-sky-700 font-semibold hover:underline" href="mailto:support@tst-plotconnect.com?subject=Account deletion request">
+              Prefer email? Contact support
+            </a>
+          </div>
+          <p id="form-status" class="text-sm font-medium text-slate-600"></p>
+        </form>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const forceHttpsHosts = new Set(["www.tst-plotconnect.com", "tst-plotconnect.com"]);
+    if (window.location.protocol === "http:" && forceHttpsHosts.has(window.location.hostname)) {
+      window.location.replace(`https://${window.location.host}${window.location.pathname}${window.location.search}${window.location.hash}`);
+    }
+  </script>
+  <script>
+    const localApiHostPattern = /^(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/i;
+    const isLocalApiHost = localApiHostPattern.test(window.location.hostname);
+    const API_BASE_URL = isLocalApiHost
+      ? `http://${window.location.hostname}:10000`
+      : "https://tstplotconnect-2.onrender.com";
+
+    const form = document.getElementById("deletion-form");
+    const submitBtn = document.getElementById("submit-btn");
+    const statusEl = document.getElementById("form-status");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      statusEl.textContent = "Submitting your request...";
+      statusEl.className = "text-sm font-medium text-slate-600";
+      submitBtn.disabled = true;
+
+      const payload = {
+        name: form.name.value.trim(),
+        phone: form.phone.value.trim(),
+        email: form.email.value.trim(),
+        reason: form.reason.value.trim(),
+        source: "web"
+      };
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/account-deletion-request`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Failed to submit deletion request.");
+        form.reset();
+        statusEl.textContent = data.message || "Your request has been submitted.";
+        statusEl.className = "text-sm font-medium text-emerald-700";
+      } catch (error) {
+        statusEl.textContent = error.message || "Could not submit your request.";
+        statusEl.className = "text-sm font-medium text-rose-700";
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
