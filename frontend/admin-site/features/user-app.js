@@ -462,15 +462,15 @@ function App() {
       const categoryFiltered = category
         ? rows.filter((p) => String(p.category || "").trim().toLowerCase() === category)
         : rows;
-      const min = Number(filters.minPrice);
-      const max = Number(filters.maxPrice);
-      const hasMin = Number.isFinite(min);
-      const hasMax = Number.isFinite(max);
+      const hasMin = String(filters.minPrice || "").trim() !== "";
+      const hasMax = String(filters.maxPrice || "").trim() !== "";
+      const min = hasMin ? Number(filters.minPrice) : null;
+      const max = hasMax ? Number(filters.maxPrice) : null;
       const priceFiltered = categoryFiltered.filter((p) => {
         const price = Number(p.price);
         if (!Number.isFinite(price)) return true;
-        if (hasMin && price < min) return false;
-        if (hasMax && price > max) return false;
+        if (hasMin && Number.isFinite(min) && price < min) return false;
+        if (hasMax && Number.isFinite(max) && price > max) return false;
         return true;
       });
       setPlots(priceFiltered);
