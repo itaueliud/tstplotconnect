@@ -237,6 +237,7 @@ function App() {
   const [userProfile, setUserProfile] = useState(null);
   const [authMode, setAuthMode] = useState("register");
   const [registerName, setRegisterName] = useState("");
+  const [registerCountry, setRegisterCountry] = useState("Kenya");
   const [registerPhone, setRegisterPhone] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [loginPhone, setLoginPhone] = useState("");
@@ -256,7 +257,6 @@ function App() {
   const [countyInput, setCountyInput] = useState("");
   const [areaInput, setAreaInput] = useState("");
   const [categoryInput, setCategoryInput] = useState("");
-  const [countryConfirmed, setCountryConfirmed] = useState(false);
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
   const [imageIndexByPlotId, setImageIndexByPlotId] = useState({});
@@ -279,6 +279,9 @@ function App() {
     const source = Array.isArray(meta.countries) ? meta.countries : [];
     return Array.from(new Set(source.filter(Boolean)));
   }, [meta.countries]);
+  const registerCountryOptions = useMemo(() => (
+    availableCountries.length ? availableCountries : ["Kenya"]
+  ), [availableCountries]);
 
   function showMessage(text, error = false) {
     setMsg({ text, error });
@@ -358,6 +361,10 @@ function App() {
   function persistSession(nextToken, user) {
     setToken(nextToken || "");
     setUserProfile(user || null);
+    if (user?.country) {
+      setFilters((prev) => ({ ...prev, country: user.country, county: "", area: "" }));
+      setCountryInput(user.country);
+    }
     if (nextToken) {
       localStorage.setItem("userToken", nextToken);
       if (user) localStorage.setItem("userProfile", JSON.stringify(user));
@@ -537,6 +544,7 @@ function App() {
   async function registerUser() {
     try {
       if (!registerName.trim()) throw new Error("Enter your name.");
+      if (!registerCountry.trim()) throw new Error("Select your country.");
       if (!registerPhone.trim()) throw new Error("Enter your Safaricom phone.");
       if (!registerPassword.trim()) throw new Error("Enter a password.");
 
@@ -544,6 +552,7 @@ function App() {
         method: "POST",
         body: JSON.stringify({
           name: registerName.trim(),
+          country: registerCountry.trim(),
           phone: registerPhone.trim(),
           password: registerPassword
         })
@@ -551,6 +560,7 @@ function App() {
 
       persistSession(data.token, data.user);
       setRegisterPassword("");
+      setRegisterCountry(data.user?.country || registerCountry.trim());
       showMessage("Registration complete. Activate your account below.");
       await loadStatus(data.token);
       await loadPaymentLog(data.token);
@@ -642,8 +652,8 @@ function App() {
 
   function logoutUser() {
     persistSession("", null);
-    setCountryConfirmed(false);
     setFilters({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
+    setRegisterCountry(registerCountryOptions[0] || "Kenya");
     setCountryInput("");
     setCountyInput("");
     setAreaInput("");
@@ -775,6 +785,13 @@ function App() {
   }, [filters.area, areaInput]);
 
   useEffect(() => {
+    if (userProfile?.country && !filters.country) {
+      setFilters((prev) => ({ ...prev, country: userProfile.country, county: "", area: "" }));
+      setCountryInput(userProfile.country);
+    }
+  }, [userProfile?.country, filters.country]);
+
+  useEffect(() => {
     if (filters.country && countryInput !== filters.country) {
       setCountryInput(filters.country);
     }
@@ -852,7 +869,6 @@ function App() {
     ? selectedPlot.title
     : (filters.area || filters.county || filters.country || "Selected Location");
   const isAuthenticated = Boolean(token);
-  const hasChosenCountry = Boolean(filters.country) && countryConfirmed;
   const userNavItems = isAuthenticated
     ? [
         { id: "user-access", label: "Access" },
@@ -864,50 +880,6 @@ function App() {
         { id: "user-about", label: "About" }
       ]
     : [{ id: "user-access", label: "Access" }];
-
-  if (!isAuthenticated && !hasChosenCountry) {
-    return html`
-      <div className="page-shell">
-        <nav className="glass hero-nav mb-5">
-          <h1 className="brand-title">TST PlotConnect</h1>
-          <p className="brand-subtitle">Find your ideal accommodation</p>
-        </nav>
-
-        <main className="user-main">
-          <section className="glass section-card w-full">
-            <p className="section-kicker">Step 1 of 2</p>
-            <h2 className="section-title">Select Country</h2>
-            <p className="text-sm text-slate-300 mb-3">Choose your country to continue to registration or login.</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <select
-                className="input-modern p-3 rounded-xl md:col-span-2"
-                value=${filters.country}
-                onChange=${(e) => {
-                  setCountryConfirmed(false);
-                  setFilters({ country: e.target.value, county: "", area: "", minPrice: "", maxPrice: "" });
-                  setAreaInput("");
-                }}
-              >
-                <option value="">Choose country</option>
-                ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
-              </select>
-              <button
-                className="btn-success rounded-xl p-3"
-                disabled=${!filters.country}
-                onClick=${() => {
-                  setCountryConfirmed(true);
-                  setActiveNav("user-access");
-                  showMessage("Country selected. Please register or log in.");
-                }}
-              >
-                Continue
-              </button>
-            </div>
-          </section>
-        </main>
-      </div>
-    `;
-  }
 
   return html`
     <div className="page-shell">
@@ -1004,6 +976,13 @@ function App() {
                         value=${registerName}
                         onInput=${(e) => setRegisterName(e.target.value)}
                       />
+                      <select
+                        className="input-modern p-3 rounded-xl"
+                        value=${registerCountry}
+                        onChange=${(e) => setRegisterCountry(e.target.value)}
+                      >
+                        ${registerCountryOptions.map((country) => html`<option value=${country} key=${country}>${country}</option>`)}
+                      </select>
                       <input
                         className="input-modern p-3 rounded-xl"
                         placeholder="Safaricom phone e.g. 0700..."
@@ -1306,6 +1285,21 @@ function App() {
                             ? html`
                                 <p className="mt-2 text-sm">Caretaker: ${contactPhone}</p>
                                 <div className="mt-2 flex flex-wrap gap-2">
+                                  ${plot.mapLink
+                                    ? html`
+                                        <a
+                                          className="rounded-lg px-3 py-2 text-xs font-semibold text-white bg-slate-700 hover:bg-slate-600"
+                                          href=${plot.mapLink}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick=${(e) => {
+                                            e.stopPropagation();
+                                          }}
+                                        >
+                                          📍 Map 🔗
+                                        </a>
+                                      `
+                                    : null}
                                   <a
                                     className="rounded-lg px-3 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700"
                                     href=${whatsappPhone ? `https://wa.me/${whatsappPhone}` : "#"}

@@ -9,32 +9,6 @@ const SUPPORT_WHATSAPP = "254768622994";
 const API = (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_API_URL)
   || (typeof window !== "undefined" && window.NEXT_PUBLIC_API_URL)
   || DEFAULT_API_BASE;
-function inferApiBase() {
-  if (typeof window === "undefined") return API;
-  const loc = window.location;
-  const isLocalHost = /^(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/i.test(loc.hostname);
-  const isLocal = loc.protocol === "file:" || isLocalHost;
-  if (isLocal) {
-    try {
-      localStorage.removeItem("apiBase");
-    } catch (_err) {}
-    return API;
-  }
-  let saved = "";
-  try {
-    saved = localStorage.getItem("apiBase") || "";
-  } catch (_err) {
-    saved = "";
-  }
-  if (saved) {
-    const savedIsLocal = /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/i.test(saved);
-    const savedIsHttp = /^http:\/\//i.test(saved);
-    if (savedIsLocal || savedIsHttp) {
-      return API;
-    }
-  }
-  return saved || API;
-}
 const DEFAULT_MAP_CENTER = [37.9062, -0.0236]; // [lng, lat]
 const SUPPORTED_COUNTRIES = ["Kenya", "Uganda", "Tanzania", "Rwanda"];
 const COUNTRY_COORDS = {
@@ -57,6 +31,19 @@ const AREA_COORDS = {
   "Nairobi|South B": [36.845, -1.3129],
   "Nairobi|Kasarani": [36.8913, -1.2281]
 };
+
+const SAMPLE_PLOTS = [
+  { id: "sample-1", title: "Bedsitter - Katungo", price: 6500, category: "Bedsitters", country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2", "https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-2", title: "One Bedroom - Katungo", price: 9000, category: "Rental Houses", country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1598928506311-6f37b1369d11"], videos: ["https://www.w3schools.com/html/mov_bbb.mp4"], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-3", title: "Bedsitter - Mutituni", price: 7000, category: "Bedsitters", country: "Kenya", county: "Machakos", town: "Machakos", area: "Mutituni", images: ["https://images.unsplash.com/photo-1570129477492-45c003edd2be"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-4", title: "Studio - Town", price: 8000, category: "Apartments", country: "Kenya", county: "Machakos", town: "Machakos", area: "Town", images: ["https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-5", title: "One Bedroom - Rongai", price: 10000, category: "Rental Houses", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Rongai", images: ["https://images.unsplash.com/photo-1570129477492-3c3d1f7eb20a"], videos: ["https://www.w3schools.com/html/mov_bbb.mp4"], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-6", title: "Bedsitter - South B", price: 6500, category: "Bedsitters", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "South B", images: ["https://images.unsplash.com/photo-1600585154340-be6161a56a0c"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-7", title: "One Bedroom - Kasarani", price: 9000, category: "Apartments", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Kasarani", images: ["https://images.unsplash.com/photo-1598928506311-6f37b1369d11"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-8", title: "Studio - Kasarani", price: 8500, category: "Apartments", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Kasarani", images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-9", title: "Bedsitter - Katungo", price: 6000, category: "Bedsitters", country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1570129477492-45c003edd2be"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
+  { id: "sample-10", title: "One Bedroom - Town", price: 9500, category: "Rental Houses", country: "Kenya", county: "Machakos", town: "Machakos", area: "Town", images: ["https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" }
+];
 
 async function ensureMapLibreAssets() {
   if (window.maplibregl) return window.maplibregl;
@@ -241,13 +228,12 @@ function formatPhoneForWhatsApp(phone) {
   }
 
 function getInitialFiltersFromUrl() {
-  const storedCountry = getStoredSelectedCountry();
   if (typeof window === "undefined") {
     return { country: "", county: "", area: "", minPrice: "", maxPrice: "" };
   }
   const params = new URLSearchParams(window.location.search || "");
   return {
-    country: String(params.get("country") || storedCountry || "").trim(),
+    country: String(params.get("country") || "").trim(),
     county: String(params.get("county") || "").trim(),
     area: String(params.get("area") || "").trim(),
     minPrice: "",
@@ -255,24 +241,17 @@ function getInitialFiltersFromUrl() {
   };
 }
 
-function getStoredSelectedCountry() {
-  if (typeof window === "undefined") return "";
-  try {
-    return String(localStorage.getItem("userSelectedCountry") || "").trim();
-  } catch (_err) {
-    return "";
-  }
-}
-
 function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
+  const REFRESH_MS = 30000;
   const initialFilters = getInitialFiltersFromUrl();
-  const [apiBase, setApiBase] = useState(inferApiBase());
+  const [apiBase, setApiBase] = useState(API);
   const [msg, setMsg] = useState({ text: "", error: false });
   const [token, setToken] = useState("");
   const [userProfile, setUserProfile] = useState(null);
   const [authMode, setAuthMode] = useState("register");
   const [registerName, setRegisterName] = useState("");
+  const [registerCountry, setRegisterCountry] = useState(initialFilters.country || "Kenya");
   const [registerPhone, setRegisterPhone] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [loginPhone, setLoginPhone] = useState("");
@@ -294,7 +273,6 @@ function App() {
   const [areaInput, setAreaInput] = useState("");
   const [categoryInput, setCategoryInput] = useState("");
   const [openField, setOpenField] = useState("");
-  const [countryConfirmed, setCountryConfirmed] = useState(Boolean(initialFilters.country));
   const [clickedField, setClickedField] = useState("");
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
   const [selectedPlotId, setSelectedPlotId] = useState("");
@@ -303,6 +281,7 @@ function App() {
   const [paymentLog, setPaymentLog] = useState([]);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const lastKnownActiveRef = useRef(false);
+  const refreshInFlightRef = useRef(false);
 
   const counties = useMemo(
     () => (filters.country ? meta.countiesByCountry[filters.country] || [] : []),
@@ -316,44 +295,42 @@ function App() {
     const source = Array.isArray(meta.countries) ? meta.countries : [];
     return Array.from(new Set(source.filter(Boolean)));
   }, [meta.countries]);
+  const registerCountryOptions = useMemo(() => (
+    availableCountries.length ? availableCountries : ["Kenya"]
+  ), [availableCountries]);
 
   function showMessage(text, error = false) {
     setMsg({ text, error });
   }
 
-  function handleCountryInputChange(value, fromRemote = false) {
+  function handleCountryInputChange(value) {
     const next = String(value || "");
     setCountryInput(next);
     setFilters((prev) => {
       if (!next) return { ...prev, country: "", county: "", area: "" };
-      const source = fromRemote ? (remoteCountries.length ? remoteCountries : availableCountries) : availableCountries;
-      const match = source.find((c) => String(c).toLowerCase() === next.toLowerCase());
+      const match = availableCountries.find((c) => String(c).toLowerCase() === next.toLowerCase());
       return { ...prev, country: match || "", county: "", area: "" };
     });
   }
 
-  function handleCountyInputChange(value, fromRemote = false) {
+  function handleCountyInputChange(value) {
     const next = String(value || "");
     setCountyInput(next);
     setFilters((prev) => {
       if (!next) return { ...prev, county: "", area: "" };
-      const country = filters.country || prev.country || countryInput;
-      const source = fromRemote ? (remoteCounties.length ? remoteCounties : (meta.countiesByCountry?.[country] || [])) : (meta.countiesByCountry?.[country] || []);
-      const match = source.find((c) => String(c).toLowerCase() === next.toLowerCase());
+      const match = counties.find((c) => String(c).toLowerCase() === next.toLowerCase());
       return { ...prev, county: match || "", area: "" };
     });
   }
 
-  function handleAreaInputChange(value, fromRemote = false) {
+  function handleAreaInputChange(value) {
     const next = String(value || "");
     setAreaInput(next);
     setFilters((prev) => {
       if (!next) {
         return { ...prev, area: "" };
       }
-      const county = filters.county || prev.county || countyInput;
-      const source = fromRemote ? (remoteAreas.length ? remoteAreas : (meta.areasByCounty?.[county] || [])) : (meta.areasByCounty?.[county] || []);
-      const match = source.find((a) => String(a).toLowerCase() === next.toLowerCase());
+      const match = areas.find((a) => String(a).toLowerCase() === next.toLowerCase());
       return { ...prev, area: match || "" };
     });
   }
@@ -380,14 +357,8 @@ function App() {
   }
 
   function clearFilters() {
-    setFilters((prev) => ({
-      ...prev,
-      county: "",
-      area: "",
-      category: "",
-      minPrice: "",
-      maxPrice: ""
-    }));
+    setFilters({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
+    setCountryInput("");
     setCountyInput("");
     setAreaInput("");
     setCategoryInput("");
@@ -408,80 +379,14 @@ function App() {
     return String(value || "").trim().toLowerCase();
   }
 
-  function getFilteredOptions(options, inputValue, limit = Infinity) {
+  function getFilteredOptions(options, inputValue, limit = 8) {
     const query = normalizeText(inputValue);
     const list = Array.isArray(options) ? options.filter(Boolean) : [];
     const filtered = query
       ? list.filter((item) => normalizeText(item).includes(query))
       : list;
-    return Number.isFinite(limit) ? filtered.slice(0, limit) : filtered;
+    return filtered.slice(0, limit);
   }
-
-  // --- New: debounce helper and server-backed fetchers for Option B endpoints ---
-  function debounce(fn, wait = 300) {
-    let t = null;
-    return (...args) => {
-      if (t) clearTimeout(t);
-      t = setTimeout(() => fn(...args), wait);
-    };
-  }
-
-  const [remoteCountries, setRemoteCountries] = useState([]);
-  const [remoteCounties, setRemoteCounties] = useState([]);
-  const [remoteAreas, setRemoteAreas] = useState([]);
-
-  let latestCountryQuery = "";
-  let latestCountyQuery = "";
-  let latestAreaQuery = "";
-
-  async function fetchCountries(query) {
-    latestCountryQuery = String(query || "");
-    try {
-      const url = `${apiBase}/api/metadata/countries${query ? `?query=${encodeURIComponent(query)}` : ""}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to load countries");
-      const data = await res.json();
-      if (latestCountryQuery !== String(query || "")) return; // stale
-      setRemoteCountries(Array.isArray(data) ? data : []);
-    } catch (_err) {
-      // fallback to local meta
-      setRemoteCountries(availableCountries || []);
-    }
-  }
-
-  async function fetchCounties(country, query) {
-    latestCountyQuery = `${country}::${String(query || "")}`;
-    try {
-      const url = `${apiBase}/api/metadata/counties?country=${encodeURIComponent(country || "")}${query ? `&query=${encodeURIComponent(query)}` : ""}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to load counties");
-      const data = await res.json();
-      if (latestCountyQuery !== `${country}::${String(query || "")}`) return;
-      setRemoteCounties(Array.isArray(data) ? data : []);
-    } catch (_err) {
-      setRemoteCounties(meta.countiesByCountry?.[country] || []);
-    }
-  }
-
-  async function fetchAreas(county, query) {
-    latestAreaQuery = `${county}::${String(query || "")}`;
-    try {
-      const url = `${apiBase}/api/metadata/areas?county=${encodeURIComponent(county || "")}${query ? `&query=${encodeURIComponent(query)}` : ""}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to load areas");
-      const data = await res.json();
-      if (latestAreaQuery !== `${county}::${String(query || "")}`) return;
-      setRemoteAreas(Array.isArray(data) ? data : []);
-    } catch (_err) {
-      setRemoteAreas(meta.areasByCounty?.[county] || []);
-    }
-  }
-
-  const debouncedFetchCountries = debounce((q) => fetchCountries(q), 300);
-  const debouncedFetchCounties = debounce((country, q) => fetchCounties(country, q), 300);
-  const debouncedFetchAreas = debounce((county, q) => fetchAreas(county, q), 300);
-
-  // --- end new additions ---
 
   function renderSuggestions(field, options, inputValue, onSelect) {
     if (openField !== field) return null;
@@ -520,13 +425,16 @@ function App() {
   function persistSession(nextToken, user) {
     setToken(nextToken || "");
     setUserProfile(user || null);
+    if (user?.country) {
+      setFilters((prev) => ({ ...prev, country: user.country, county: "", area: "" }));
+      setCountryInput(user.country);
+    }
     if (nextToken) {
       localStorage.setItem("userToken", nextToken);
       if (user) localStorage.setItem("userProfile", JSON.stringify(user));
     } else {
       localStorage.removeItem("userToken");
       localStorage.removeItem("userProfile");
-      localStorage.removeItem("userSelectedCountry");
     }
   }
 
@@ -670,23 +578,37 @@ function App() {
       const categoryFiltered = category
         ? rows.filter((p) => String(p.category || "").trim().toLowerCase() === category)
         : rows;
-      const minPriceValue = String(filters.minPrice ?? "").trim();
-      const maxPriceValue = String(filters.maxPrice ?? "").trim();
-      const hasMin = minPriceValue !== "";
-      const hasMax = maxPriceValue !== "";
-      const min = hasMin ? Number(minPriceValue) : null;
-      const max = hasMax ? Number(maxPriceValue) : null;
+      const min = Number(filters.minPrice);
+      const max = Number(filters.maxPrice);
+      const hasMin = Number.isFinite(min);
+      const hasMax = Number.isFinite(max);
       const priceFiltered = categoryFiltered.filter((p) => {
         const price = Number(p.price);
         if (!Number.isFinite(price)) return true;
-        if (hasMin && Number.isFinite(min) && price < min) return false;
-        if (hasMax && Number.isFinite(max) && price > max) return false;
+        if (hasMin && price < min) return false;
+        if (hasMax && price > max) return false;
         return true;
       });
-      setPlots(priceFiltered);
+      const sampleFiltered = SAMPLE_PLOTS.filter((p) =>
+        (!filters.country || p.country === filters.country) &&
+        (!filters.county || (p.county || p.town) === filters.county) &&
+        (!filters.area || p.area === filters.area) &&
+        (!filters.category || p.category === filters.category) &&
+        (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
+        (!filters.maxPrice || p.price <= Number(filters.maxPrice))
+      ).map((p) => ({ ...p, priority: "bottom" }));
+      setPlots([...priceFiltered, ...sampleFiltered]);
     } catch (err) {
-      setPlots([]);
-      showMessage(`${err.message}. Failed to load plots from server.`, true);
+      const fallback = SAMPLE_PLOTS.filter((p) =>
+        (!filters.country || p.country === filters.country) &&
+        (!filters.county || (p.county || p.town) === filters.county) &&
+        (!filters.area || p.area === filters.area) &&
+        (!filters.category || p.category === filters.category) &&
+        (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
+        (!filters.maxPrice || p.price <= Number(filters.maxPrice))
+      ).map((p) => ({ ...p, priority: "bottom" }));
+      setPlots(fallback);
+      showMessage(`${err.message}. Showing sample plots.`, true);
     } finally {
       setLoading(false);
     }
@@ -717,6 +639,7 @@ function App() {
   async function registerUser() {
     try {
       if (!registerName.trim()) throw new Error("Enter your name.");
+      if (!registerCountry.trim()) throw new Error("Select your country.");
       if (!registerPhone.trim()) throw new Error("Enter your Safaricom phone.");
       if (!registerPassword.trim()) throw new Error("Enter a password.");
 
@@ -724,6 +647,7 @@ function App() {
         method: "POST",
         body: JSON.stringify({
           name: registerName.trim(),
+          country: registerCountry.trim(),
           phone: registerPhone.trim(),
           password: registerPassword
         })
@@ -731,6 +655,7 @@ function App() {
 
       persistSession(data.token, data.user);
       setRegisterPassword("");
+      setRegisterCountry(data.user?.country || registerCountry.trim());
       showMessage("Registration complete. Activate your account below.");
       await loadStatus(data.token);
       await loadPaymentLog(data.token);
@@ -822,8 +747,8 @@ function App() {
 
   function logoutUser() {
     persistSession("", null);
-    setCountryConfirmed(false);
     setFilters({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
+    setRegisterCountry(registerCountryOptions[0] || "Kenya");
     setCountryInput("");
     setCountyInput("");
     setAreaInput("");
@@ -935,36 +860,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!token || filters.country) return;
-    const storedCountry = getStoredSelectedCountry();
-    const fallbackCountry = storedCountry
-      || (availableCountries.includes("Kenya") ? "Kenya" : availableCountries[0] || "");
-    if (!fallbackCountry) return;
-    try {
-      localStorage.setItem("userSelectedCountry", fallbackCountry);
-    } catch (_err) {}
-    setFilters((prev) => ({ ...prev, country: fallbackCountry }));
-    setCountryInput(fallbackCountry);
-    setCountryConfirmed(true);
-  }, [token, filters.country, availableCountries]);
-
-  useEffect(() => {
-    function syncApiBase(event) {
-      if (event && event.key && event.key !== "apiBase") return;
-      setApiBase(inferApiBase());
-    }
-    window.addEventListener("storage", syncApiBase);
-    return () => window.removeEventListener("storage", syncApiBase);
-  }, []);
-
-  useEffect(() => {
-    loadMetadata();
     loadPlots();
-  }, [apiBase]);
-
-  useEffect(() => {
-    loadPlots();
-  }, [filters.country, filters.county, filters.area, filters.category, filters.minPrice, filters.maxPrice, token, apiBase]);
+  }, [filters.country, filters.county, filters.area, filters.category, filters.minPrice, filters.maxPrice, token]);
 
   useEffect(() => {
     setSelectedPlotId("");
@@ -1006,19 +903,17 @@ function App() {
   }, [filters.area, areaInput]);
 
   useEffect(() => {
+    if (userProfile?.country && !filters.country) {
+      setFilters((prev) => ({ ...prev, country: userProfile.country, county: "", area: "" }));
+      setCountryInput(userProfile.country);
+    }
+  }, [userProfile?.country, filters.country]);
+
+  useEffect(() => {
     if (filters.country && countryInput !== filters.country) {
       setCountryInput(filters.country);
     }
   }, [filters.country, countryInput]);
-
-  useEffect(() => {
-    if (!filters.country) {
-      setRemoteCounties([]);
-      return;
-    }
-    setRemoteCounties(meta.countiesByCountry?.[filters.country] || []);
-    debouncedFetchCounties(filters.country, "");
-  }, [filters.country, meta]);
 
   useEffect(() => {
     if (filters.county && countyInput !== filters.county) {
@@ -1027,19 +922,37 @@ function App() {
   }, [filters.county, countyInput]);
 
   useEffect(() => {
-    if (!filters.county) {
-      setRemoteAreas([]);
-      return;
-    }
-    setRemoteAreas(meta.areasByCounty?.[filters.county] || []);
-    debouncedFetchAreas(filters.county, "");
-  }, [filters.county, meta]);
-
-  useEffect(() => {
     if (filters.category && categoryInput !== filters.category) {
       setCategoryInput(filters.category);
     }
   }, [filters.category, categoryInput]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const refresh = async () => {
+      if (!mounted || document.hidden || refreshInFlightRef.current) return;
+      refreshInFlightRef.current = true;
+      try {
+        await loadMetadata();
+        await loadPlots();
+      } finally {
+        refreshInFlightRef.current = false;
+      }
+    };
+
+    refresh();
+    const timer = setInterval(refresh, REFRESH_MS);
+    const onVisible = () => {
+      if (!document.hidden) refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice, token]);
 
   useEffect(() => {
     function syncHash() {
@@ -1063,22 +976,6 @@ function App() {
     return () => window.removeEventListener("resize", syncMobileNavState);
   }, []);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function onDocumentClick(e) {
-      if (!e || !e.target) return;
-      // If a combo input or suggestions container was clicked, keep it open
-      const el = e.target instanceof Element ? e.target : null;
-      if (!el) return;
-      const combo = el.closest && el.closest('.combo-single');
-      if (!combo) {
-        setOpenField('');
-      }
-    }
-    document.addEventListener('click', onDocumentClick);
-    return () => document.removeEventListener('click', onDocumentClick);
-  }, []);
-
   const remainingMs = status && status.active ? getRemainingMs(status.expiresAt) : 0;
   const countdown = formatRemaining(remainingMs);
   const currentYear = new Date().getFullYear();
@@ -1090,8 +987,6 @@ function App() {
     ? selectedPlot.title
     : (filters.area || filters.county || filters.country || "Selected Location");
   const isAuthenticated = Boolean(token);
-  const hasChosenCountry = Boolean(filters.country) && countryConfirmed;
-  const searchGridClass = "grid grid-cols-1 md:grid-cols-5 gap-3";
   const userNavItems = isAuthenticated
     ? [
         { id: "user-access", label: "Access" },
@@ -1104,54 +999,6 @@ function App() {
       ]
     : [{ id: "user-access", label: "Access" }];
   const isAboutOpen = isAuthenticated && activeNav === "user-about";
-
-  if (!isAuthenticated && !hasChosenCountry) {
-    return html`
-      <div className="page-shell">
-        <nav className="glass hero-nav mb-5">
-          <h1 className="brand-title">TST PlotConnect</h1>
-          <p className="brand-subtitle">Find your ideal accommodation</p>
-        </nav>
-
-        <main className="user-main">
-          <section className="glass section-card w-full">
-            <p className="section-kicker">Step 1 of 2</p>
-            <h2 className="section-title">Select Country</h2>
-            <p className="text-sm text-slate-300 mb-3">Choose your country to continue to registration or login.</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="combo-single md:col-span-2">
-                <input
-                  className="input-modern combo-single-input"
-                  placeholder="Select country"
-                  value=${countryInput}
-                  onInput=${(e) => { handleCountryInputChange(e.target.value); setCountryConfirmed(false); }}
-                  onFocus=${() => setOpenField("country")}
-                  onClick=${() => setOpenField(openField === "country" ? "" : "country")}
-                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
-                  autoComplete="off"
-                />
-                ${renderSuggestions("country", availableCountries, countryInput, (value) => handleCountryInputChange(value))}
-              </div>
-              <button
-                className="btn-success rounded-xl p-3"
-                disabled=${!filters.country}
-                onClick=${() => {
-                  try {
-                    localStorage.setItem("userSelectedCountry", filters.country || "");
-                  } catch (_err) {}
-                  setCountryConfirmed(true);
-                  setActiveNav("user-access");
-                  showMessage("Country selected. Please register or log in.");
-                }}
-              >
-                Continue
-              </button>
-            </div>
-          </section>
-        </main>
-      </div>
-    `;
-  }
 
   return html`
     <div className="page-shell">
@@ -1256,6 +1103,13 @@ function App() {
                         value=${registerName}
                         onInput=${(e) => setRegisterName(e.target.value)}
                       />
+                      <select
+                        className="input-modern p-3 rounded-xl"
+                        value=${registerCountry}
+                        onChange=${(e) => setRegisterCountry(e.target.value)}
+                      >
+                        ${registerCountryOptions.map((country) => html`<option value=${country} key=${country}>${country}</option>`)}
+                      </select>
                       <input
                         className="input-modern p-3 rounded-xl"
                         placeholder="Safaricom phone e.g. 0700..."
@@ -1393,68 +1247,45 @@ function App() {
       <section id="user-search" className="glass section-card mb-5">
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
-            <div className=${searchGridClass}>
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+              <div className="combo-single">
+                <input
+                  className="input-modern combo-single-input"
+                  placeholder="All Countries"
+                  value=${countryInput}
+                  onInput=${(e) => handleCountryInputChange(e.target.value)}
+                  onFocus=${() => setOpenField("country")}
+                  onClick=${() => setOpenField(openField === "country" ? "" : "country")}
+                  onBlur=${() => setTimeout(() => setOpenField(""), 120)}
+                  autoComplete="off"
+                />
+                ${renderSuggestions("country", availableCountries, countryInput, (value) => handleCountryInputChange(value))}
+              </div>
               <div className="combo-single">
                 <input
                   className="input-modern combo-single-input"
                   placeholder="All Counties"
                   value=${countyInput}
-                  onInput=${(e) => {
-                    const v = e.target.value;
-                    setCountyInput(v);
-                    const country = filters.country || countryInput;
-                    debouncedFetchCounties(country, v);
-                    setFilters((prev) => {
-                      if (!v) return { ...prev, county: "", area: "" };
-                      const source = remoteCounties.length ? remoteCounties : (meta.countiesByCountry?.[country] || []);
-                      const match = source.find((c) => String(c).toLowerCase() === v.toLowerCase());
-                      return { ...prev, county: match || "", area: "" };
-                    });
-                  }}
-                  onFocus=${() => {
-                    setOpenField("county");
-                    debouncedFetchCounties(filters.country, countyInput || "");
-                  }}
-                  onClick=${() => {
-                    setOpenField(openField === "county" ? "" : "county");
-                    debouncedFetchCounties(filters.country, countyInput || "");
-                  }}
+                  onInput=${(e) => handleCountyInputChange(e.target.value)}
+                  onFocus=${() => setOpenField("county")}
+                  onClick=${() => setOpenField(openField === "county" ? "" : "county")}
                   onBlur=${() => setTimeout(() => setOpenField(""), 120)}
                   autoComplete="off"
-                  disabled=${!filters.country}
                 />
-                ${renderSuggestions(
-                  "county",
-                  remoteCounties.length ? remoteCounties : counties,
-                  countyInput,
-                  (value) => {
-                    handleCountyInputChange(value, true);
-                    debouncedFetchAreas(value, "");
-                  }
-                )}
+                ${renderSuggestions("county", counties, countyInput, (value) => handleCountyInputChange(value))}
               </div>
               <div className="combo-single">
                 <input
                   className="input-modern combo-single-input"
                   placeholder="Type or select area"
                   value=${areaInput}
-                  onInput=${(e) => {
-                    const v = e.target.value;
-                    setAreaInput(v);
-                    const county = filters.county || countyInput;
-                    debouncedFetchAreas(county, v);
-                    setFilters((prev) => {
-                      if (!v) return { ...prev, area: "" };
-                      const match = (meta.areasByCounty?.[county] || []).find((a) => String(a).toLowerCase() === v.toLowerCase());
-                      return { ...prev, area: match || "" };
-                    });
-                  }}
-                  onFocus=${() => { setOpenField("area"); debouncedFetchAreas(filters.county || countyInput, areaInput || ""); }}
-                  onClick=${() => { setOpenField(openField === "area" ? "" : "area"); debouncedFetchAreas(filters.county || countyInput, areaInput || ""); }}
+                  onInput=${(e) => handleAreaInputChange(e.target.value)}
+                  onFocus=${() => setOpenField("area")}
+                  onClick=${() => setOpenField(openField === "area" ? "" : "area")}
                   onBlur=${() => setTimeout(() => setOpenField(""), 120)}
                   autoComplete="off"
                 />
-                ${renderSuggestions("area", remoteAreas.length ? remoteAreas : areas, areaInput, (value) => { handleAreaInputChange(value); })}
+                ${renderSuggestions("area", areas, areaInput, (value) => handleAreaInputChange(value))}
               </div>
               <div className="combo-single">
                 <input
@@ -1569,6 +1400,21 @@ function App() {
                             ? html`
                                 <p className="mt-2 text-sm">Caretaker: ${contactPhone}</p>
                                 <div className="mt-2 flex flex-wrap gap-2">
+                                  ${plot.mapLink
+                                    ? html`
+                                        <a
+                                          className="rounded-lg px-3 py-2 text-xs font-semibold text-white bg-slate-700 hover:bg-slate-600"
+                                          href=${plot.mapLink}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick=${(e) => {
+                                            e.stopPropagation();
+                                          }}
+                                        >
+                                          📍 Map 🔗
+                                        </a>
+                                      `
+                                    : null}
                                   <a
                                     className="rounded-lg px-3 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700"
                                     href=${whatsappPhone ? `https://wa.me/${whatsappPhone}` : "#"}

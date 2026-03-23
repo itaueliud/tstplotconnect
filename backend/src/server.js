@@ -271,11 +271,20 @@ function mapPlot(plot, unlocked) {
     description: plot.description || "",
     images: Array.isArray(plot.images) ? plot.images : [],
     videos: Array.isArray(plot.videos) ? plot.videos : [],
+    lat: typeof plot.lat === "number" ? plot.lat : null,
+    lng: typeof plot.lng === "number" ? plot.lng : null,
+    mapLink: plot.mapLink || "",
     priority: plot.priority || "medium",
     caretaker: unlocked ? plot.caretaker : "Locked",
     whatsapp: unlocked ? plot.whatsapp : "Locked",
     unlocked
   };
+}
+
+function toOptionalNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function escapeRegex(value) {
@@ -1416,7 +1425,10 @@ app.post("/api/admin/plots", requireSecureAdmin, requireAuth, requireAdmin, asyn
     caretaker,
     whatsapp,
     images = [],
-    videos = []
+    videos = [],
+    lat = null,
+    lng = null,
+    mapLink = ""
   } = req.body || {};
 
   const cleanTitle = String(title || "").trim();
@@ -1428,6 +1440,9 @@ app.post("/api/admin/plots", requireSecureAdmin, requireAuth, requireAdmin, asyn
   const cleanDescription = String(description || "").trim();
   const cleanCaretaker = String(caretaker || "").trim();
   const cleanWhatsapp = String(whatsapp || "").trim();
+  const cleanLat = toOptionalNumber(lat);
+  const cleanLng = toOptionalNumber(lng);
+  const cleanMapLink = String(mapLink || "").trim();
 
   if (!cleanTitle || !price || !cleanCounty || !cleanArea || !cleanCaretaker || !cleanWhatsapp) {
     return res.status(400).json({ error: "Missing required fields" });
@@ -1451,6 +1466,9 @@ app.post("/api/admin/plots", requireSecureAdmin, requireAuth, requireAdmin, asyn
     whatsapp: cleanWhatsapp,
     images: (images || []).filter(Boolean),
     videos: (videos || []).filter(Boolean),
+    lat: cleanLat,
+    lng: cleanLng,
+    mapLink: cleanMapLink,
     createdAt: new Date()
   };
 
@@ -1477,7 +1495,10 @@ app.put("/api/admin/plots/:id", requireSecureAdmin, requireAuth, requireAdmin, a
     caretaker = existing.caretaker,
     whatsapp = existing.whatsapp,
     images = null,
-    videos = null
+    videos = null,
+    lat = existing.lat ?? null,
+    lng = existing.lng ?? null,
+    mapLink = existing.mapLink || ""
   } = req.body || {};
 
   const cleanTitle = String(title || "").trim();
@@ -1489,6 +1510,9 @@ app.put("/api/admin/plots/:id", requireSecureAdmin, requireAuth, requireAdmin, a
   const cleanDescription = String(description || "").trim();
   const cleanCaretaker = String(caretaker || "").trim();
   const cleanWhatsapp = String(whatsapp || "").trim();
+  const cleanLat = toOptionalNumber(lat);
+  const cleanLng = toOptionalNumber(lng);
+  const cleanMapLink = String(mapLink || "").trim();
 
   if (cleanCategory && !ALLOWED_CATEGORIES.has(cleanCategory)) {
     return res.status(400).json({ error: "Invalid category" });
@@ -1505,7 +1529,10 @@ app.put("/api/admin/plots/:id", requireSecureAdmin, requireAuth, requireAdmin, a
     priority: ["top", "medium", "bottom"].includes(cleanPriority) ? cleanPriority : "medium",
     description: cleanDescription,
     caretaker: cleanCaretaker,
-    whatsapp: cleanWhatsapp
+    whatsapp: cleanWhatsapp,
+    lat: cleanLat,
+    lng: cleanLng,
+    mapLink: cleanMapLink
   };
 
   if (images !== null) {

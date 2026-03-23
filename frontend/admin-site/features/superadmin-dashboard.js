@@ -128,6 +128,9 @@ function App() {
     priority: "medium",
     town: "",
     area: "",
+    lat: "",
+    lng: "",
+    mapLink: "",
     caretaker: "",
     whatsapp: "",
     description: "",
@@ -597,6 +600,9 @@ function App() {
         priority: plotForm.priority || "medium",
         town: plotForm.town.trim(),
         area: plotForm.area.trim(),
+        lat: plotForm.lat.trim(),
+        lng: plotForm.lng.trim(),
+        mapLink: plotForm.mapLink.trim(),
         caretaker: plotForm.caretaker.trim(),
         whatsapp: plotForm.whatsapp.trim(),
         description: plotForm.description.trim(),
@@ -611,6 +617,9 @@ function App() {
         priority: "medium",
         town: "",
         area: "",
+        lat: "",
+        lng: "",
+        mapLink: "",
         caretaker: "",
         whatsapp: "",
         description: "",
@@ -659,9 +668,14 @@ function App() {
       { label: "ID", value: (p) => p.id },
       { label: "Title", value: (p) => p.title },
       { label: "Price", value: (p) => p.price },
+      { label: "Category", value: (p) => p.category || "" },
+      { label: "Priority", value: (p) => p.priority || "" },
       { label: "Country", value: (p) => p.country || "Kenya" },
       { label: "County", value: (p) => p.county || p.town || "" },
       { label: "Area", value: (p) => p.area || "" },
+      { label: "Latitude", value: (p) => p.lat ?? "" },
+      { label: "Longitude", value: (p) => p.lng ?? "" },
+      { label: "Map Link", value: (p) => p.mapLink || "" },
       { label: "Caretaker", value: (p) => p.caretaker || "" },
       { label: "WhatsApp", value: (p) => p.whatsapp || "" },
       { label: "Description", value: (p) => p.description || "" },
@@ -776,6 +790,12 @@ function App() {
     if (town === null) return;
     const area = window.prompt("Area:", plot.area || "");
     if (area === null) return;
+    const lat = window.prompt("Latitude:", plot.lat ?? "");
+    if (lat === null) return;
+    const lng = window.prompt("Longitude:", plot.lng ?? "");
+    if (lng === null) return;
+    const mapLink = window.prompt("Map link:", plot.mapLink || "");
+    if (mapLink === null) return;
     const caretaker = window.prompt("Caretaker phone:", plot.caretaker || "");
     if (caretaker === null) return;
     const whatsapp = window.prompt("WhatsApp phone:", plot.whatsapp || "");
@@ -795,6 +815,9 @@ function App() {
         priority: String(priority || "medium").trim().toLowerCase() || "medium",
         town: town.trim(),
         area: area.trim(),
+        lat: lat.trim(),
+        lng: lng.trim(),
+        mapLink: mapLink.trim(),
         caretaker: caretaker.trim(),
         whatsapp: whatsapp.trim(),
         description: description.trim(),
@@ -1179,6 +1202,9 @@ function App() {
                     <option value="">Select Area</option>
                     ${plotAreaOptions.map((a) => html`<option value=${a} key=${a}>${a}</option>`)}
                   </select>
+                  <input className="input-modern p-3 rounded-xl" placeholder="Latitude for pin" value=${plotForm.lat} onInput=${(e) => setPlotForm({ ...plotForm, lat: e.target.value })} />
+                  <input className="input-modern p-3 rounded-xl" placeholder="Longitude for pin" value=${plotForm.lng} onInput=${(e) => setPlotForm({ ...plotForm, lng: e.target.value })} />
+                  <input className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Map link (Google Maps or share link)" value=${plotForm.mapLink} onInput=${(e) => setPlotForm({ ...plotForm, mapLink: e.target.value })} />
                   <input className="input-modern p-3 rounded-xl" placeholder="Caretaker phone" value=${plotForm.caretaker} onInput=${(e) => setPlotForm({ ...plotForm, caretaker: e.target.value })} />
                   <input className="input-modern p-3 rounded-xl" placeholder="WhatsApp phone" value=${plotForm.whatsapp} onInput=${(e) => setPlotForm({ ...plotForm, whatsapp: e.target.value })} />
                   <textarea className="input-modern p-3 rounded-xl md:col-span-2" placeholder="Description" value=${plotForm.description} onInput=${(e) => setPlotForm({ ...plotForm, description: e.target.value })}></textarea>
@@ -1397,15 +1423,17 @@ function App() {
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left data-table">
-                    <thead><tr><th className="p-2">ID</th><th className="p-2">Title</th><th className="p-2">Price</th><th className="p-2">Town</th><th className="p-2">Area</th><th className="p-2">Caretaker</th><th className="p-2">WhatsApp</th><th className="p-2">Action</th></tr></thead>
+                    <thead><tr><th className="p-2">ID</th><th className="p-2">Title</th><th className="p-2">Price</th><th className="p-2">Priority</th><th className="p-2">Town</th><th className="p-2">Area</th><th className="p-2">Pin</th><th className="p-2">Caretaker</th><th className="p-2">WhatsApp</th><th className="p-2">Action</th></tr></thead>
                     <tbody>
                       ${plots.map((plot) => html`
                         <tr key=${plot.id} className="admin-row border-t border-slate-700">
                           <td className="p-2">${plot.id}</td>
                           <td className="p-2">${plot.title}</td>
                           <td className="p-2">${plot.price}</td>
+                          <td className="p-2">${plot.priority || "-"}</td>
                           <td className="p-2">${plot.town || plot.county || "-"}</td>
                           <td className="p-2">${plot.area}</td>
+                          <td className="p-2">${plot.lat !== null && plot.lng !== null ? `${plot.lat}, ${plot.lng}` : (plot.mapLink ? "Link only" : "-")}</td>
                           <td className="p-2">${plot.caretaker}</td>
                           <td className="p-2">${plot.whatsapp}</td>
                           <td className="p-2 flex gap-2">
