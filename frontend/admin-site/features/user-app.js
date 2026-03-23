@@ -217,7 +217,6 @@ function formatPhoneForWhatsApp(phone) {
 
 function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
-  const REFRESH_MS = 30000;
   const [apiBase, setApiBase] = useState(API);
   const [msg, setMsg] = useState({ text: "", error: false });
   const messageTimerRef = useRef(null);
@@ -252,7 +251,6 @@ function App() {
   const [paymentLog, setPaymentLog] = useState([]);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const lastKnownActiveRef = useRef(false);
-  const refreshInFlightRef = useRef(false);
 
   const counties = useMemo(
     () => (filters.country ? meta.countiesByCountry[filters.country] || [] : []),
@@ -711,12 +709,6 @@ function App() {
   useEffect(() => {
     loadStatus();
     loadPaymentLog();
-    const statusTimer = setInterval(loadStatus, 1000);
-    const paymentTimer = setInterval(loadPaymentLog, 5000);
-    return () => {
-      clearInterval(statusTimer);
-      clearInterval(paymentTimer);
-    };
   }, [token]);
 
   useEffect(() => {
@@ -760,33 +752,6 @@ function App() {
       setCategoryInput(filters.category);
     }
   }, [filters.category, categoryInput]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const refresh = async () => {
-      if (!mounted || document.hidden || refreshInFlightRef.current) return;
-      refreshInFlightRef.current = true;
-      try {
-        await loadMetadata();
-        await loadPlots();
-      } finally {
-        refreshInFlightRef.current = false;
-      }
-    };
-
-    refresh();
-    const timer = setInterval(refresh, REFRESH_MS);
-    const onVisible = () => {
-      if (!document.hidden) refresh();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      mounted = false;
-      clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, [filters.country, filters.county, filters.area, filters.minPrice, filters.maxPrice, token]);
 
   useEffect(() => {
     function syncHash() {
