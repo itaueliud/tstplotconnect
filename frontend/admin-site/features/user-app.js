@@ -32,18 +32,6 @@ const AREA_COORDS = {
   "Nairobi|Kasarani": [36.8913, -1.2281]
 };
 
-const SAMPLE_PLOTS = [
-  { id: "sample-1", title: "Bedsitter - Katungo", price: 6500, category: "Bedsitters", country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2", "https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-2", title: "One Bedroom - Katungo", price: 9000, category: "Rental Houses", country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1598928506311-6f37b1369d11"], videos: ["https://www.w3schools.com/html/mov_bbb.mp4"], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-3", title: "Bedsitter - Mutituni", price: 7000, category: "Bedsitters", country: "Kenya", county: "Machakos", town: "Machakos", area: "Mutituni", images: ["https://images.unsplash.com/photo-1570129477492-45c003edd2be"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-4", title: "Studio - Town", price: 8000, category: "Apartments", country: "Kenya", county: "Machakos", town: "Machakos", area: "Town", images: ["https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-5", title: "One Bedroom - Rongai", price: 10000, category: "Rental Houses", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Rongai", images: ["https://images.unsplash.com/photo-1570129477492-3c3d1f7eb20a"], videos: ["https://www.w3schools.com/html/mov_bbb.mp4"], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-6", title: "Bedsitter - South B", price: 6500, category: "Bedsitters", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "South B", images: ["https://images.unsplash.com/photo-1600585154340-be6161a56a0c"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-7", title: "One Bedroom - Kasarani", price: 9000, category: "Apartments", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Kasarani", images: ["https://images.unsplash.com/photo-1598928506311-6f37b1369d11"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-8", title: "Studio - Kasarani", price: 8500, category: "Apartments", country: "Kenya", county: "Nairobi", town: "Nairobi", area: "Kasarani", images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-9", title: "Bedsitter - Katungo", price: 6000, category: "Bedsitters", country: "Kenya", county: "Machakos", town: "Machakos", area: "Katungo", images: ["https://images.unsplash.com/photo-1570129477492-45c003edd2be"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" },
-  { id: "sample-10", title: "One Bedroom - Town", price: 9500, category: "Rental Houses", country: "Kenya", county: "Machakos", town: "Machakos", area: "Town", images: ["https://images.unsplash.com/photo-1580587771525-78b9dba3b914"], videos: [], caretaker: "Locked", whatsapp: "Locked", description: "", priority: "bottom" }
-];
 
 async function ensureMapLibreAssets() {
   if (window.maplibregl) return window.maplibregl;
@@ -253,7 +241,6 @@ function App() {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
-  const [countryInput, setCountryInput] = useState("");
   const [countyInput, setCountyInput] = useState("");
   const [areaInput, setAreaInput] = useState("");
   const [categoryInput, setCategoryInput] = useState("");
@@ -305,16 +292,6 @@ function App() {
     setImageIndexByPlotId((prev) => ({ ...prev, [plotId]: index }));
   }
 
-  function handleCountryInputChange(value) {
-    const next = String(value || "");
-    setCountryInput(next);
-    setFilters((prev) => {
-      if (!next) return { ...prev, country: "", county: "", area: "" };
-      const match = availableCountries.find((c) => String(c).toLowerCase() === next.toLowerCase());
-      return { ...prev, country: match || "", county: "", area: "" };
-    });
-  }
-
   function handleCountyInputChange(value) {
     const next = String(value || "");
     setCountyInput(next);
@@ -363,7 +340,6 @@ function App() {
     setUserProfile(user || null);
     if (user?.country) {
       setFilters((prev) => ({ ...prev, country: user.country, county: "", area: "" }));
-      setCountryInput(user.country);
     }
     if (nextToken) {
       localStorage.setItem("userToken", nextToken);
@@ -497,26 +473,10 @@ function App() {
         if (hasMax && price > max) return false;
         return true;
       });
-      const sampleFiltered = SAMPLE_PLOTS.filter((p) =>
-        (!filters.country || p.country === filters.country) &&
-        (!filters.county || (p.county || p.town) === filters.county) &&
-        (!filters.area || p.area === filters.area) &&
-        (!filters.category || p.category === filters.category) &&
-        (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
-        (!filters.maxPrice || p.price <= Number(filters.maxPrice))
-      ).map((p) => ({ ...p, priority: "bottom" }));
-      setPlots([...priceFiltered, ...sampleFiltered]);
+      setPlots(priceFiltered);
     } catch (err) {
-      const fallback = SAMPLE_PLOTS.filter((p) =>
-        (!filters.country || p.country === filters.country) &&
-        (!filters.county || (p.county || p.town) === filters.county) &&
-        (!filters.area || p.area === filters.area) &&
-        (!filters.category || p.category === filters.category) &&
-        (!filters.minPrice || p.price >= Number(filters.minPrice)) &&
-        (!filters.maxPrice || p.price <= Number(filters.maxPrice))
-      ).map((p) => ({ ...p, priority: "bottom" }));
-      setPlots(fallback);
-      showMessage(`${err.message}. Showing sample plots.`, true);
+      setPlots([]);
+      showMessage(err.message, true);
     } finally {
       setLoading(false);
     }
@@ -654,7 +614,6 @@ function App() {
     persistSession("", null);
     setFilters({ country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" });
     setRegisterCountry(registerCountryOptions[0] || "Kenya");
-    setCountryInput("");
     setCountyInput("");
     setAreaInput("");
     setCategoryInput("");
@@ -787,15 +746,8 @@ function App() {
   useEffect(() => {
     if (userProfile?.country && !filters.country) {
       setFilters((prev) => ({ ...prev, country: userProfile.country, county: "", area: "" }));
-      setCountryInput(userProfile.country);
     }
   }, [userProfile?.country, filters.country]);
-
-  useEffect(() => {
-    if (filters.country && countryInput !== filters.country) {
-      setCountryInput(filters.country);
-    }
-  }, [filters.country, countryInput]);
 
   useEffect(() => {
     if (filters.county && countyInput !== filters.county) {
@@ -1118,19 +1070,7 @@ function App() {
       <section id="user-search" className="glass section-card mb-5">
         <p className="section-kicker">Filter</p>
         <h2 className="section-title">Search By Location</h2>
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-          <div className="combo-single">
-            <input
-              className="input-modern combo-single-input"
-              placeholder="All Countries"
-              list="user-country-options"
-              value=${countryInput}
-              onInput=${(e) => handleCountryInputChange(e.target.value)}
-            />
-            <datalist id="user-country-options">
-              ${availableCountries.map((c) => html`<option value=${c} key=${c}>${c}</option>`)}
-            </datalist>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <div className="combo-single">
             <input
               className="input-modern combo-single-input"
