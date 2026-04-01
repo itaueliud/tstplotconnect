@@ -12,6 +12,44 @@ const dbName = process.env.MONGODB_DB_NAME || fallbackDbName;
 let client = null;
 let db = null;
 
+function getMongoOptions() {
+  const serverSelectionTimeoutMS = Number(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 30000);
+  const connectTimeoutMS = Number(process.env.MONGODB_CONNECT_TIMEOUT_MS || 10000);
+  const socketTimeoutMS = Number(process.env.MONGODB_SOCKET_TIMEOUT_MS || 45000);
+
+  return {
+    serverSelectionTimeoutMS,
+    connectTimeoutMS,
+    socketTimeoutMS,
+    maxPoolSize: Number(process.env.MONGODB_MAX_POOL_SIZE || 10),
+    minPoolSize: Number(process.env.MONGODB_MIN_POOL_SIZE || 0),
+  };
+}
+
+function getMongoUriSummary(uri) {
+  if (!uri) {
+    return "missing";
+  }
+
+  const isSrv = uri.startsWith("mongodb+srv://");
+  const isStandard = uri.startsWith("mongodb://");
+  let host = "unknown-host";
+
+  try {
+    if (isSrv || isStandard) {
+      const withoutScheme = uri.replace(/^mongodb(\+srv)?:\/\//, "");
+      const afterAuth = withoutScheme.includes("@") ? withoutScheme.split("@")[1] : withoutScheme;
+      host = (afterAuth || "").split("/")[0] || host;
+    }
+  } catch (_error) {
+    host = "unparseable";
+  }
+
+  const scheme = isSrv ? "mongodb+srv" : (isStandard ? "mongodb" : "unknown");
+  const hasAuth = uri.includes("@") ? "yes" : "no";
+  return `${scheme} host=${host} auth=${hasAuth}`;
+}
+
 function toDate(value, fallback = null) {
   if (!value) {
     return fallback;
@@ -28,8 +66,30 @@ async function initDb() {
     return db;
   }
 
-  client = new MongoClient(mongoUri);
-  await client.connect();
+  if (!mongoUri || !mongoUri.trim()) {
+    throw new Error("MONGODB_URI is missing.");
+  }
+
+  const mongoOptions = getMongoOptions();
+  client = new MongoClient(mongoUri, mongoOptions);
+
+  try {
+    await client.connect();
+  } catch (error) {
+    console.error("MongoDB connection failed.", {
+      uri: getMongoUriSummary(mongoUri),
+      dbName,
+      serverSelectionTimeoutMS: mongoOptions.serverSelectionTimeoutMS,
+      connectTimeoutMS: mongoOptions.connectTimeoutMS,
+      socketTimeoutMS: mongoOptions.socketTimeoutMS,
+      message: error?.message || "unknown error",
+      code: error?.code,
+      reasonType: error?.reason?.type,
+      topologySetName: error?.reason?.setName,
+    });
+    throw error;
+  }
+
   db = client.db(dbName);
 
   await ensureCollections();
