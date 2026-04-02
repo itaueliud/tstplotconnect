@@ -26,6 +26,7 @@ const SMS_MODE = (process.env.SMS_MODE || "mock").toLowerCase();
 const AFRICASTALKING_API_KEY = String(process.env.AFRICASTALKING_API_KEY || "").trim();
 const AFRICASTALKING_USERNAME = String(process.env.AFRICASTALKING_USERNAME || "sandbox").trim();
 const AFRICASTALKING_SENDER_ID = String(process.env.AFRICASTALKING_SENDER_ID || "").trim();
+const MONGODB_RETRY_DELAY_MS = Math.max(1000, Number(process.env.MONGODB_RETRY_DELAY_MS || 5000));
 const EXTRA_ALLOWED_ORIGINS = String(process.env.EXTRA_ALLOWED_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim())
@@ -66,6 +67,9 @@ const ALLOWED_ORIGINS = new Set([
   "http://127.0.0.1:5503"
 ]);
 
+let dbReady = false;
+let dbInitAttempts = 0;
+
 for (const origin of EXTRA_ALLOWED_ORIGINS) {
   ALLOWED_ORIGINS.add(origin);
 }
@@ -103,6 +107,23 @@ app.use((req, res, next) => {
 
 app.options("*", cors());
 app.use(express.json());
+
+app.use((req, res, next) => {
+  if (dbReady) {
+    return next();
+  }
+
+  const isHealthRoute = req.path === "/api/health" || req.path === "/";
+  const isPublicConfigRoute = req.path === "/api/public/config";
+  if (isHealthRoute || isPublicConfigRoute) {
+    return next();
+  }
+
+  return res.status(503).json({
+    error: "Service temporarily unavailable. Database is still connecting.",
+    dbReady: false
+  });
+});
 
 function usersCol() {
   return getDb().collection("users");
@@ -275,6 +296,8 @@ function mapPlot(plot, unlocked) {
     lng: typeof plot.lng === "number" ? plot.lng : null,
     mapLink: plot.mapLink || "",
     priority: plot.priority || "medium",
+    createdAt: plot.createdAt || null,
+    updatedAt: plot.updatedAt || plot.createdAt || null,
     caretaker: unlocked ? plot.caretaker : "Locked",
     whatsapp: unlocked ? plot.whatsapp : "Locked",
     unlocked
@@ -515,7 +538,13 @@ async function createUserIfMissing(phone) {
 }
 
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true });
+  const statusCode = dbReady ? 200 : 503;
+  res.status(statusCode).json({
+    ok: dbReady,
+    dbReady,
+    mongoRetryDelayMs: MONGODB_RETRY_DELAY_MS,
+    dbInitAttempts
+  });
 });
 
 app.get("/", (_req, res) => {
@@ -1469,7 +1498,8 @@ app.post("/api/admin/plots", requireSecureAdmin, requireAuth, requireAdmin, asyn
     lat: cleanLat,
     lng: cleanLng,
     mapLink: cleanMapLink,
-    createdAt: new Date()
+    createdAt: new Date(),
+    updatedAt: new Date()
   };
 
   await plotsCol().insertOne(plot);
@@ -1532,7 +1562,8 @@ app.put("/api/admin/plots/:id", requireSecureAdmin, requireAuth, requireAdmin, a
     whatsapp: cleanWhatsapp,
     lat: cleanLat,
     lng: cleanLng,
-    mapLink: cleanMapLink
+    mapLink: cleanMapLink,
+    updatedAt: new Date()
   };
 
   if (images !== null) {
@@ -2324,16 +2355,34 @@ app.get("/api/admin/analytics", requireSecureAdmin, requireAuth, requireAdmin, a
   });
 });
 
-async function start() {
-  await initDb();
+async function connectDbWithRetry() {
+  while (!dbReady) {
+    dbInitAttempts += 1;
+    try {
+      await initDb();
+      dbReady = true;
+      console.log("MongoDB connected. Service is ready.");
+      break;
+    } catch (err) {
+      console.error(`MongoDB init attempt ${dbInitAttempts} failed. Retrying in ${MONGODB_RETRY_DELAY_MS}ms.`);
+      await new Promise((resolve) => {
+        setTimeout(resolve, MONGODB_RETRY_DELAY_MS);
+      });
+    }
+  }
+}
 
+async function start() {
   app.listen(PORT, HOST, () => {
     console.log(`TST PlotConnect running on http://${HOST}:${PORT}`);
     console.log(`Payment mode: ${PAYMENT_MODE}`);
     if (PAYMENT_MODE === "daraja") {
       console.log(`Daraja config loaded: ${isDarajaConfigured() ? "yes" : "no"}`);
     }
+    console.log(`MongoDB retry delay: ${MONGODB_RETRY_DELAY_MS}ms`);
   });
+
+  void connectDbWithRetry();
 }
 
 start().catch((err) => {
