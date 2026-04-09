@@ -1,10 +1,10 @@
 User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /superadmin
 Disallow: /admin.html
+Disallow: /blog-admin
+Disallow: /blog-admin.html
+Disallow: /superadmin
 Disallow: /superadmin.html
-Disallow: /TSTPLOTCONNECTadmin.html
-Disallow: /TSTPLOTCONNECTsuperadmin.html
 
 Sitemap: https://www.tst-plotconnect.com/sitemap.xml

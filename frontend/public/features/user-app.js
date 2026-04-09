@@ -217,21 +217,29 @@ function formatPhoneForWhatsApp(phone) {
 
 function getInitialFiltersFromUrl() {
   if (typeof window === "undefined") {
-    return { country: "", county: "", area: "", minPrice: "", maxPrice: "" };
+    return { country: "", county: "", area: "", category: "", minPrice: "", maxPrice: "" };
   }
   const params = new URLSearchParams(window.location.search || "");
   return {
     country: String(params.get("country") || "").trim(),
     county: String(params.get("county") || "").trim(),
     area: String(params.get("area") || "").trim(),
+    category: String(params.get("category") || "").trim(),
     minPrice: "",
     maxPrice: ""
   };
 }
 
+function getInitialPlotIdFromUrl() {
+  if (typeof window === "undefined") return "";
+  const params = new URLSearchParams(window.location.search || "");
+  return String(params.get("plotId") || "").trim();
+}
+
 function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
   const initialFilters = getInitialFiltersFromUrl();
+  const initialPlotIdRef = useRef(getInitialPlotIdFromUrl());
   const [apiBase, setApiBase] = useState(API);
   const [msg, setMsg] = useState({ text: "", error: false });
   const [token, setToken] = useState("");
@@ -261,7 +269,7 @@ function App() {
   const [openField, setOpenField] = useState("");
   const [clickedField, setClickedField] = useState("");
   const [meta, setMeta] = useState({ countries: [], countiesByCountry: {}, areasByCounty: {} });
-  const [selectedPlotId, setSelectedPlotId] = useState("");
+  const [selectedPlotId, setSelectedPlotId] = useState(initialPlotIdRef.current);
   const [nowTs, setNowTs] = useState(Date.now());
   const [activeNav, setActiveNav] = useState("user-access");
   const [paymentLog, setPaymentLog] = useState([]);
@@ -543,6 +551,7 @@ function App() {
       if (filters.country) query.set("country", filters.country);
       if (filters.county) query.set("county", filters.county);
       if (filters.area) query.set("area", filters.area);
+      if (filters.category) query.set("category", filters.category);
       if (filters.minPrice) query.set("minPrice", filters.minPrice);
       if (filters.maxPrice) query.set("maxPrice", filters.maxPrice);
       const data = await api(`/api/plots${query.toString() ? `?${query.toString()}` : ""}`);
@@ -820,10 +829,6 @@ function App() {
   }, [filters.country, filters.county, filters.area, filters.category, filters.minPrice, filters.maxPrice, token]);
 
   useEffect(() => {
-    setSelectedPlotId("");
-  }, [filters.country, filters.county, filters.area, filters.category, filters.minPrice, filters.maxPrice]);
-
-  useEffect(() => {
     loadStatus();
     loadPaymentLog();
   }, [token]);
@@ -891,6 +896,13 @@ function App() {
     window.addEventListener("resize", syncMobileNavState);
     return () => window.removeEventListener("resize", syncMobileNavState);
   }, []);
+
+  useEffect(() => {
+    if (!initialPlotIdRef.current || !plots.length) return;
+    if (plots.some((plot) => plot.id === initialPlotIdRef.current)) {
+      setSelectedPlotId(initialPlotIdRef.current);
+    }
+  }, [plots]);
 
   const remainingMs = status && status.active ? getRemainingMs(status.expiresAt) : 0;
   const countdown = formatRemaining(remainingMs);

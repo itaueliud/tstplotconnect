@@ -1,0 +1,13 @@
+{
+  "name": "plotconnect-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared web, backend, and mobile workspace for PlotConnect.",
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:web": "npm --prefix frontend run dev",
+    "dev:mobile": "npm --prefix mobile-app start",
+    "start:mobile": "npm --prefix mobile-app start",
+    "sync:shared": "node scripts/sync-shared.mjs"
+  }
+}

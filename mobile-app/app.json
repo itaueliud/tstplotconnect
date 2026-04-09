@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "PlotConnect",
+    "slug": "plotconnect-mobile",
+    "version": "1.0.0",
+    "description": "Find verified hostels, bedsitters, and lodges, compare prices by location, and unlock caretaker contacts when you are ready to book.",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#081a36"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.tst.plotconnect",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "extra": {
+      "apiUrl": "https://tstplotconnect-2.onrender.com",
+      "eas": {
+        "projectId": "355d5536-96f4-48bb-94df-110cfbd3803c"
+      }
+    }
+  }
+}

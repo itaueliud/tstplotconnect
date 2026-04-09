@@ -7,7 +7,8 @@
     "start": "http-server public -p 5500 -c-1",
     "dev": "http-server public -p 5500 -c-1",
     "start:admin": "http-server admin-site -p 5501 -c-1",
-    "start:superadmin": "http-server superadmin-site -p 5502 -c-1"
+    "start:superadmin": "http-server superadmin-site -p 5502 -c-1",
+    "seo:sync": "node scripts/sync-seo.cjs"
   },
   "devDependencies": {
     "http-server": "^14.1.1"

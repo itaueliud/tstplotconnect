@@ -1,0 +1,8 @@
+node_modules
+.expo
+dist-check
+dist-test
+PLAYSTORE_CONTENT_CHECKLIST.md
+PLAYSTORE_LISTING.md
+PLAYSTORE_SUBMISSION.md
+npm-debug.log

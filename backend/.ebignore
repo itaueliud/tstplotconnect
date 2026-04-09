@@ -1,0 +1,6 @@
+node_modules
+.env
+npm-debug.log
+.git
+.gitignore
+AWS_APP_RUNNER_DEPLOY.md

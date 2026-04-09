@@ -5,7 +5,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "migrate:users-plots": "node scripts/migrate-users-plots.js",
+    "import:listings": "node scripts/import-local-listings-to-target-db.js"
   },
   "engines": {
     "node": "20.x"

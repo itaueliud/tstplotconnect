@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -17,6 +17,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import {
   DEFAULT_API_BASE,
@@ -29,7 +30,8 @@ import {
   formatPhoneForWhatsApp,
   inferApiBase,
   sortByPriority
-} from "../shared/src/index.js";
+} from "./shared.js";
+import "./i18n";
 
 const TOKEN_KEY = "plotconnect:userToken";
 const PROFILE_KEY = "plotconnect:userProfile";
@@ -40,11 +42,6 @@ const SUPPORT_INSTAGRAM = "https://www.instagram.com/techswifttrix/?hl=en";
 const TERMS_PRIVACY_URL = "https://www.tst-plotconnect.com/privacy";
 const ACCOUNT_DELETION_URL = "https://www.tst-plotconnect.com/account-deletion";
 const SEARCH_RESULTS_PER_PAGE = 6;
-const PROFILE_NOTIFICATIONS = [
-  { title: "New listings available", body: "Fresh spaces matching your country were added today." },
-  { title: "Account access update", body: "Activate your account to unblur images and unlock contacts." },
-  { title: "Support is online", body: "Reach us by call, WhatsApp, email, Facebook, or Instagram." }
-];
 const DEFAULT_FILTERS = {
   country: "Kenya",
   county: "",
@@ -54,10 +51,10 @@ const DEFAULT_FILTERS = {
   maxPrice: ""
 };
 const DISCOVER_CATEGORIES = [
-  { label: "All", value: "" },
-  { label: "Hostel", value: "Hostels" },
-  { label: "Bedsitter", value: "Bedsitters" },
-  { label: "Lodge", value: "Lodges" }
+  { labelKey: "categories.all", value: "" },
+  { labelKey: "categories.hostel", value: "Hostels" },
+  { labelKey: "categories.bedsitter", value: "Bedsitters" },
+  { labelKey: "categories.lodge", value: "Lodges" }
 ];
 function useApiBase() {
   return useMemo(() => {
@@ -73,12 +70,18 @@ function createAuthHeaders(token, includeJson = false) {
   return headers;
 }
 
-function formatStatusCountdown(status) {
-  if (!status?.active || !status?.expiresAt) return "Inactive";
+function formatStatusCountdown(status, t) {
+  if (!status?.active || !status?.expiresAt) return t ? t("payments.inactive") : "Inactive";
   const remainingMs = Math.max(0, new Date(status.expiresAt).getTime() - Date.now());
   const total = Math.floor(remainingMs / 1000);
   const hours = Math.floor(total / 3600);
   const minutes = Math.floor((total % 3600) / 60);
+  if (t) {
+    return t("payments.time_left", {
+      hours,
+      minutes: String(minutes).padStart(2, "0")
+    });
+  }
   return `${hours}h ${String(minutes).padStart(2, "0")}m left`;
 }
 
@@ -91,19 +94,19 @@ function getInitials(name) {
     .join("");
 }
 
-function mapCategoryLabel(category) {
+function mapCategoryLabel(category, t) {
   const value = String(category || "").toLowerCase();
-  if (!value) return "Listing";
-  if (value.includes("hostel")) return "Hostel";
-  if (value.includes("bedsitter")) return "Bedsitter";
-  if (value.includes("lodge")) return "Lodge";
-  if (value.includes("apartment")) return "Apartment";
+  if (!value) return t ? t("categories.listing") : "Listing";
+  if (value.includes("hostel")) return t ? t("categories.hostel") : "Hostel";
+  if (value.includes("bedsitter")) return t ? t("categories.bedsitter") : "Bedsitter";
+  if (value.includes("lodge")) return t ? t("categories.lodge") : "Lodge";
+  if (value.includes("apartment")) return t ? t("categories.apartment") : "Apartment";
   return String(category);
 }
 
-function formatPrice(value) {
+function formatPrice(value, t) {
   const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return "Price on request";
+  if (!Number.isFinite(numeric)) return t ? t("pricing.on_request") : "Price on request";
   return `Ksh ${numeric.toLocaleString()}`;
 }
 
@@ -180,7 +183,7 @@ function SelectableInputField({
           placeholder={placeholder}
           placeholderTextColor="#7c88a4"
         />
-        <Text style={styles.dropdownChevron}>{open ? "˄" : "˅"}</Text>
+        <Text style={styles.dropdownChevron}>{open ? "Ë„" : "Ë…"}</Text>
       </View>
       <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
         <Pressable
@@ -236,7 +239,7 @@ function SelectableInputField({
   );
 }
 
-function ListingCard({ item, status, onPress }) {
+function ListingCard({ item, status, onPress, t }) {
   const locationLine = getLocationLine(item);
   const previewImage = Array.isArray(item?.images) && item.images.length ? item.images[0] : "";
   const mediaUnlocked = !!status?.active;
@@ -252,7 +255,7 @@ function ListingCard({ item, status, onPress }) {
             />
             {!mediaUnlocked ? <View style={styles.listingImageOverlay} /> : null}
             <View style={styles.priceBadgeFloating}>
-              <Text style={styles.priceBadgeText}>{formatPrice(item?.price)}</Text>
+              <Text style={styles.priceBadgeText}>{formatPrice(item?.price, t)}</Text>
             </View>
           </View>
         ) : (
@@ -261,7 +264,7 @@ function ListingCard({ item, status, onPress }) {
               <Text style={styles.listingIllustrationText}>H</Text>
             </View>
             <View style={styles.priceBadge}>
-              <Text style={styles.priceBadgeText}>{formatPrice(item?.price)}</Text>
+              <Text style={styles.priceBadgeText}>{formatPrice(item?.price, t)}</Text>
             </View>
           </View>
         )}
@@ -269,7 +272,7 @@ function ListingCard({ item, status, onPress }) {
 
       <View style={styles.badgeRow}>
         <View style={styles.softBadge}>
-          <Text style={styles.softBadgeText}>{mapCategoryLabel(item?.category)}</Text>
+          <Text style={styles.softBadgeText}>{mapCategoryLabel(item?.category, t)}</Text>
         </View>
         <View style={[styles.softBadge, styles.greenBadge]}>
           <Text style={[styles.softBadgeText, styles.greenBadgeText]}>Verified</Text>
@@ -278,14 +281,14 @@ function ListingCard({ item, status, onPress }) {
 
       {!previewImage ? (
         <View style={styles.priceBadgeInline}>
-          <Text style={styles.priceBadgeText}>{formatPrice(item?.price)}</Text>
+          <Text style={styles.priceBadgeText}>{formatPrice(item?.price, t)}</Text>
         </View>
       ) : null}
 
-      <Text style={styles.listingTitle}>{item?.title || "Untitled Listing"}</Text>
-      <Text style={styles.listingLocation}>{locationLine || "Location not provided"}</Text>
+      <Text style={styles.listingTitle}>{item?.title || t("listing.untitled")}</Text>
+      <Text style={styles.listingLocation}>{locationLine || t("listing.location_missing")}</Text>
       <Text style={styles.listingDescription} numberOfLines={2}>
-        {item?.description || "No description added yet."}
+        {item?.description || t("listing.description_missing")}
       </Text>
 
       <View style={styles.listingFooterRow}>
@@ -295,7 +298,7 @@ function ListingCard({ item, status, onPress }) {
 
       <View style={styles.lockBanner}>
         <Text style={styles.lockBannerText}>
-          {status?.active ? "Contacts available in details" : "Activate to view contacts"}
+          {status?.active ? t("listing.contacts_available") : t("listing.activate_to_view_contacts")}
         </Text>
       </View>
     </Pressable>
@@ -304,6 +307,7 @@ function ListingCard({ item, status, onPress }) {
 
 export default function App() {
   const apiBase = useApiBase();
+  const { t, i18n } = useTranslation();
   const [token, setToken] = useState("");
   const [userProfile, setUserProfile] = useState(null);
   const [activeScreen, setActiveScreen] = useState("landing");
@@ -341,6 +345,21 @@ export default function App() {
   const [forgotStep, setForgotStep] = useState("request");
   const [forgotExpiresAt, setForgotExpiresAt] = useState("");
   const [forgotBusy, setForgotBusy] = useState(false);
+  const activeLanguage = i18n.resolvedLanguage?.toLowerCase().startsWith("sw") ? "sw" : "en";
+  const profileNotifications = [
+    {
+      title: t("notifications.new_listings_title"),
+      body: t("notifications.new_listings_body")
+    },
+    {
+      title: t("notifications.account_access_title"),
+      body: t("notifications.account_access_body")
+    },
+    {
+      title: t("notifications.support_online_title"),
+      body: t("notifications.support_online_body")
+    }
+  ];
 
   const featuredPlots = plots.slice(0, 3);
   const totalSearchPages = Math.max(1, Math.ceil(plots.length / SEARCH_RESULTS_PER_PAGE));
@@ -417,6 +436,14 @@ export default function App() {
 
   function showMessage(text, error = false) {
     setMessage({ text, error });
+  }
+
+  async function handleLanguageChange(lang) {
+    try {
+      await i18n.changeLanguage(lang);
+    } catch (_err) {
+      showMessage("Failed to switch language.", true);
+    }
   }
 
   function syncFiltersToCountry(country) {
@@ -588,9 +615,9 @@ export default function App() {
       await persistSession(data.token, data.user);
       setAuthFields((prev) => ({ ...prev, loginPassword: "" }));
       setActiveScreen("home");
-      showMessage("Login successful.", false);
+      showMessage(t("messages.login_successful"), false);
     } catch (err) {
-      showMessage(err.message || "Login failed.", true);
+      showMessage(err.message || t("messages.login_failed"), true);
     } finally {
       setAuthBusy(false);
     }
@@ -669,7 +696,7 @@ export default function App() {
     setAppliedFilters({ ...draftFilters });
     setSearchPage(1);
     setActiveScreen("search");
-    showMessage("Filters updated.", false);
+    showMessage(t("messages.filters_updated"), false);
   }
 
   function clearFilters() {
@@ -679,7 +706,7 @@ export default function App() {
     setAppliedFilters(nextFilters);
     setSearchPage(1);
     setOpenDropdown("");
-    showMessage("Filters cleared.", false);
+    showMessage(t("messages.filters_cleared"), false);
   }
 
   async function handleActivateAccount() {
@@ -719,40 +746,40 @@ export default function App() {
     }
   }
 
-  function handleProfileMenuPress(title) {
-    if (title === "Saved Listings") {
+  function handleProfileMenuPress(itemId) {
+    if (itemId === "savedListings") {
       setShowSupportCard(false);
       setShowNotificationsCard(false);
       setActiveScreen("search");
-      showMessage("Opening saved listings.", false);
+      showMessage(t("messages.saved_listings_opening"), false);
       return;
     }
-    if (title === "Notifications") {
+    if (itemId === "notifications") {
       setShowSupportCard(false);
       setShowNotificationsCard((prev) => !prev);
       return;
     }
-    if (title === "List My Property") {
+    if (itemId === "listProperty") {
       setShowSupportCard(false);
       setShowNotificationsCard(false);
-      showMessage("List My Property is coming soon.", false);
+      showMessage(t("messages.list_property_soon"), false);
       return;
     }
-    if (title === "Support") {
+    if (itemId === "support") {
       setShowNotificationsCard(false);
       setShowSupportCard((prev) => !prev);
       return;
     }
-    if (title === "Terms & Privacy") {
+    if (itemId === "termsPrivacy") {
       setShowSupportCard(false);
       setShowNotificationsCard(false);
-      openSupportLink(TERMS_PRIVACY_URL, "Could not open Terms & Privacy.");
+      openSupportLink(TERMS_PRIVACY_URL, t("messages.could_not_open_terms"));
       return;
     }
-    if (title === "Delete Account") {
+    if (itemId === "deleteAccount") {
       setShowSupportCard(false);
       setShowNotificationsCard(false);
-      openSupportLink(ACCOUNT_DELETION_URL, "Could not open Delete Account page.");
+      openSupportLink(ACCOUNT_DELETION_URL, t("messages.could_not_open_delete_account"));
     }
   }
 
@@ -773,8 +800,9 @@ export default function App() {
           <Text style={styles.countryText}>{country}</Text>
           {token ? (
             <Text style={styles.topBarTitle}>
-              Find Your{"\n"}
-              <Text style={styles.topBarAccent}>Perfect Space</Text>
+              {t("home.find_perfect_space")}
+              {"\n"}
+              <Text style={styles.topBarAccent}>{t("home.perfect_space")}</Text>
             </Text>
           ) : null}
         </View>
@@ -790,7 +818,7 @@ export default function App() {
   }
 
   function renderSearchBar(showInlineAction = true) {
-    const placeholder = token ? "Search area, county, hostel..." : "you@example.com";
+    const placeholder = token ? t("home.search_placeholder") : "you@example.com";
     return (
       <View style={styles.searchShell}>
         <TextInput
@@ -804,7 +832,7 @@ export default function App() {
         />
         {showInlineAction ? (
           <Pressable style={styles.searchAction} onPress={token ? applyFilters : handleLogin} disabled={!token && authBusy}>
-            <Text style={styles.searchActionText}>{token ? "Search" : authBusy ? "..." : "Log In"}</Text>
+            <Text style={styles.searchActionText}>{token ? t("tabs.search") : authBusy ? "..." : t("auth.log_in")}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -818,8 +846,8 @@ export default function App() {
           <Text style={styles.promoIconText}>!</Text>
         </View>
         <View style={styles.promoBody}>
-          <Text style={styles.promoTitle}>Unlock Contact Details</Text>
-          <Text style={styles.promoText}>Activate for Ksh {ACCESS_FEE} • 24hr access</Text>
+          <Text style={styles.promoTitle}>{t("home.unlock_contact_details")}</Text>
+          <Text style={styles.promoText}>{t("home.activate_offer", { amount: ACCESS_FEE })}</Text>
         </View>
         <Pressable
           style={styles.promoButton}
@@ -832,7 +860,9 @@ export default function App() {
           }}
           disabled={paying}
         >
-          <Text style={styles.promoButtonText}>{status?.active ? "Active" : paying ? "..." : "Activate"}</Text>
+          <Text style={styles.promoButtonText}>
+            {status?.active ? t("payments.active") : paying ? "..." : t("home.activate")}
+          </Text>
         </Pressable>
       </View>
     );
@@ -841,12 +871,12 @@ export default function App() {
   function renderBrowseTypeChips() {
     return (
       <View style={styles.sectionBlock}>
-        <Text style={styles.sectionEyebrow}>Browse By Type</Text>
+        <Text style={styles.sectionEyebrow}>{t("home.browse_by_type")}</Text>
         <View style={styles.chipRow}>
           {DISCOVER_CATEGORIES.map((option) => (
             <MiniChip
-              key={option.label}
-              label={option.label}
+              key={`${option.labelKey}-${option.value}`}
+              label={t(option.labelKey)}
               active={(appliedFilters.category || "") === option.value}
               onPress={() => setQuickCategory(option.value)}
             />
@@ -872,11 +902,11 @@ export default function App() {
           <ActivityIndicator color="#18c7a0" size="large" style={styles.loadingState} />
         ) : featuredPlots.length === 0 ? (
           <View style={styles.emptyPanel}>
-            <Text style={styles.emptyPanelText}>No listings match your current filters.</Text>
+            <Text style={styles.emptyPanelText}>{t("home.no_listings_filters")}</Text>
           </View>
         ) : (
           featuredPlots.map((item) => (
-            <ListingCard key={String(item.id)} item={item} status={status} onPress={() => openPlot(item)} />
+            <ListingCard key={String(item.id)} item={item} status={status} onPress={() => openPlot(item)} t={t} />
           ))
         )}
       </View>
@@ -890,7 +920,7 @@ export default function App() {
         {renderSearchBar(true)}
         {renderPromoCard()}
         {renderBrowseTypeChips()}
-        {renderListingsSection("Nearby Listings", "See all")}
+        {renderListingsSection(t("home.nearby_listings"), t("home.see_all"))}
       </ScrollView>
     );
   }
@@ -902,9 +932,12 @@ export default function App() {
       (option) => String(option).trim().toLowerCase() === String(draftFilters.county || "").trim().toLowerCase()
     ) || "";
     const areaOptions = selectedCounty ? meta.areasByCounty?.[selectedCounty] || [] : [];
-    const categoryOptions = DISCOVER_CATEGORIES.concat(
+    const categoryOptions = DISCOVER_CATEGORIES.map((option) => ({
+      ...option,
+      label: t(option.labelKey)
+    })).concat(
       LISTING_CATEGORIES.filter((item) => !DISCOVER_CATEGORIES.some((option) => option.value === item)).map((item) => ({
-        label: mapCategoryLabel(item),
+        label: mapCategoryLabel(item, t),
         value: item
       }))
     );
@@ -917,7 +950,7 @@ export default function App() {
         scrollEnabled={!openDropdown}
       >
         <View style={styles.searchFilterHeader}>
-          <Text style={styles.screenTitle}>Search & Filter</Text>
+          <Text style={styles.screenTitle}>{t("filters.search_filter")}</Text>
         </View>
 
         <View style={styles.searchPanel}>
@@ -925,15 +958,15 @@ export default function App() {
             style={styles.searchInputWide}
             value={draftFilters.area}
             onChangeText={(area) => setDraftFilters((prev) => ({ ...prev, area }))}
-            placeholder="Name, area, or county..."
+            placeholder={t("filters.name_area_county")}
             placeholderTextColor="#60708f"
           />
 
           <View style={styles.filterDoubleRow}>
             <SelectableInputField
-              label="County / City"
+              label={t("filters.county_city")}
               value={draftFilters.county}
-              placeholder="All counties"
+              placeholder={t("filters.all_counties")}
               options={countyOptions}
               isOpen={openDropdown === "county"}
               onFocus={() => setOpenDropdown("county")}
@@ -953,14 +986,14 @@ export default function App() {
               half
             />
             <SelectableInputField
-              label="Area"
+              label={t("filters.area")}
               value={draftFilters.area}
-              placeholder="All areas"
+              placeholder={t("filters.all_areas")}
               options={areaOptions}
               isOpen={openDropdown === "area"}
               onFocus={() => {
                 if (!selectedCounty) {
-                  showMessage("Select a county first.", true);
+                  showMessage(t("messages.select_county_first"), true);
                   return;
                 }
                 setOpenDropdown("area");
@@ -982,7 +1015,7 @@ export default function App() {
             />
           </View>
 
-          <Text style={styles.filterLabel}>Category</Text>
+          <Text style={styles.filterLabel}>{t("filters.category")}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
             {categoryOptions.map((option) => (
               <MiniChip
@@ -996,7 +1029,7 @@ export default function App() {
 
           <View style={styles.filterDoubleRow}>
             <FilterField
-              label="Min Price"
+              label={t("filters.min_price")}
               value={draftFilters.minPrice}
               placeholder="Ksh 0"
               onChangeText={(minPrice) => setDraftFilters((prev) => ({ ...prev, minPrice }))}
@@ -1004,7 +1037,7 @@ export default function App() {
               half
             />
             <FilterField
-              label="Max Price"
+              label={t("filters.max_price")}
               value={draftFilters.maxPrice}
               placeholder="Ksh 80"
               onChangeText={(maxPrice) => setDraftFilters((prev) => ({ ...prev, maxPrice }))}
@@ -1015,25 +1048,25 @@ export default function App() {
 
           <View style={styles.searchActionRow}>
             <Text style={styles.resultCountText}>
-              {plots.length} listing{plots.length === 1 ? "" : "s"} found
+              {t("filters.results_found", { count: plots.length })}
             </Text>
             {plots.length > 0 ? (
               <Text style={styles.searchPageText}>
-                Page {searchPage} of {totalSearchPages}
+                {t("filters.page_of", { page: searchPage, total: totalSearchPages })}
               </Text>
             ) : (
               <Pressable onPress={clearFilters}>
-                <Text style={styles.clearText}>Clear</Text>
+                <Text style={styles.clearText}>{t("filters.clear")}</Text>
               </Pressable>
             )}
           </View>
 
           <View style={styles.searchButtonsRow}>
             <Pressable style={[styles.outlineButton, styles.buttonFlex]} onPress={clearFilters}>
-              <Text style={styles.outlineButtonText}>Reset</Text>
+              <Text style={styles.outlineButtonText}>{t("filters.reset")}</Text>
             </Pressable>
             <Pressable style={[styles.primaryButton, styles.buttonFlex]} onPress={applyFilters}>
-              <Text style={styles.primaryButtonText}>Apply</Text>
+              <Text style={styles.primaryButtonText}>{t("filters.apply")}</Text>
             </Pressable>
           </View>
         </View>
@@ -1043,12 +1076,12 @@ export default function App() {
             <ActivityIndicator color="#18c7a0" size="large" style={styles.loadingState} />
           ) : plots.length === 0 ? (
             <View style={styles.emptyPanel}>
-              <Text style={styles.emptyPanelText}>No listings available for these filters.</Text>
+              <Text style={styles.emptyPanelText}>{t("filters.no_listings")}</Text>
             </View>
           ) : (
             <>
               {paginatedPlots.map((item) => (
-                <ListingCard key={String(item.id)} item={item} status={status} onPress={() => openPlot(item)} />
+                <ListingCard key={String(item.id)} item={item} status={status} onPress={() => openPlot(item)} t={t} />
               ))}
               {totalSearchPages > 1 ? (
                 <View style={styles.paginationRow}>
@@ -1057,14 +1090,18 @@ export default function App() {
                     onPress={() => setSearchPage((prev) => Math.max(1, prev - 1))}
                     disabled={searchPage === 1}
                   >
-                    <Text style={[styles.outlineButtonText, searchPage === 1 && styles.paginationButtonTextDisabled]}>Previous</Text>
+                    <Text style={[styles.outlineButtonText, searchPage === 1 && styles.paginationButtonTextDisabled]}>
+                      {t("filters.previous")}
+                    </Text>
                   </Pressable>
                   <Pressable
                     style={[styles.primaryButton, styles.paginationButton, searchPage === totalSearchPages && styles.paginationButtonDisabled]}
                     onPress={() => setSearchPage((prev) => Math.min(totalSearchPages, prev + 1))}
                     disabled={searchPage === totalSearchPages}
                   >
-                    <Text style={[styles.primaryButtonText, searchPage === totalSearchPages && styles.paginationButtonTextDisabled]}>Next</Text>
+                    <Text style={[styles.primaryButtonText, searchPage === totalSearchPages && styles.paginationButtonTextDisabled]}>
+                      {t("filters.next")}
+                    </Text>
                   </Pressable>
                 </View>
               ) : null}
@@ -1080,9 +1117,9 @@ export default function App() {
     return (
       <ScrollView contentContainerStyle={styles.screenContent} showsVerticalScrollIndicator={false}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.screenTitle}>Listing Details</Text>
+          <Text style={styles.screenTitle}>{t("listing.listing_details")}</Text>
           <Pressable style={styles.outlineButtonSmall} onPress={() => setActiveScreen("search")}>
-            <Text style={styles.outlineButtonText}>Back</Text>
+            <Text style={styles.outlineButtonText}>{t("listing.back")}</Text>
           </Pressable>
         </View>
 
@@ -1090,7 +1127,7 @@ export default function App() {
           <ActivityIndicator color="#18c7a0" size="large" style={styles.loadingState} />
         ) : !selectedPlot ? (
           <View style={styles.emptyPanel}>
-            <Text style={styles.emptyPanelText}>Select a listing from Search to view full details.</Text>
+            <Text style={styles.emptyPanelText}>{t("listing.select_listing")}</Text>
           </View>
         ) : (
           <View style={styles.detailCard}>
@@ -1101,48 +1138,52 @@ export default function App() {
                 </View>
               </View>
               <View style={styles.priceBadge}>
-                <Text style={styles.priceBadgeText}>{formatPrice(selectedPlot.price)}</Text>
+                <Text style={styles.priceBadgeText}>{formatPrice(selectedPlot.price, t)}</Text>
               </View>
             </View>
 
             <View style={styles.badgeRow}>
               <View style={styles.softBadge}>
-                <Text style={styles.softBadgeText}>{mapCategoryLabel(selectedPlot.category)}</Text>
+                <Text style={styles.softBadgeText}>{mapCategoryLabel(selectedPlot.category, t)}</Text>
               </View>
               <View style={[styles.softBadge, styles.greenBadge]}>
-                <Text style={[styles.softBadgeText, styles.greenBadgeText]}>{status?.active ? "Unlocked" : "Locked"}</Text>
+                <Text style={[styles.softBadgeText, styles.greenBadgeText]}>
+                  {status?.active ? t("listing.unlocked") : t("listing.locked")}
+                </Text>
               </View>
             </View>
 
             <Text style={styles.listingTitle}>{selectedPlot.title}</Text>
-            <Text style={styles.listingLocation}>{locationLine || "Location not provided"}</Text>
-            <Text style={styles.detailDescription}>{selectedPlot.description || "No description added yet."}</Text>
+            <Text style={styles.listingLocation}>{locationLine || t("listing.location_missing")}</Text>
+            <Text style={styles.detailDescription}>{selectedPlot.description || t("listing.description_missing")}</Text>
 
             <View style={styles.detailInfoCard}>
-              <Text style={styles.detailInfoLabel}>Caretaker Phone</Text>
+              <Text style={styles.detailInfoLabel}>{t("listing.caretaker_phone")}</Text>
               <Text style={styles.detailInfoValue}>
                 {selectedPlot.caretaker && selectedPlot.caretaker !== "Locked"
                   ? formatPhoneForTel(selectedPlot.caretaker)
-                  : "Locked until activation"}
+                  : t("listing.locked_until_activation")}
               </Text>
             </View>
 
             <View style={styles.detailInfoCard}>
-              <Text style={styles.detailInfoLabel}>WhatsApp</Text>
+              <Text style={styles.detailInfoLabel}>{t("listing.whatsapp")}</Text>
               <Text style={styles.detailInfoValue}>
                 {selectedPlot.whatsapp && selectedPlot.whatsapp !== "Locked"
                   ? formatPhoneForWhatsApp(selectedPlot.whatsapp)
-                  : "Locked until activation"}
+                  : t("listing.locked_until_activation")}
               </Text>
             </View>
 
             {!token ? (
               <Pressable style={styles.primaryButton} onPress={() => setActiveScreen("access")}>
-                <Text style={styles.primaryButtonText}>Log In To Unlock Contacts</Text>
+                <Text style={styles.primaryButtonText}>{t("listing.log_in_unlock_contacts")}</Text>
               </Pressable>
             ) : !status?.active ? (
               <Pressable style={styles.primaryButton} onPress={handleActivateAccount} disabled={paying}>
-                <Text style={styles.primaryButtonText}>{paying ? "Starting Payment..." : "Activate Account"}</Text>
+                <Text style={styles.primaryButtonText}>
+                  {paying ? t("listing.starting_payment") : t("listing.activate_account")}
+                </Text>
               </Pressable>
             ) : null}
           </View>
@@ -1155,7 +1196,7 @@ export default function App() {
     return (
       <ScrollView contentContainerStyle={styles.screenContent} showsVerticalScrollIndicator={false}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.screenTitle}>Payments</Text>
+          <Text style={styles.screenTitle}>{t("payments.title")}</Text>
           <Pressable
             style={styles.outlineButtonSmall}
             onPress={() => {
@@ -1163,38 +1204,40 @@ export default function App() {
               loadPayments();
             }}
           >
-            <Text style={styles.outlineButtonText}>Refresh</Text>
+            <Text style={styles.outlineButtonText}>{t("payments.refresh")}</Text>
           </Pressable>
         </View>
 
         <View style={styles.paymentHero}>
-          <Text style={styles.paymentHeroLabel}>Access Status</Text>
-          <Text style={styles.paymentHeroValue}>{status?.active ? "Active" : "Inactive"}</Text>
-          <Text style={styles.paymentHeroText}>{status?.active ? formatStatusCountdown(status) : "Activate for 24 hour access"}</Text>
+          <Text style={styles.paymentHeroLabel}>{t("payments.access_status")}</Text>
+          <Text style={styles.paymentHeroValue}>{status?.active ? t("payments.active") : t("payments.inactive")}</Text>
+          <Text style={styles.paymentHeroText}>
+            {status?.active ? formatStatusCountdown(status, t) : t("payments.activate_24h_access")}
+          </Text>
         </View>
 
         <View style={styles.paymentActionCard}>
-          <Text style={styles.paymentActionTitle}>Unlock contact details</Text>
-          <Text style={styles.paymentActionText}>One tap M-Pesa activation for Ksh {ACCESS_FEE}.</Text>
+          <Text style={styles.paymentActionTitle}>{t("payments.unlock_contact_details")}</Text>
+          <Text style={styles.paymentActionText}>{t("payments.one_tap_activation", { amount: ACCESS_FEE })}</Text>
           <Pressable style={styles.primaryButton} onPress={handleActivateAccount} disabled={paying}>
-            <Text style={styles.primaryButtonText}>{paying ? "Starting Payment..." : "Activate Now"}</Text>
+            <Text style={styles.primaryButtonText}>{paying ? t("listing.starting_payment") : t("payments.activate_now")}</Text>
           </Pressable>
         </View>
 
         <View style={styles.sectionBlock}>
-          <Text style={styles.sectionEyebrow}>Recent Payments</Text>
+          <Text style={styles.sectionEyebrow}>{t("payments.recent_payments")}</Text>
           {loadingPayments ? (
             <ActivityIndicator color="#18c7a0" size="large" style={styles.loadingState} />
           ) : paymentLog.length === 0 ? (
             <View style={styles.emptyPanel}>
-              <Text style={styles.emptyPanelText}>No payment activity yet.</Text>
+              <Text style={styles.emptyPanelText}>{t("payments.no_activity")}</Text>
             </View>
           ) : (
             paymentLog.map((payment) => (
               <View key={String(payment.id)} style={styles.paymentItem}>
-                <Text style={styles.paymentMainText}>{payment.status} • {formatPrice(payment.amount)}</Text>
+                <Text style={styles.paymentMainText}>{payment.status} • {formatPrice(payment.amount, t)}</Text>
                 <Text style={styles.paymentSubText}>{new Date(payment.timestamp).toLocaleString()}</Text>
-                {payment.mpesaReceipt ? <Text style={styles.paymentSubText}>Receipt: {payment.mpesaReceipt}</Text> : null}
+                {payment.mpesaReceipt ? (<Text style={styles.paymentSubText}>{t("payments.receipt", { receipt: payment.mpesaReceipt })}</Text>) : null}
                 {payment.validationError ? <Text style={styles.errorText}>{payment.validationError}</Text> : null}
                 {payment.validationWarning ? <Text style={styles.warningText}>{payment.validationWarning}</Text> : null}
               </View>
@@ -1207,7 +1250,7 @@ export default function App() {
 
   function renderProfileScreen() {
     const accountName = userProfile?.name || "PlotConnect User";
-    const accountId = userProfile?.displayId || userProfile?.id || userProfile?._id || "ID pending";
+    const accountId = userProfile?.displayId || userProfile?.id || userProfile?._id || t("profile.id_pending");
     const accountCountry = normalizeCountry(userProfile?.country || draftFilters.country);
     return (
       <ScrollView contentContainerStyle={styles.screenContent} showsVerticalScrollIndicator={false}>
@@ -1217,12 +1260,12 @@ export default function App() {
           </View>
           <View style={styles.accountHeroBody}>
             <Text style={styles.accountName}>{accountName}</Text>
-            <Text style={styles.accountMeta}>{userProfile?.phone || "No phone saved"} • ID: {accountId}</Text>
+            <Text style={styles.accountMeta}>{userProfile?.phone || t("profile.no_phone_saved")} • ID: {accountId}</Text>
           </View>
         </View>
 
         <View style={styles.accountCard}>
-          <Text style={styles.filterLabel}>Your Country</Text>
+          <Text style={styles.filterLabel}>{t("profile.your_country")}</Text>
           <TextInput
             style={styles.filterInput}
             value={accountCountry}
@@ -1232,15 +1275,31 @@ export default function App() {
           />
         </View>
 
+        <View style={styles.accountCard}>
+          <Text style={styles.filterLabel}>{t("language.label")}</Text>
+          <View style={styles.chipRow}>
+            <MiniChip
+              label={t("language.english")}
+              active={activeLanguage === "en"}
+              onPress={() => handleLanguageChange("en")}
+            />
+            <MiniChip
+              label={t("language.swahili")}
+              active={activeLanguage === "sw"}
+              onPress={() => handleLanguageChange("sw")}
+            />
+          </View>
+        </View>
+
         {[
-          { title: "Saved Listings", subtitle: `${plots.length} properties nearby` },
-          { title: "Notifications", subtitle: status?.active ? "Access is active" : "2 new alerts" },
-          { title: "List My Property", subtitle: "Reach thousands of seekers" },
-          { title: "Support", subtitle: "Get help fast" },
-          { title: "Terms & Privacy", subtitle: "Legal information" },
-          { title: "Delete Account", subtitle: "Request account and data deletion" }
+          { id: "savedListings", title: t("profile.saved_listings"), subtitle: t("profile.saved_listings_subtitle", { count: plots.length }) },
+          { id: "notifications", title: t("profile.notifications"), subtitle: status?.active ? t("profile.notifications_active") : t("profile.notifications_alerts") },
+          { id: "listProperty", title: t("profile.list_my_property"), subtitle: t("profile.list_my_property_subtitle") },
+          { id: "support", title: t("profile.support"), subtitle: t("profile.support_subtitle") },
+          { id: "termsPrivacy", title: t("profile.terms_privacy"), subtitle: t("profile.terms_privacy_subtitle") },
+          { id: "deleteAccount", title: t("profile.delete_account"), subtitle: t("profile.delete_account_subtitle") }
         ].map((item) => (
-          <Pressable key={item.title} style={styles.accountMenuCard} onPress={() => handleProfileMenuPress(item.title)}>
+          <Pressable key={item.id} style={styles.accountMenuCard} onPress={() => handleProfileMenuPress(item.id)}>
             <View>
               <Text style={styles.accountMenuTitle}>{item.title}</Text>
               <Text style={styles.accountMenuText}>{item.subtitle}</Text>
@@ -1251,8 +1310,8 @@ export default function App() {
 
         {showNotificationsCard ? (
           <View style={styles.notificationsCard}>
-            <Text style={styles.sectionEyebrow}>Notifications</Text>
-            {PROFILE_NOTIFICATIONS.map((item) => (
+            <Text style={styles.sectionEyebrow}>{t("profile.notifications")}</Text>
+            {profileNotifications.map((item) => (
               <View key={item.title} style={styles.notificationItem}>
                 <Text style={styles.notificationTitle}>{item.title}</Text>
                 <Text style={styles.notificationText}>{item.body}</Text>
@@ -1268,9 +1327,9 @@ export default function App() {
                 <MaterialCommunityIcons name="headset" size={18} color="#ffffff" />
               </View>
               <View style={styles.supportHeaderBody}>
-                <Text style={styles.sectionEyebrow}>Support</Text>
-                <Text style={styles.supportTitle}>We are here when you need us</Text>
-                <Text style={styles.supportCaption}>Reach PlotConnect support by email, call, WhatsApp, Facebook, or Instagram.</Text>
+                <Text style={styles.sectionEyebrow}>{t("profile.support")}</Text>
+                <Text style={styles.supportTitle}>{t("support.title")}</Text>
+                <Text style={styles.supportCaption}>{t("support.caption")}</Text>
               </View>
             </View>
 
@@ -1288,7 +1347,12 @@ export default function App() {
             <View style={styles.supportActions}>
               <Pressable
                 style={styles.supportActionButton}
-                onPress={() => openSupportLink(`mailto:${SUPPORT_EMAIL}?subject=Support Request - TST PlotConnect`, "Could not open email app.")}
+                onPress={() =>
+                  openSupportLink(
+                    `mailto:${SUPPORT_EMAIL}?subject=Support Request - TST PlotConnect`,
+                    t("messages.could_not_open_email")
+                  )
+                }
               >
                 <View style={styles.supportActionIconWrap}>
                   <MaterialCommunityIcons name="email-fast-outline" size={20} color="#ffffff" />
@@ -1297,7 +1361,7 @@ export default function App() {
               </Pressable>
               <Pressable
                 style={styles.supportActionButton}
-                onPress={() => openSupportLink(`tel:${SUPPORT_PHONE}`, "Could not start the phone call.")}
+                onPress={() => openSupportLink(`tel:${SUPPORT_PHONE}`, t("messages.could_not_start_call"))}
               >
                 <View style={styles.supportActionIconWrap}>
                   <MaterialCommunityIcons name="phone" size={18} color="#ffffff" />
@@ -1309,7 +1373,7 @@ export default function App() {
                 onPress={() =>
                   openSupportLink(
                     `https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent("Hello, I need help with TST PlotConnect.")}`,
-                    "Could not open WhatsApp."
+                    t("messages.could_not_open_whatsapp")
                   )
                 }
               >
@@ -1320,7 +1384,7 @@ export default function App() {
               </Pressable>
               <Pressable
                 style={styles.supportActionButton}
-                onPress={() => openSupportLink(SUPPORT_FACEBOOK, "Could not open Facebook.")}
+                onPress={() => openSupportLink(SUPPORT_FACEBOOK, t("messages.could_not_open_facebook"))}
               >
                 <View style={[styles.supportActionIconWrap, styles.supportActionIconFacebook]}>
                   <FontAwesome name="facebook-f" size={18} color="#ffffff" />
@@ -1329,7 +1393,7 @@ export default function App() {
               </Pressable>
               <Pressable
                 style={styles.supportActionButton}
-                onPress={() => openSupportLink(SUPPORT_INSTAGRAM, "Could not open Instagram.")}
+                onPress={() => openSupportLink(SUPPORT_INSTAGRAM, t("messages.could_not_open_instagram"))}
               >
                 <View style={[styles.supportActionIconWrap, styles.supportActionIconInstagram]}>
                   <FontAwesome name="instagram" size={19} color="#ffffff" />
@@ -1341,7 +1405,7 @@ export default function App() {
         ) : null}
 
         <Pressable style={styles.outlineDangerButton} onPress={handleLogout}>
-          <Text style={styles.outlineDangerText}>Log Out</Text>
+          <Text style={styles.outlineDangerText}>{t("profile.log_out")}</Text>
         </Pressable>
       </ScrollView>
     );
@@ -1363,26 +1427,40 @@ export default function App() {
         >
           <Text style={styles.backText}>{"<"}</Text>
         </Pressable>
-        <Text style={styles.accessTitle}>Welcome back</Text>
-        <Text style={styles.accessSubtitle}>Sign in with your phone number and password</Text>
+        <Text style={styles.accessTitle}>{t("auth.welcome_back")}</Text>
+        <Text style={styles.accessSubtitle}>{t("auth.sign_in_subtitle")}</Text>
+
+        <Text style={styles.filterLabel}>{t("language.label")}</Text>
+        <View style={styles.chipRow}>
+          <MiniChip
+            label={t("language.english")}
+            active={activeLanguage === "en"}
+            onPress={() => handleLanguageChange("en")}
+          />
+          <MiniChip
+            label={t("language.swahili")}
+            active={activeLanguage === "sw"}
+            onPress={() => handleLanguageChange("sw")}
+          />
+        </View>
 
         <View style={styles.authModeRow}>
-          <MiniChip label="Login" active={authMode === "login"} onPress={() => setAuthMode("login")} />
-          <MiniChip label="Register" active={authMode === "register"} onPress={() => setAuthMode("register")} />
+          <MiniChip label={t("auth.login_chip")} active={authMode === "login"} onPress={() => setAuthMode("login")} />
+          <MiniChip label={t("auth.register_chip")} active={authMode === "register"} onPress={() => setAuthMode("register")} />
         </View>
 
         {authMode === "login" ? (
           <>
             <FilterField
-              label="Phone Number"
+              label={t("auth.phone_number")}
               value={authFields.loginPhone}
-              placeholder="Phone number"
+              placeholder={t("auth.phone_placeholder")}
               onChangeText={(loginPhone) => setAuthFields((prev) => ({ ...prev, loginPhone }))}
             />
             <FilterField
-              label="Password"
+              label={t("auth.password")}
               value={authFields.loginPassword}
-              placeholder="Password"
+              placeholder={t("auth.password_placeholder")}
               onChangeText={(loginPassword) => setAuthFields((prev) => ({ ...prev, loginPassword }))}
             />
             <Pressable
@@ -1395,13 +1473,15 @@ export default function App() {
                 setForgotExpiresAt("");
               }}
             >
-              <Text style={styles.forgotText}>{showForgotOptions ? "Back to login" : "Forgot password?"}</Text>
+              <Text style={styles.forgotText}>
+                {showForgotOptions ? t("auth.back_to_login") : t("auth.forgot_password")}
+              </Text>
             </Pressable>
 
             {showForgotOptions ? (
               <View style={styles.forgotCard}>
                 <FilterField
-                  label="Phone Number"
+                  label={t("auth.phone_number")}
                   value={forgotPhone}
                   placeholder="07xxxxxxxx"
                   onChangeText={setForgotPhone}
@@ -1410,32 +1490,32 @@ export default function App() {
                 {forgotStep === "verify" ? (
                   <>
                     <FilterField
-                      label="OTP Code"
+                      label={t("auth.otp_code")}
                       value={forgotCode}
-                      placeholder="Enter OTP code"
+                      placeholder={t("auth.otp_placeholder")}
                       onChangeText={setForgotCode}
                       keyboardType="numeric"
                     />
                     <FilterField
-                      label="New Password"
+                      label={t("auth.new_password")}
                       value={forgotNewPassword}
-                      placeholder="Enter new password"
+                      placeholder={t("auth.new_password_placeholder")}
                       onChangeText={setForgotNewPassword}
                     />
                     {forgotExpiresAt ? (
                       <Text style={styles.forgotHelpText}>
-                        OTP expires at {new Date(forgotExpiresAt).toLocaleTimeString()}.
+                        {t("auth.otp_expires_at", { time: new Date(forgotExpiresAt).toLocaleTimeString() })}
                       </Text>
                     ) : null}
                     <Pressable style={styles.loginButton} onPress={handleVerifyPasswordResetCode} disabled={forgotBusy}>
-                      <Text style={styles.loginButtonText}>{forgotBusy ? "Resetting..." : "Reset Password"}</Text>
+                      <Text style={styles.loginButtonText}>{forgotBusy ? t("auth.resetting") : t("auth.reset_password")}</Text>
                     </Pressable>
                   </>
                 ) : (
                   <>
-                    <Text style={styles.forgotHelpText}>We will send an OTP code to your phone.</Text>
+                    <Text style={styles.forgotHelpText}>{t("auth.otp_help")}</Text>
                     <Pressable style={styles.loginButton} onPress={handleRequestPasswordResetCode} disabled={forgotBusy}>
-                      <Text style={styles.loginButtonText}>{forgotBusy ? "Sending..." : "Send OTP Code"}</Text>
+                      <Text style={styles.loginButtonText}>{forgotBusy ? t("auth.sending") : t("auth.send_otp")}</Text>
                     </Pressable>
                   </>
                 )}
@@ -1443,18 +1523,18 @@ export default function App() {
             ) : null}
 
             <Pressable style={styles.loginButton} onPress={handleLogin} disabled={authBusy || showForgotOptions}>
-              <Text style={styles.loginButtonText}>{authBusy ? "Signing in..." : "Log In"}</Text>
+              <Text style={styles.loginButtonText}>{authBusy ? t("auth.signing_in") : t("auth.log_in")}</Text>
             </Pressable>
           </>
         ) : (
           <>
             <FilterField
-              label="Full Name"
+              label={t("auth.full_name")}
               value={authFields.registerName}
-              placeholder="Your full name"
+              placeholder={t("auth.full_name_placeholder")}
               onChangeText={(registerName) => setAuthFields((prev) => ({ ...prev, registerName }))}
             />
-            <Text style={styles.filterLabel}>Country</Text>
+            <Text style={styles.filterLabel}>{t("auth.country")}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
               {countryOptions.map((country) => (
                 <MiniChip
@@ -1466,19 +1546,19 @@ export default function App() {
               ))}
             </ScrollView>
             <FilterField
-              label="Phone Number"
+              label={t("auth.phone_number")}
               value={authFields.registerPhone}
-              placeholder="Safaricom phone"
+              placeholder={t("auth.safaricom_phone")}
               onChangeText={(registerPhone) => setAuthFields((prev) => ({ ...prev, registerPhone }))}
             />
             <FilterField
-              label="Password"
+              label={t("auth.password")}
               value={authFields.registerPassword}
-              placeholder="Create password"
+              placeholder={t("auth.create_password")}
               onChangeText={(registerPassword) => setAuthFields((prev) => ({ ...prev, registerPassword }))}
             />
             <Pressable style={styles.loginButton} onPress={handleRegister} disabled={authBusy}>
-              <Text style={styles.loginButtonText}>{authBusy ? "Creating account..." : "Create Account"}</Text>
+              <Text style={styles.loginButtonText}>{authBusy ? t("auth.creating_account") : t("auth.create_account")}</Text>
             </Pressable>
           </>
         )}
@@ -1493,22 +1573,22 @@ export default function App() {
         <View style={styles.landingOrbTwo} />
         <View style={styles.landingContent}>
           <View style={styles.landingLogo}>
-            <Text style={styles.landingLogoText}>🏠</Text>
+            <Text style={styles.landingLogoText}>ðŸ </Text>
           </View>
 
           <Text style={styles.landingTitle}>
             TST <Text style={styles.topBarAccent}>PlotConnect</Text>
           </Text>
           <Text style={styles.landingSubtitle}>
-            Discover verified hostels, bedsitters & lodges across East Africa
+            {t("landing.subtitle")}
           </Text>
 
           <Pressable style={styles.landingPrimaryButton} onPress={() => setActiveScreen("access")}>
-            <Text style={styles.landingPrimaryButtonText}>Get Started</Text>
+            <Text style={styles.landingPrimaryButtonText}>{t("landing.get_started")}</Text>
           </Pressable>
 
 
-          <Text style={styles.landingFooterText}>Safe · Verified · Affordable · East Africa</Text>
+          <Text style={styles.landingFooterText}>{t("landing.footer")}</Text>
         </View>
       </View>
     );
@@ -1520,32 +1600,32 @@ export default function App() {
     return (
       <View style={styles.bottomTabs}>
         <TabButton
-          label="Explore"
-          icon="⌂"
+          label={t("tabs.explore")}
+          icon="âŒ‚"
           active={canNavigate && activeScreen === "home"}
           onPress={() => {
             if (canNavigate) setActiveScreen("home");
           }}
         />
         <TabButton
-          label="Search"
-          icon="⌕"
+          label={t("tabs.search")}
+          icon="âŒ•"
           active={canNavigate && (activeScreen === "search" || activeScreen === "detail")}
           onPress={() => {
             if (canNavigate) setActiveScreen("search");
           }}
         />
         <TabButton
-          label="Payments"
-          icon="◫"
+          label={t("tabs.payments")}
+          icon="â—«"
           active={canNavigate && activeScreen === "payments"}
           onPress={() => {
             if (canNavigate) setActiveScreen("payments");
           }}
         />
         <TabButton
-          label="Profile"
-          icon="◉"
+          label={t("tabs.profile")}
+          icon="â—‰"
           active={canNavigate && activeScreen === "account"}
           onPress={() => {
             if (canNavigate) setActiveScreen("account");
@@ -2777,3 +2857,6 @@ const styles = StyleSheet.create({
     fontSize: 12
   }
 });
+
+
+

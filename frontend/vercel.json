@@ -22,8 +22,10 @@
   ],
   "rewrites": [
     { "source": "/about", "destination": "/about.html" },
+    { "source": "/blogs/:slug", "destination": "/blog-post.html?slug=:slug" },
     { "source": "/blogs", "destination": "/blog.html" },
     { "source": "/blog-post", "destination": "/blog-post.html" },
+    { "source": "/listing/:slug", "destination": "/listings/:slug.html" },
     { "source": "/plots", "destination": "/plots.html" },
     { "source": "/contacts", "destination": "/contact.html" },
     { "source": "/account-deletion", "destination": "/account-deletion.html" },
