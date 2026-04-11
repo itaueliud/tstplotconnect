@@ -14,6 +14,7 @@ const PORT = Number(process.env.PORT) || 10000;
 const HOST = process.env.HOST || "0.0.0.0";
 const JWT_SECRET = process.env.JWT_SECRET || "tstplotconnect-dev-secret";
 const PAYMENT_MODE = (process.env.PAYMENT_MODE || "mock").toLowerCase();
+const TEMP_FREE_ACCESS = (process.env.TEMP_FREE_ACCESS || "false").toLowerCase() === "true";
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || "";
 const REQUIRE_HTTPS_ADMIN = (process.env.REQUIRE_HTTPS_ADMIN || "false").toLowerCase() === "true";
 const ADMIN_MAX_LOGIN_ATTEMPTS = Number(process.env.ADMIN_MAX_LOGIN_ATTEMPTS || 5);
@@ -366,6 +367,7 @@ async function syncUserActivationStatusToLatest(userId) {
 }
 
 async function getUnlockedFromRequest(req) {
+  if (TEMP_FREE_ACCESS) return true;
   const authHeader = req.headers.authorization || "";
   const [type, token] = authHeader.split(" ");
   if (type !== "Bearer" || !token) {
@@ -949,6 +951,18 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.get("/api/user/status", requireAuth, async (req, res) => {
+  if (TEMP_FREE_ACCESS) {
+    const tempExpiresAt = new Date(Date.now() + 28 * 24 * 60 * 60 * 1000);
+    return res.json({
+      active: true,
+      activatedAt: new Date().toISOString(),
+      expiresAt: tempExpiresAt.toISOString(),
+      remainingSeconds: Math.floor((tempExpiresAt.getTime() - Date.now()) / 1000),
+      remainingHours: 24 * 28,
+      remainingMinutes: 0,
+      bypassAccess: true
+    });
+  }
   const now = Date.now();
   let activation = await getUserActiveActivation(req.user.id);
   let userFallback = null;
@@ -1007,6 +1021,12 @@ app.get("/api/user/payments", requireAuth, async (req, res) => {
 });
 
 app.post("/api/pay", requireAuth, async (req, res) => {
+  if (TEMP_FREE_ACCESS) {
+    return res.json({
+      message: "Temporary free access is enabled. No payment is required right now.",
+      mode: "free"
+    });
+  }
   const user = await usersCol().findOne({ id: req.user.id });
   if (!user) {
     return res.status(404).json({ error: "User not found" });
