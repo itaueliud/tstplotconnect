@@ -1113,6 +1113,9 @@ function App() {
                 <p className="text-sm ${status.active ? "text-emerald-300" : "text-slate-400"}">
                   Countdown: ${status.active ? countdown.text : "0h 00m 00s"}
                 </p>
+                <p className="mt-1 text-xs text-slate-400">
+                  After the countdown ends, payment of Ksh 50 will be required to continue access.
+                </p>
               </div>
             `
           : null}
