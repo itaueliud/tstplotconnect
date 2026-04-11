@@ -15,6 +15,7 @@ const HOST = process.env.HOST || "0.0.0.0";
 const JWT_SECRET = process.env.JWT_SECRET || "tstplotconnect-dev-secret";
 const PAYMENT_MODE = (process.env.PAYMENT_MODE || "mock").toLowerCase();
 const TEMP_FREE_ACCESS = (process.env.TEMP_FREE_ACCESS || "false").toLowerCase() === "true";
+const TEMP_FREE_ACCESS_DAYS = Math.max(1, Number(process.env.TEMP_FREE_ACCESS_DAYS || 28));
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || "";
 const REQUIRE_HTTPS_ADMIN = (process.env.REQUIRE_HTTPS_ADMIN || "false").toLowerCase() === "true";
 const ADMIN_MAX_LOGIN_ATTEMPTS = Number(process.env.ADMIN_MAX_LOGIN_ATTEMPTS || 5);
@@ -952,14 +953,38 @@ app.post("/api/login", async (req, res) => {
 
 app.get("/api/user/status", requireAuth, async (req, res) => {
   if (TEMP_FREE_ACCESS) {
-    const tempExpiresAt = new Date(Date.now() + 28 * 24 * 60 * 60 * 1000);
+    const nowMs = Date.now();
+    const user = await usersCol().findOne(
+      { id: String(req.user.id) },
+      { projection: { tempAccessActivatedAt: 1, tempAccessExpiresAt: 1 } }
+    );
+
+    let activatedAt = user?.tempAccessActivatedAt ? new Date(user.tempAccessActivatedAt) : null;
+    let tempExpiresAt = user?.tempAccessExpiresAt ? new Date(user.tempAccessExpiresAt) : null;
+
+    const hasValidWindow = activatedAt
+      && tempExpiresAt
+      && Number.isFinite(activatedAt.getTime())
+      && Number.isFinite(tempExpiresAt.getTime())
+      && tempExpiresAt.getTime() > activatedAt.getTime();
+
+    if (!hasValidWindow) {
+      activatedAt = new Date();
+      tempExpiresAt = new Date(activatedAt.getTime() + TEMP_FREE_ACCESS_DAYS * 24 * 60 * 60 * 1000);
+      await usersCol().updateOne(
+        { id: String(req.user.id) },
+        { $set: { tempAccessActivatedAt: activatedAt, tempAccessExpiresAt: tempExpiresAt } }
+      );
+    }
+
+    const remainingSeconds = Math.max(0, Math.floor((tempExpiresAt.getTime() - nowMs) / 1000));
     return res.json({
-      active: true,
-      activatedAt: new Date().toISOString(),
+      active: tempExpiresAt.getTime() > nowMs,
+      activatedAt: activatedAt.toISOString(),
       expiresAt: tempExpiresAt.toISOString(),
-      remainingSeconds: Math.floor((tempExpiresAt.getTime() - Date.now()) / 1000),
-      remainingHours: 24 * 28,
-      remainingMinutes: 0,
+      remainingSeconds,
+      remainingHours: Math.floor(remainingSeconds / 3600),
+      remainingMinutes: Math.floor((remainingSeconds % 3600) / 60),
       bypassAccess: true
     });
   }
