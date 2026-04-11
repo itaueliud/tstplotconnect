@@ -231,7 +231,9 @@ function App() {
   const USER_MOBILE_NAV_BREAKPOINT = 980;
   const [apiBase, setApiBase] = useState(API);
   const [msg, setMsg] = useState({ text: "", error: false });
+  const [toastHiding, setToastHiding] = useState(false);
   const messageTimerRef = useRef(null);
+  const hideTimerRef = useRef(null);
   const [token, setToken] = useState("");
   const [userProfile, setUserProfile] = useState(null);
   const [authMode, setAuthMode] = useState("register");
@@ -278,11 +280,17 @@ function App() {
   }, [meta.countries]);
 
   function showMessage(text, error = false) {
+    setToastHiding(false);
     setMsg({ text, error });
     if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     if (text) {
       messageTimerRef.current = setTimeout(() => {
-        setMsg({ text: "", error: false });
+        setToastHiding(true);
+        hideTimerRef.current = setTimeout(() => {
+          setMsg({ text: "", error: false });
+          setToastHiding(false);
+        }, 300);
       }, 4000);
     }
   }
@@ -879,6 +887,14 @@ function App() {
 
   return html`
     <div className="page-shell">
+      ${msg.text ? html`
+        <div className="toast-container">
+          <div className=${`toast ${toastHiding ? "is-hiding" : ""} ${msg.error ? "is-error" : "is-success"}`}>
+            ${msg.text}
+          </div>
+        </div>
+      ` : null}
+      
       <nav className="glass hero-nav mb-5">
         <h1 className="brand-title">TST PlotConnect</h1>
         <p className="brand-subtitle">Find your ideal accommodation</p>
@@ -1089,7 +1105,7 @@ function App() {
                       : null}
                   `}
             `}
-        ${msg.text ? html`<p className=${`mt-3 text-sm ${msg.error ? "text-red-300" : "text-emerald-300"}`}>${msg.text}</p>` : null}
+        ${msg.text ? html`<p className=${`mt-3 text-sm hidden ${msg.error ? "text-red-300" : "text-emerald-300"}`}>${msg.text}</p>` : null}
         ${status
           ? html`
               <div className="mt-3 rounded-xl border border-slate-700/60 bg-slate-900/40 p-3">
