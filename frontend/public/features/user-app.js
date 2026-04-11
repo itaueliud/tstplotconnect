@@ -647,12 +647,13 @@ function App() {
       persistSession(data.token, data.user);
       setLoginPassword("");
       setShowForgotOptions(false);
-      showMessage("Login successful. Activate your account.");
       const freshStatus = await loadStatus(data.token);
       setNowTs(Date.now());
       await loadPaymentLog(data.token);
       if (freshStatus && freshStatus.active) {
-        showMessage("Login successful. Account is active and contacts are unlocked.");
+        showMessage("Login successful. Account is active and countdown continues from first activation.");
+      } else {
+        showMessage("Login successful. Activate your account.");
       }
       await loadPlots();
     } catch (err) {
@@ -838,7 +839,7 @@ function App() {
     if (token && isActive && !lastKnownActiveRef.current) {
       loadPlots();
       loadPaymentLog();
-      showMessage("Payment received. Contacts unlocked for 24 hours.");
+      showMessage("Account is active. Countdown continues from your first activation.");
     }
     lastKnownActiveRef.current = isActive;
     if (!token) {
@@ -1162,6 +1163,9 @@ function App() {
                 <p className="text-sm text-slate-300">Activation: ${status.active ? "Active" : "Inactive"}</p>
                 <p className="text-sm ${status.active ? "text-emerald-300" : "text-slate-400"}">
                   Countdown: ${status.active ? countdown.text : "0h 00m 00s"}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">
+                  After the countdown ends, payment of Ksh 50 will be required to continue access.
                 </p>
               </div>
             `
