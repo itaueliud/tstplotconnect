@@ -234,29 +234,39 @@
   function renderSchema() {
     const schemaEl = document.getElementById("city-page-schema");
     if (!schemaEl) return;
+    const locationLabel = cfg.city || "Location";
+    const pageTitle = `${cfg.category || "Accommodation"} in ${locationLabel}`;
+    const pageDescription = `Browse ${String(cfg.category || "accommodation").toLowerCase()} options in ${locationLabel} on TST PlotConnect.`;
     schemaEl.textContent = JSON.stringify({
       "@context": "https://schema.org",
       "@graph": [
         {
+          "@type": "WebPage",
+          name: pageTitle,
+          description: pageDescription,
+          url: `https://www.tst-plotconnect.com${cfg.path || ""}`,
+          inLanguage: "en-KE",
+          isPartOf: {
+            "@type": "WebSite",
+            name: "TST PlotConnect",
+            url: "https://www.tst-plotconnect.com"
+          }
+        },
+        {
           "@type": "LodgingBusiness",
-          name: `${cfg.category} in ${cfg.city}`,
+          name: pageTitle,
           address: {
             "@type": "PostalAddress",
-            addressLocality: cfg.city,
+            addressLocality: locationLabel,
             addressCountry: cfg.country || "Kenya"
           },
           url: `https://www.tst-plotconnect.com${cfg.path || ""}`
         },
         {
           "@type": "ItemList",
-          name: `${cfg.category} in ${cfg.city}`,
-          numberOfItems: state.filteredPlots.length,
-          itemListElement: state.filteredPlots.slice(0, 10).map((plot, index) => ({
-            "@type": "ListItem",
-            position: index + 1,
-            url: `https://www.tst-plotconnect.com${listingHref(plot)}`,
-            name: plot.title
-          }))
+          name: pageTitle,
+          description: pageDescription,
+          numberOfItems: state.filteredPlots.length
         }
       ]
     });
