@@ -1,12 +1,12 @@
 const SITE = {
-  name: "TST PlotConnect",
+  name: "AfricaRentalGrid",
   url: "https://www.tst-plotconnect.com",
-  description: "TST PlotConnect helps people discover verified hostels, bedsitters, lodges, and rentals across Kenya with trusted listings and local search pages.",
+  description: "AfricaRentalGrid helps people discover verified hostels, bedsitters, lodges, and rentals across Kenya with trusted listings and local search pages.",
   image: "/favicon.svg",
-  imageAlt: "TST PlotConnect logo",
+  imageAlt: "AfricaRentalGrid logo",
   locale: "en_KE",
   twitterCard: "summary_large_image",
-  author: "TST PlotConnect"
+  author: "AfricaRentalGrid"
 };
 
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -198,7 +198,7 @@ function cityPage({ file, path, city, category, title, description, priority = 0
       `${city} ${lowerCategory}`,
       `affordable ${lowerCategory} ${city}`,
       `verified ${lowerCategory} ${city}`,
-      `TST PlotConnect ${city}`,
+      `AfricaRentalGrid ${city}`,
       ...keywords
     ]),
     changefreq: "weekly",
@@ -214,7 +214,7 @@ function cityPage({ file, path, city, category, title, description, priority = 0
       },
       breadcrumbSchema([
         { name: "Home", path: "/" },
-        { name: title.replace(" | TST PlotConnect", ""), path }
+        { name: title.replace(" | AfricaRentalGrid", ""), path }
       ])
     ]
   });
@@ -224,15 +224,15 @@ const pages = [
   publicPage({
     file: "index.html",
     path: "/",
-    title: "TST PlotConnect | Find Hostels, Bedsitters & Lodges Near You",
-    description: "TST PlotConnect helps students and travelers find verified hostels, bedsitters, lodges, and affordable rentals across Kenya with trusted local listings.",
+    title: "AfricaRentalGrid | Find Hostels, Bedsitters & Lodges Near You",
+    description: "AfricaRentalGrid helps students and travelers find verified hostels, bedsitters, lodges, and affordable rentals across Kenya with trusted local listings.",
     keywords: [
       "hostels Kenya",
       "bedsitters Kenya",
       "lodges Kenya",
       "affordable rentals Kenya",
       "verified accommodation Kenya",
-      "TST PlotConnect"
+      "AfricaRentalGrid"
     ],
     changefreq: "weekly",
     priority: 1,
@@ -241,17 +241,17 @@ const pages = [
   publicPage({
     file: "about.html",
     path: "/about",
-    title: "About TST PlotConnect | Verified Listings Across Kenya",
-    description: "Learn how TST PlotConnect helps renters, students, and travelers discover verified plots and accommodation listings across Kenya.",
+    title: "About AfricaRentalGrid | Verified Listings Across Kenya",
+    description: "Learn how AfricaRentalGrid helps renters, students, and travelers discover verified plots and accommodation listings across Kenya.",
     keywords: [
-      "about TST PlotConnect",
+      "about AfricaRentalGrid",
       "verified listings Kenya",
       "rental platform Kenya",
       "property discovery Kenya"
     ],
     priority: 0.7,
     schemas: [
-      pageSchema({ title: "About TST PlotConnect", description: "Learn how TST PlotConnect helps renters, students, and travelers discover verified plots and accommodation listings across Kenya.", path: "/about" }, "AboutPage"),
+      pageSchema({ title: "About AfricaRentalGrid", description: "Learn how AfricaRentalGrid helps renters, students, and travelers discover verified plots and accommodation listings across Kenya.", path: "/about" }, "AboutPage"),
       breadcrumbSchema([
         { name: "Home", path: "/" },
         { name: "About", path: "/about" }
@@ -261,14 +261,14 @@ const pages = [
   publicPage({
     file: "plots.html",
     path: "/plots",
-    title: "Plots & Rentals | TST PlotConnect",
+    title: "Plots & Rentals | AfricaRentalGrid",
     description: "Browse verified plots and rental listings across Kenya, then open the main PlotConnect experience for full filters, maps, and listing details.",
     keywords: [
       "plots Kenya",
       "rentals Kenya",
       "verified plots",
       "property listings Kenya",
-      "TST PlotConnect listings"
+      "AfricaRentalGrid listings"
     ],
     changefreq: "weekly",
     priority: 0.8,
@@ -283,16 +283,16 @@ const pages = [
   publicPage({
     file: "contact.html",
     path: "/contacts",
-    title: "Contact TST PlotConnect",
-    description: "Contact TST PlotConnect for support, listing questions, WhatsApp help, and partnership inquiries across Kenya.",
+    title: "Contact AfricaRentalGrid",
+    description: "Contact AfricaRentalGrid for support, listing questions, WhatsApp help, and partnership inquiries across Kenya.",
     keywords: [
-      "contact TST PlotConnect",
+      "contact AfricaRentalGrid",
       "PlotConnect support",
       "listing support Kenya",
       "PlotConnect WhatsApp"
     ],
     schemas: [
-      pageSchema({ title: "Contact TST PlotConnect", description: "Contact TST PlotConnect for support and partnership inquiries.", path: "/contacts" }, "ContactPage"),
+      pageSchema({ title: "Contact AfricaRentalGrid", description: "Contact AfricaRentalGrid for support and partnership inquiries.", path: "/contacts" }, "ContactPage"),
       localBusinessSchema(),
       breadcrumbSchema([
         { name: "Home", path: "/" },
@@ -303,15 +303,15 @@ const pages = [
   publicPage({
     file: "privacy.html",
     path: "/privacy",
-    title: "Privacy Policy | TST PlotConnect",
-    description: "Read the TST PlotConnect privacy policy for information about account data, listing activity, payments, and support communications.",
+    title: "Privacy Policy | AfricaRentalGrid",
+    description: "Read the AfricaRentalGrid privacy policy for information about account data, listing activity, payments, and support communications.",
     keywords: [
-      "TST PlotConnect privacy policy",
+      "AfricaRentalGrid privacy policy",
       "PlotConnect data policy",
       "privacy policy Kenya property app"
     ],
     schemas: [
-      pageSchema({ title: "Privacy Policy", description: "Read the TST PlotConnect privacy policy.", path: "/privacy" }),
+      pageSchema({ title: "Privacy Policy", description: "Read the AfricaRentalGrid privacy policy.", path: "/privacy" }),
       breadcrumbSchema([
         { name: "Home", path: "/" },
         { name: "Privacy Policy", path: "/privacy" }
@@ -321,15 +321,15 @@ const pages = [
   publicPage({
     file: "account-deletion.html",
     path: "/account-deletion",
-    title: "Account Deletion | TST PlotConnect",
-    description: "Request deletion of your TST PlotConnect account and understand what user data may be deleted or retained for operational or legal reasons.",
+    title: "Account Deletion | AfricaRentalGrid",
+    description: "Request deletion of your AfricaRentalGrid account and understand what user data may be deleted or retained for operational or legal reasons.",
     keywords: [
-      "TST PlotConnect account deletion",
+      "AfricaRentalGrid account deletion",
       "delete PlotConnect account",
       "Google Play account deletion PlotConnect"
     ],
     schemas: [
-      pageSchema({ title: "Account Deletion", description: "Request deletion of your TST PlotConnect account and associated user data.", path: "/account-deletion" }),
+      pageSchema({ title: "Account Deletion", description: "Request deletion of your AfricaRentalGrid account and associated user data.", path: "/account-deletion" }),
       breadcrumbSchema([
         { name: "Home", path: "/" },
         { name: "Account Deletion", path: "/account-deletion" }
@@ -339,10 +339,10 @@ const pages = [
   publicPage({
     file: "blog.html",
     path: "/blogs",
-    title: "Blog | TST PlotConnect",
-    description: "Read TST PlotConnect guides on hostels, bedsitters, lodges, student housing, and affordable rentals across Kenya.",
+    title: "Blog | AfricaRentalGrid",
+    description: "Read AfricaRentalGrid guides on hostels, bedsitters, lodges, student housing, and affordable rentals across Kenya.",
     keywords: [
-      "TST PlotConnect blog",
+      "AfricaRentalGrid blog",
       "hostels Kenya guide",
       "bedsitters Nairobi tips",
       "student accommodation Kenya",
@@ -354,8 +354,8 @@ const pages = [
       {
         "@context": "https://schema.org",
         "@type": "Blog",
-        name: "TST PlotConnect Blog",
-        description: "Tips and guides on hostels, bedsitters, lodges, and affordable rentals from TST PlotConnect.",
+        name: "AfricaRentalGrid Blog",
+        description: "Tips and guides on hostels, bedsitters, lodges, and affordable rentals from AfricaRentalGrid.",
         url: absoluteUrl("/blogs"),
         publisher: {
           "@type": "Organization",
@@ -375,10 +375,10 @@ const pages = [
   publicPage({
     file: "blog-post.html",
     path: "/blog-post",
-    title: "Blog Post | TST PlotConnect",
-    description: "Read the latest hostels, bedsitters, lodges, and rental tips from TST PlotConnect.",
+    title: "Blog Post | AfricaRentalGrid",
+    description: "Read the latest hostels, bedsitters, lodges, and rental tips from AfricaRentalGrid.",
     keywords: [
-      "TST PlotConnect article",
+      "AfricaRentalGrid article",
       "Kenya rental guide",
       "hostels and bedsitters blog"
     ],
@@ -390,8 +390,8 @@ const pages = [
     path: "/nairobi-hostels",
     city: "Nairobi",
     category: "Hostels",
-    title: "Hostels in Nairobi - Affordable Rooms | TST PlotConnect",
-    description: "Find affordable hostels in Nairobi with photos, prices, map view, and direct listing access on TST PlotConnect.",
+    title: "Hostels in Nairobi - Affordable Rooms | AfricaRentalGrid",
+    description: "Find affordable hostels in Nairobi with photos, prices, map view, and direct listing access on AfricaRentalGrid.",
     priority: 0.9,
     keywords: ["cheap hostels Nairobi", "student hostels Nairobi", "budget rooms Nairobi"],
     extraDescription: "Browse verified hostels in Nairobi with live prices and map view."
@@ -401,8 +401,8 @@ const pages = [
     path: "/machakos-hostels",
     city: "Machakos",
     category: "Hostels",
-    title: "Hostels in Machakos - Affordable Rooms | TST PlotConnect",
-    description: "Browse hostels in Machakos with verified listing details, local map view, and live prices on TST PlotConnect.",
+    title: "Hostels in Machakos - Affordable Rooms | AfricaRentalGrid",
+    description: "Browse hostels in Machakos with verified listing details, local map view, and live prices on AfricaRentalGrid.",
     priority: 0.9,
     keywords: ["cheap hostels Machakos", "student hostels Machakos", "budget rooms Machakos"]
   }),
@@ -411,8 +411,8 @@ const pages = [
     path: "/kiambu-hostels",
     city: "Kiambu",
     category: "Hostels",
-    title: "Hostels in Kiambu - Affordable Rooms | TST PlotConnect",
-    description: "Find hostels in Kiambu with photos, prices, and map view. Browse verified listings on TST PlotConnect.",
+    title: "Hostels in Kiambu - Affordable Rooms | AfricaRentalGrid",
+    description: "Find hostels in Kiambu with photos, prices, and map view. Browse verified listings on AfricaRentalGrid.",
     priority: 0.8,
     keywords: ["cheap rooms Kiambu", "student hostels Kiambu"]
   }),
@@ -421,8 +421,8 @@ const pages = [
     path: "/thika-hostels",
     city: "Thika",
     category: "Hostels",
-    title: "Hostels in Thika - Affordable Rooms | TST PlotConnect",
-    description: "Discover hostels in Thika with live pricing, verified listings, and map-based browsing on TST PlotConnect.",
+    title: "Hostels in Thika - Affordable Rooms | AfricaRentalGrid",
+    description: "Discover hostels in Thika with live pricing, verified listings, and map-based browsing on AfricaRentalGrid.",
     priority: 0.8,
     keywords: ["cheap hostels Thika", "student rooms Thika"]
   }),
@@ -431,8 +431,8 @@ const pages = [
     path: "/mombasa-hostels",
     city: "Mombasa",
     category: "Hostels",
-    title: "Hostels in Mombasa - Affordable Rooms | TST PlotConnect",
-    description: "Find verified hostels in Mombasa with direct listing access, photos, and price comparisons on TST PlotConnect.",
+    title: "Hostels in Mombasa - Affordable Rooms | AfricaRentalGrid",
+    description: "Find verified hostels in Mombasa with direct listing access, photos, and price comparisons on AfricaRentalGrid.",
     priority: 0.8,
     keywords: ["cheap hostels Mombasa", "budget rooms Mombasa", "student hostels Mombasa"]
   }),
@@ -441,8 +441,8 @@ const pages = [
     path: "/nairobi-bedsitters",
     city: "Nairobi",
     category: "Bedsitters",
-    title: "Bedsitters in Nairobi - Affordable Rentals | TST PlotConnect",
-    description: "Browse affordable bedsitters in Nairobi with verified prices, photos, and local listing access on TST PlotConnect.",
+    title: "Bedsitters in Nairobi - Affordable Rentals | AfricaRentalGrid",
+    description: "Browse affordable bedsitters in Nairobi with verified prices, photos, and local listing access on AfricaRentalGrid.",
     priority: 0.9,
     keywords: ["bedsitters Nairobi", "cheap bedsitters Nairobi", "student bedsitters Nairobi"]
   }),
@@ -451,8 +451,8 @@ const pages = [
     path: "/machakos-lodges",
     city: "Machakos",
     category: "Lodges",
-    title: "Lodges in Machakos - Affordable Short Stay Rooms | TST PlotConnect",
-    description: "Compare Machakos lodges and short-stay rooms with verified listings, photos, and live prices on TST PlotConnect.",
+    title: "Lodges in Machakos - Affordable Short Stay Rooms | AfricaRentalGrid",
+    description: "Compare Machakos lodges and short-stay rooms with verified listings, photos, and live prices on AfricaRentalGrid.",
     priority: 0.9,
     keywords: ["lodges Machakos", "short stay rooms Machakos", "cheap lodge Machakos"]
   }),
@@ -461,8 +461,8 @@ const pages = [
     path: "/nairobi-lodges",
     city: "Nairobi",
     category: "Lodges",
-    title: "Lodges in Nairobi - Affordable Short Stay Rooms | TST PlotConnect",
-    description: "Find affordable lodges in Nairobi with map view, verified room details, and direct listing access on TST PlotConnect.",
+    title: "Lodges in Nairobi - Affordable Short Stay Rooms | AfricaRentalGrid",
+    description: "Find affordable lodges in Nairobi with map view, verified room details, and direct listing access on AfricaRentalGrid.",
     priority: 0.8,
     keywords: ["lodges Nairobi", "short stay Nairobi", "cheap lodges Nairobi"]
   }),
@@ -471,8 +471,8 @@ const pages = [
     path: "/kitui-hostels",
     city: "Kitui",
     category: "Hostels",
-    title: "Hostels in Kitui - Affordable Rooms | TST PlotConnect",
-    description: "Search for hostels in Kitui with verified local listings, prices, and map view on TST PlotConnect.",
+    title: "Hostels in Kitui - Affordable Rooms | AfricaRentalGrid",
+    description: "Search for hostels in Kitui with verified local listings, prices, and map view on AfricaRentalGrid.",
     priority: 0.7,
     keywords: ["hostels Kitui", "cheap rooms Kitui", "student hostels Kitui"]
   }),
@@ -481,8 +481,8 @@ const pages = [
     path: "/embu-hostels",
     city: "Embu",
     category: "Hostels",
-    title: "Hostels in Embu - Affordable Rooms | TST PlotConnect",
-    description: "Find verified hostels in Embu with live prices, local search filters, and map view on TST PlotConnect.",
+    title: "Hostels in Embu - Affordable Rooms | AfricaRentalGrid",
+    description: "Find verified hostels in Embu with live prices, local search filters, and map view on AfricaRentalGrid.",
     priority: 0.7,
     keywords: ["hostels Embu", "cheap rooms Embu", "student hostels Embu"]
   }),
@@ -491,8 +491,8 @@ const pages = [
     path: "/makueni-hostels",
     city: "Makueni",
     category: "Hostels",
-    title: "Hostels in Makueni - Affordable Rooms | TST PlotConnect",
-    description: "Browse hostels in Makueni with verified listings, photos, and local accommodation search filters on TST PlotConnect.",
+    title: "Hostels in Makueni - Affordable Rooms | AfricaRentalGrid",
+    description: "Browse hostels in Makueni with verified listings, photos, and local accommodation search filters on AfricaRentalGrid.",
     priority: 0.7,
     keywords: ["hostels Makueni", "cheap rooms Makueni", "student hostels Makueni"]
   }),
@@ -501,8 +501,8 @@ const pages = [
     path: "/kajiado-hostels",
     city: "Kajiado",
     category: "Hostels",
-    title: "Hostels in Kajiado - Affordable Rooms | TST PlotConnect",
-    description: "Search verified hostels in Kajiado with live pricing, local map view, and direct listing access on TST PlotConnect.",
+    title: "Hostels in Kajiado - Affordable Rooms | AfricaRentalGrid",
+    description: "Search verified hostels in Kajiado with live pricing, local map view, and direct listing access on AfricaRentalGrid.",
     priority: 0.7,
     keywords: ["hostels Kajiado", "cheap rooms Kajiado", "student hostels Kajiado"]
   }),
@@ -511,33 +511,33 @@ const pages = [
     path: "/uasin-gishu-hostels",
     city: "Uasin Gishu",
     category: "Hostels",
-    title: "Hostels in Uasin Gishu - Affordable Rooms | TST PlotConnect",
-    description: "Find hostels in Uasin Gishu with verified accommodation listings, map view, and local pricing on TST PlotConnect.",
+    title: "Hostels in Uasin Gishu - Affordable Rooms | AfricaRentalGrid",
+    description: "Find hostels in Uasin Gishu with verified accommodation listings, map view, and local pricing on AfricaRentalGrid.",
     priority: 0.7,
     keywords: ["hostels Uasin Gishu", "cheap rooms Uasin Gishu", "student hostels Eldoret"]
   }),
   privatePage({
     file: "admin.html",
     path: "/admin.html",
-    title: "TST PlotConnect Admin",
-    description: "Private admin dashboard for managing TST PlotConnect content and listings.",
-    keywords: ["TST PlotConnect admin"],
+    title: "AfricaRentalGrid Admin",
+    description: "Private admin dashboard for managing AfricaRentalGrid content and listings.",
+    keywords: ["AfricaRentalGrid admin"],
     disallowPaths: ["/admin", "/admin.html"]
   }),
   privatePage({
     file: "superadmin.html",
     path: "/superadmin.html",
-    title: "TST PlotConnect Super Admin",
-    description: "Private super admin dashboard for managing platform-wide TST PlotConnect settings.",
-    keywords: ["TST PlotConnect super admin"],
+    title: "AfricaRentalGrid Super Admin",
+    description: "Private super admin dashboard for managing platform-wide AfricaRentalGrid settings.",
+    keywords: ["AfricaRentalGrid super admin"],
     disallowPaths: ["/superadmin", "/superadmin.html"]
   }),
   privatePage({
     file: "blog-admin.html",
     path: "/blog-admin.html",
-    title: "Blog Admin | TST PlotConnect",
-    description: "Private blog administration dashboard for TST PlotConnect.",
-    keywords: ["TST PlotConnect blog admin"],
+    title: "Blog Admin | AfricaRentalGrid",
+    description: "Private blog administration dashboard for AfricaRentalGrid.",
+    keywords: ["AfricaRentalGrid blog admin"],
     disallowPaths: ["/blog-admin", "/blog-admin.html"]
   })
 ];

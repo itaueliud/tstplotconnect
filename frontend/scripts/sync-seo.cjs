@@ -201,10 +201,10 @@ function xmlEscape(value) {
 function buildPlotTitle(plot) {
   const title = stripText(plot.title);
   const location = [stripText(plot.area), stripText(plot.county || plot.town)].filter(Boolean).join(", ");
-  if (title && location) return `${title} | ${location} | TST PlotConnect`;
-  if (title) return `${title} | TST PlotConnect`;
+  if (title && location) return `${title} | ${location} | AfricaRentalGrid`;
+  if (title) return `${title} | AfricaRentalGrid`;
   const fallback = [stripText(plot.category || "Listing"), stripText(plot.county || plot.town || plot.country || "Kenya")].filter(Boolean).join(" in ");
-  return `${fallback || "Property Listing"} | TST PlotConnect`;
+  return `${fallback || "Property Listing"} | AfricaRentalGrid`;
 }
 
 function buildPlotDescription(plot) {
@@ -213,8 +213,8 @@ function buildPlotDescription(plot) {
   const pricePart = Number.isFinite(Number(plot.price))
     ? ` priced at ${formatCurrency(plot.price)}`
     : "";
-  const details = stripText(plot.description) || "View photos, location details, and open the live listing on TST PlotConnect.";
-  return truncate(`View ${title}${place ? ` in ${place}` : ""}${pricePart} on TST PlotConnect. ${details}`, 158);
+  const details = stripText(plot.description) || "View photos, location details, and open the live listing on AfricaRentalGrid.";
+  return truncate(`View ${title}${place ? ` in ${place}` : ""}${pricePart} on AfricaRentalGrid. ${details}`, 158);
 }
 
 function buildPlotSlug(plot) {
@@ -243,7 +243,7 @@ function buildPlotKeywords(plot) {
     `${stripText(plot.category)} ${stripText(plot.county || plot.town)}`.trim(),
     `${stripText(plot.area)} ${stripText(plot.county || plot.town)}`.trim(),
     `verified plot ${stripText(plot.county || plot.town)}`.trim(),
-    "TST PlotConnect listing"
+    "AfricaRentalGrid listing"
   ]).filter(Boolean);
 }
 
@@ -480,7 +480,7 @@ ${JSON.stringify(schema, null, 2)}
     <div class="hero">
       <div>
         <p class="eyebrow">Verified Plot Listing</p>
-        <h1>${escapeHtml(stripText(plot.title) || "Property listing on TST PlotConnect")}</h1>
+        <h1>${escapeHtml(stripText(plot.title) || "Property listing on AfricaRentalGrid")}</h1>
         <p>${escapeHtml(description)}</p>
         <div class="actions">
           <a id="open-live-listing" class="button" href="${escapeHtml(userUrl)}">Open Live Listing</a>
@@ -498,7 +498,7 @@ ${JSON.stringify(schema, null, 2)}
       </div>
       <div class="card">
         <span class="label">About This Listing</span>
-        <p>${escapeHtml(stripText(plot.description) || "This verified property listing is available on TST PlotConnect. Open the live listing to view current search filters, nearby options, and map context.")}</p>
+        <p>${escapeHtml(stripText(plot.description) || "This verified property listing is available on AfricaRentalGrid. Open the live listing to view current search filters, nearby options, and map context.")}</p>
       </div>
     </div>
   </main>

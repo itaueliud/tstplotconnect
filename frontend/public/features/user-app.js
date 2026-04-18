@@ -932,7 +932,7 @@ function App() {
   return html`
     <div className="page-shell">
       <nav className="glass hero-nav mb-5">
-        <h1 className="brand-title">TST PlotConnect</h1>
+        <h1 className="brand-title">AfricaRentalGrid</h1>
         <p className="brand-subtitle">Find your ideal accommodation</p>
       </nav>
 
@@ -1449,7 +1449,7 @@ function App() {
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="section-kicker">About</p>
-                  <h2 className="section-title mb-0">About TST PlotConnect</h2>
+                  <h2 className="section-title mb-0">About AfricaRentalGrid</h2>
                 </div>
                 <button
                   type="button"
@@ -1461,7 +1461,7 @@ function App() {
               </div>
               <iframe
                 src="/about"
-                title="About TST PlotConnect"
+                title="About AfricaRentalGrid"
                 className="w-full rounded-xl border border-slate-700/60"
                 style=${{ minHeight: "75vh", background: "#fff" }}
               ></iframe>
@@ -1472,7 +1472,7 @@ function App() {
       <footer className="user-footer">
         <div className="footer-grid">
           <div>
-            <p className="footer-brand">TST PlotConnect</p>
+            <p className="footer-brand">AfricaRentalGrid</p>
             <p className="footer-note">Find trusted plots and rentals faster across East Africa.</p>
           </div>
           <div>
@@ -1507,7 +1507,7 @@ function App() {
           </div>
         </div>
         <div className="footer-bottom">
-          <p className="footer-copy">(c) ${currentYear} TST PlotConnect. All rights reserved. A TechSwiftTrix platform.</p>
+          <p className="footer-copy">(c) ${currentYear} AfricaRentalGrid. All rights reserved. A TechSwiftTrix platform.</p>
           <a href="#user-access" className="back-to-top">Back to top</a>
         </div>
       </footer>

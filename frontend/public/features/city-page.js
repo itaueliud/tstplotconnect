@@ -236,7 +236,7 @@
     if (!schemaEl) return;
     const locationLabel = cfg.city || "Location";
     const pageTitle = `${cfg.category || "Accommodation"} in ${locationLabel}`;
-    const pageDescription = `Browse ${String(cfg.category || "accommodation").toLowerCase()} options in ${locationLabel} on TST PlotConnect.`;
+    const pageDescription = `Browse ${String(cfg.category || "accommodation").toLowerCase()} options in ${locationLabel} on AfricaRentalGrid.`;
     schemaEl.textContent = JSON.stringify({
       "@context": "https://schema.org",
       "@graph": [
@@ -248,7 +248,7 @@
           inLanguage: "en-KE",
           isPartOf: {
             "@type": "WebSite",
-            name: "TST PlotConnect",
+            name: "AfricaRentalGrid",
             url: "https://www.tst-plotconnect.com"
           }
         },

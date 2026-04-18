@@ -104,7 +104,7 @@ function createCard(post) {
 
   const excerpt = document.createElement("p");
   excerpt.className = "blog-card-excerpt";
-  excerpt.textContent = post.excerpt || toExcerpt(post.content) || "Helpful rental guidance from TST PlotConnect.";
+  excerpt.textContent = post.excerpt || toExcerpt(post.content) || "Helpful rental guidance from AfricaRentalGrid.";
 
   const footer = document.createElement("div");
   footer.className = "blog-card-footer";
@@ -112,7 +112,7 @@ function createCard(post) {
   const meta = document.createElement("p");
   meta.className = "blog-card-meta";
   meta.textContent = [
-    post.author || "TST PlotConnect",
+    post.author || "AfricaRentalGrid",
     estimateReadTime(post.content, post.excerpt)
   ].filter(Boolean).join(" - ");
 

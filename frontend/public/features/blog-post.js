@@ -53,7 +53,7 @@ function getSlugFromLocation() {
 }
 
 function setMeta(title, description, slug) {
-  document.title = `${title} | TST PlotConnect`;
+  document.title = `${title} | AfricaRentalGrid`;
   if (metaDescription) metaDescription.setAttribute("content", description);
   if (ogTitle) ogTitle.setAttribute("content", document.title);
   if (ogDescription) ogDescription.setAttribute("content", description);
@@ -101,11 +101,11 @@ function setSchema(post) {
     dateModified: post.updatedAt || post.createdAt,
     author: {
       "@type": "Person",
-      name: post.author || "TST PlotConnect"
+      name: post.author || "AfricaRentalGrid"
     },
     publisher: {
       "@type": "Organization",
-      name: "TST PlotConnect",
+      name: "AfricaRentalGrid",
       logo: {
         "@type": "ImageObject",
         url: "https://www.tst-plotconnect.com/favicon.svg"
@@ -162,14 +162,14 @@ function renderRelated(posts, currentSlug) {
 
     const excerpt = document.createElement("p");
     excerpt.className = "blog-card-excerpt";
-    excerpt.textContent = post.excerpt || "More rental guidance from TST PlotConnect.";
+    excerpt.textContent = post.excerpt || "More rental guidance from AfricaRentalGrid.";
 
     const footer = document.createElement("div");
     footer.className = "blog-card-footer";
 
     const meta = document.createElement("p");
     meta.className = "blog-card-meta";
-    meta.textContent = post.author || "TST PlotConnect";
+    meta.textContent = post.author || "AfricaRentalGrid";
 
     const readMore = document.createElement("a");
     readMore.href = link.href;

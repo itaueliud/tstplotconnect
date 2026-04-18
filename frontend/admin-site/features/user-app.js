@@ -801,7 +801,7 @@ function App() {
   return html`
     <div className="page-shell">
       <nav className="glass hero-nav mb-5">
-        <h1 className="brand-title">TST PlotConnect</h1>
+        <h1 className="brand-title">AfricaRentalGrid</h1>
         <p className="brand-subtitle">Find your ideal accommodation</p>
       </nav>
 
@@ -1306,9 +1306,9 @@ function App() {
 
       <section id="user-about" className="glass section-card mb-2">
         <p className="section-kicker">About</p>
-        <h2 className="section-title">About TST PlotConnect</h2>
+        <h2 className="section-title">About AfricaRentalGrid</h2>
         <p className="faq-a mb-3">
-          TST PlotConnect helps you find verified plots and rentals across Kenya with clear locations,
+          AfricaRentalGrid helps you find verified plots and rentals across Kenya with clear locations,
           honest pricing, and direct contact access after activation.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1326,7 +1326,7 @@ function App() {
       <footer className="user-footer">
         <div className="footer-grid">
           <div>
-            <p className="footer-brand">TST PlotConnect</p>
+            <p className="footer-brand">AfricaRentalGrid</p>
             <p className="footer-note">Find trusted plots and rentals faster across East Africa.</p>
           </div>
           <div>
@@ -1361,7 +1361,7 @@ function App() {
           </div>
         </div>
         <div className="footer-bottom">
-          <p className="footer-copy">(c) ${currentYear} TST PlotConnect. All rights reserved. Created by Fluxbyte.</p>
+          <p className="footer-copy">(c) ${currentYear} AfricaRentalGrid. All rights reserved. Created by Fluxbyte.</p>
           <a href="#user-access" className="back-to-top">Back to top</a>
         </div>
       </footer>

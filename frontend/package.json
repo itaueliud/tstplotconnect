@@ -2,7 +2,7 @@
   "name": "tstplotconnect-frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "Static frontend for TST PlotConnect",
+  "description": "Static frontend for AfricaRentalGrid",
   "scripts": {
     "start": "http-server public -p 5500 -c-1",
     "dev": "http-server public -p 5500 -c-1",

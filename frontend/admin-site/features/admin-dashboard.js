@@ -896,7 +896,7 @@ function App() {
               <path d="M3 11.2L12 4l9 7.2v8.6a.8.8 0 0 1-.8.8h-5.4v-6.1a.8.8 0 0 0-.8-.8h-4a.8.8 0 0 0-.8.8v6.1H3.8a.8.8 0 0 1-.8-.8v-8.6z"></path>
             </svg>
           </span>
-          <span>TST PlotConnect Admin</span>
+          <span>AfricaRentalGrid Admin</span>
         </h1>
         <div className="flex gap-2">
           <a href="https://www.tst-plotconnect.com/" className="btn-soft px-4 py-2 rounded-xl">User Site</a>

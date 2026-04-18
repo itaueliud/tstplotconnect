@@ -6,6 +6,5 @@ Disallow: /blog-admin
 Disallow: /blog-admin.html
 Disallow: /superadmin
 Disallow: /superadmin.html
-Disallow: /listing/
 
 Sitemap: https://www.tst-plotconnect.com/sitemap.xml
