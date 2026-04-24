@@ -53,6 +53,8 @@ const ALLOWED_ORIGINS = new Set([
   "https://tstplotsconnect-admin.vercel.app",
   "https://tstplotconnect-84rw.vercel.app",
   "https://tstplotsconnect-84rw.vercel.app",
+  "https://africagrindrentals.vercel.app",
+  "https://www.africagrindrentals.vercel.app",
   "https://tst-plotconnect.com",
   "https://www.tst-plotconnect.com",
   "https://tstplotconnect.com",
@@ -81,7 +83,7 @@ function isPrivateLanOrigin(origin) {
 }
 
 function isTrustedVercelOrigin(origin) {
-  return /^https:\/\/tstplots?connect([a-z0-9-]*)\.vercel\.app$/i.test(origin);
+  return /^https:\/\/(tstplots?connect|africagrindrentals)([a-z0-9-]*)\.vercel\.app$/i.test(origin);
 }
 
 app.use(cors({
