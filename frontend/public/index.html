@@ -77,7 +77,7 @@
     const isLocalApiHost = localApiHostPattern.test(window.location.hostname);
     window.NEXT_PUBLIC_API_URL = isLocalApiHost
       ? `http://${window.location.hostname}:10000`
-      : "https://tstplotconnect-2.onrender.com";
+      : "";
   </script>
   <script type="module" src="/features/user-app.js"></script>
 </body>
