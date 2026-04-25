@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { apiRequest } from "@/lib/api";
 import AuthenticatedUserShell from "@/components/user/authenticated-user-shell";
+import PasswordField from "@/components/user/password-field";
 import { clearUserSession, readUserSession, writeUserSession } from "@/components/user/user-session";
 
 type Plot = {
@@ -98,6 +99,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   const [token, setToken] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<UserStatus | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
   const [authView, setAuthView] = useState<"login" | "register" | "recover">("login");
   const [activeSection, setActiveSection] = useState<"dashboard" | "listings">("dashboard");
 
@@ -333,12 +335,14 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
 
   useEffect(() => {
     const stored = readUserSession();
-    if (!stored?.token) return;
-    setToken(stored.token);
-    setUser(stored.user as User | null);
-    if (stored.user?.country) {
-      setFilters((prev) => ({ ...prev, country: stored.user?.country || prev.country }));
+    if (stored?.token) {
+      setToken(stored.token);
+      setUser(stored.user as User | null);
+      if (stored.user?.country) {
+        setFilters((prev) => ({ ...prev, country: stored.user?.country || prev.country }));
+      }
     }
+    setSessionReady(true);
   }, []);
 
   useEffect(() => {
@@ -365,6 +369,27 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     return () => window.clearTimeout(timeout);
   }, [message, error]);
 
+  if (!sessionReady) {
+    return (
+      <main className="container portal-auth-shell">
+        <header className="portal-page-header reveal-card">
+          <div className="portal-page-branding">
+            <span className="pill">africaRentalsGrind</span>
+            <div>
+              <strong>Restoring your workspace.</strong>
+              <p>We are checking your saved session so refresh keeps you inside the user portal.</p>
+            </div>
+          </div>
+        </header>
+        <section className="card portal-session-loading reveal-card">
+          <span className="pill">Loading</span>
+          <h2 style={{ margin: "0.65rem 0 0.35rem", color: "#0f172a" }}>Opening your dashboard</h2>
+          <p className="meta" style={{ margin: 0 }}>Pulling your saved account and listings state from this browser.</p>
+        </section>
+      </main>
+    );
+  }
+
   if (!isLoggedIn) {
     return (
       <main className="container portal-auth-shell">
@@ -373,12 +398,27 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
             {error || message}
           </div>
         )}
+        <header className="portal-page-header reveal-card">
+          <div className="portal-page-branding">
+            <span className="pill">africaRentalsGrind</span>
+            <div>
+              <strong>Search rentals, manage access, and keep your account in one polished user portal.</strong>
+              <p>Sign in or create an account to browse verified listings, review payments, and update your profile without leaving the page.</p>
+            </div>
+          </div>
+          <nav className="portal-page-links" aria-label="User page header navigation">
+            <Link href="/user">User portal</Link>
+            <Link href="/user#listings">Listings</Link>
+            <Link href="/about">About</Link>
+            <Link href="/contact">Contact</Link>
+          </nav>
+        </header>
         <section className="portal-auth-landing reveal-card">
           <div className="portal-auth-stage">
             <div className="portal-auth-glow portal-auth-glow-left" />
             <div className="portal-auth-glow portal-auth-glow-right" />
             <div className="portal-auth-story">
-              <span className="pill">AfricaRentalGrid</span>
+              <span className="pill">africaRentalsGrind</span>
               <h1>Find your next stay from one calm, modern dashboard.</h1>
               <p>
                 Sign in to browse verified rentals, activate your access, and manage everything from a cleaner private workspace.
@@ -437,7 +477,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                 <div className="portal-auth-form">
                   <div className="grid" style={{ gridTemplateColumns: "1fr", gap: "0.9rem" }}>
                     <input className="portal-input" placeholder="Phone number" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} />
-                    <input className="portal-input" type="password" placeholder="Password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
+                    <PasswordField placeholder="Password" value={loginPassword} onChange={setLoginPassword} />
                   </div>
                   <button className="btn btn-primary portal-auth-submit" onClick={loginUser} disabled={busy}>
                     {busy ? "Signing you in..." : "Login"}
@@ -458,7 +498,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                       <option>Tanzania</option>
                     </select>
                     <input className="portal-input" placeholder="Phone number" value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} />
-                    <input className="portal-input" type="password" placeholder="Create password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} />
+                    <PasswordField placeholder="Create password" value={registerPassword} onChange={setRegisterPassword} />
                   </div>
                   <button className="btn btn-primary portal-auth-submit" onClick={registerUser} disabled={busy}>
                     {busy ? "Creating your account..." : "Register"}
@@ -472,7 +512,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                   <div className="grid" style={{ gridTemplateColumns: "1fr", gap: "0.9rem" }}>
                     <input className="portal-input" placeholder="Phone number" value={otpPhone} onChange={(e) => setOtpPhone(e.target.value)} />
                     <input className="portal-input" placeholder="OTP code" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} />
-                    <input className="portal-input" type="password" placeholder="New password" value={otpNewPassword} onChange={(e) => setOtpNewPassword(e.target.value)} />
+                    <PasswordField placeholder="New password" value={otpNewPassword} onChange={setOtpNewPassword} />
                   </div>
                   <div className="portal-auth-action-row">
                     <button className="btn btn-secondary" onClick={requestCode} disabled={busy}>
@@ -496,6 +536,18 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
             </div>
           </div>
         </section>
+        <footer className="portal-page-footer reveal-card">
+          <div>
+            <strong>africaRentalsGrind</strong>
+            <p>Trusted browsing, payments, and account tools designed around cleaner rental discovery.</p>
+          </div>
+          <nav className="portal-page-footer-links" aria-label="User page footer navigation">
+            <Link href="/about">About</Link>
+            <Link href="/contact">Contact</Link>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/user">User portal</Link>
+          </nav>
+        </footer>
       </main>
     );
   }
@@ -511,9 +563,9 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           <section className="portal-hero portal-hero-surface reveal-card" id="dashboard">
             <div className="portal-hero-copy">
               <span className="pill" style={{ width: "fit-content", marginBottom: "0.7rem" }}>User dashboard</span>
-              <h1 style={{ margin: 0, fontSize: "2.2rem", fontWeight: 800, color: "#0f172a" }}>Welcome to your dashboard</h1>
-              <p style={{ margin: "0.7rem 0 0.5rem", color: "#334155", fontSize: "1.1rem" }}>
-                Search, activate, and manage your access from a modern, left-aligned dashboard. Enjoy a streamlined experience with live filters, backend-powered listings, and instant account actions.
+              <h1 style={{ color: "#0f172a" }}>Welcome back</h1>
+              <p>
+                Browse listings, check your access window, and move into profile or payments from one cleaner workspace built around your active account.
               </p>
             </div>
             <div className="portal-hero-overview">
@@ -539,7 +591,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
 
         {activeSection !== "listings" && (
           <section className="portal-dashboard-grid">
-            <article className="card portal-status-card reveal-card">
+        <article className="card portal-status-card reveal-card">
           <div className="portal-status-header">
             <div>
               <span className="pill">Activation</span>
@@ -584,24 +636,33 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           </div>
         </article>
 
-        <article className="card portal-auth-card reveal-card">
-          <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginBottom: "0.8rem" }}>
-            <span className="pill">Access</span>
-            {isLoggedIn && <span className="portal-account-line">Account: {user?.name || user?.phone}</span>}
+        <article className="card portal-auth-card portal-account-card reveal-card">
+          <div className="portal-account-card-head">
+            <span className="pill">Account</span>
+            <strong style={{ color: "#0f172a", fontSize: "1.15rem" }}>{user?.name || user?.phone || "User account"}</strong>
+            <p className="meta">
+              Keep your profile, payments, and listing activity close by without leaving the dashboard.
+            </p>
           </div>
-          <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginBottom: "0.8rem" }}>
+
+          <div className="portal-account-summary">
+            <div className="portal-account-summary-item">
+              <span>Phone</span>
+              <strong>{user?.phone || "-"}</strong>
+            </div>
+            <div className="portal-account-summary-item">
+              <span>Status</span>
+              <strong>{status?.active ? "Access active" : "Activation needed"}</strong>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
             {isLoggedIn && (
               <button className="btn btn-secondary" onClick={logout}>
                 Logout
               </button>
             )}
           </div>
-
-          {isLoggedIn && (
-            <p className="meta" style={{ marginTop: "0.7rem", marginBottom: 0 }}>
-              Logged in as {user?.name || user?.phone}. Activation state: {status?.active ? "Active" : "Inactive"}.
-            </p>
-          )}
         </article>
           </section>
         )}

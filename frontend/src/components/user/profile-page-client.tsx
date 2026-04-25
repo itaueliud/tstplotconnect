@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AuthenticatedUserShell from "./authenticated-user-shell";
+import PasswordField from "./password-field";
 import { readUserSession, writeUserSession } from "./user-session";
 import { apiRequest } from "@/lib/api";
 
@@ -23,6 +24,7 @@ function fmtDate(value?: string | null): string {
 
 export default function ProfilePageClient() {
   const [token, setToken] = useState("");
+  const [sessionReady, setSessionReady] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [form, setForm] = useState({ name: "", email: "", phone: "", country: "Kenya" });
   const [currentPassword, setCurrentPassword] = useState("");
@@ -110,9 +112,11 @@ export default function ProfilePageClient() {
 
   useEffect(() => {
     const session = readUserSession();
-    if (!session?.token) return;
-    setToken(session.token);
-    loadProfile(session.token);
+    if (session?.token) {
+      setToken(session.token);
+      loadProfile(session.token);
+    }
+    setSessionReady(true);
   }, []);
 
   useEffect(() => {
@@ -160,13 +164,21 @@ export default function ProfilePageClient() {
         </div>
       </section>
 
-      {!token && (
+      {!sessionReady && (
+        <section className="card portal-session-loading reveal-card">
+          <span className="pill">Loading</span>
+          <h2 style={{ margin: "0.65rem 0 0.35rem", color: "#0f172a" }}>Restoring your profile</h2>
+          <p className="meta" style={{ margin: 0 }}>Checking your saved session before loading account details.</p>
+        </section>
+      )}
+
+      {sessionReady && !token && (
         <section className="card reveal-card">
           <p className="meta" style={{ margin: 0 }}>Login from the user page to manage your profile.</p>
         </section>
       )}
 
-      {token && (
+      {sessionReady && token && (
         <div className="portal-profile-grid">
           <section className="card portal-auth-card reveal-card">
             <span className="pill">Profile details</span>
@@ -192,9 +204,9 @@ export default function ProfilePageClient() {
             <span className="pill">Security</span>
             <h2 style={{ marginBottom: "0.4rem" }}>Change password</h2>
             <div className="grid" style={{ gridTemplateColumns: "1fr", gap: "0.9rem" }}>
-              <input className="portal-input" type="password" placeholder="Current password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-              <input className="portal-input" type="password" placeholder="New password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-              <input className="portal-input" type="password" placeholder="Confirm new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              <PasswordField placeholder="Current password" value={currentPassword} onChange={setCurrentPassword} />
+              <PasswordField placeholder="New password" value={newPassword} onChange={setNewPassword} />
+              <PasswordField placeholder="Confirm new password" value={confirmPassword} onChange={setConfirmPassword} />
             </div>
             <div style={{ marginTop: "0.9rem", display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
               <button className="btn btn-primary" onClick={changePassword} disabled={busyPassword}>

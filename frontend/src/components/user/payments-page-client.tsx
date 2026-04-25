@@ -37,6 +37,7 @@ function countdown(status: UserStatus | null): string {
 
 export default function PaymentsPageClient() {
   const [token, setToken] = useState("");
+  const [sessionReady, setSessionReady] = useState(false);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [status, setStatus] = useState<UserStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,12 +90,13 @@ export default function PaymentsPageClient() {
 
   useEffect(() => {
     const session = readUserSession();
-    if (!session?.token) {
+    if (session?.token) {
+      setToken(session.token);
+      loadAll(session.token);
+    } else {
       setLoading(false);
-      return;
     }
-    setToken(session.token);
-    loadAll(session.token);
+    setSessionReady(true);
   }, []);
 
   useEffect(() => {
@@ -142,13 +144,21 @@ export default function PaymentsPageClient() {
         </div>
       </section>
 
-      {!token && (
+      {!sessionReady && (
+        <section className="card portal-session-loading reveal-card">
+          <span className="pill">Loading</span>
+          <h2 style={{ margin: "0.65rem 0 0.35rem", color: "#0f172a" }}>Restoring your payments</h2>
+          <p className="meta" style={{ margin: 0 }}>Checking your saved session before loading payment history.</p>
+        </section>
+      )}
+
+      {sessionReady && !token && (
         <section className="card reveal-card">
           <p className="meta" style={{ margin: 0 }}>Login from the user page to view payment history.</p>
         </section>
       )}
 
-      {token && (
+      {sessionReady && token && (
         <>
           <section className="card portal-listings-card reveal-card">
             <div className="portal-filter-header">

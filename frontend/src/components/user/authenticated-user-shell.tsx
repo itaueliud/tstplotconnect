@@ -32,10 +32,26 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
 
   return (
     <main className="container portal-shell" style={{ padding: "1.2rem 0 3rem" }}>
+      <header className="portal-page-header reveal-card">
+        <div className="portal-page-branding">
+          <span className="pill">africaRentalsGrind</span>
+          <div>
+            <strong>Modern property search, payments, and account access in one place.</strong>
+            <p>{user?.name ? `Signed in as ${user.name}` : "Explore your dashboard, profile, payments, and listings from one streamlined workspace."}</p>
+          </div>
+        </div>
+        <nav className="portal-page-links" aria-label="User page header navigation">
+          <Link href="/user">Dashboard</Link>
+          <Link href="/user#listings">Listings</Link>
+          <Link href="/profile">Profile</Link>
+          <Link href="/payments">Payments</Link>
+        </nav>
+      </header>
+
       <div className="portal-dashboard-shell">
         <aside className="card portal-side-nav reveal-card">
           <div className="portal-side-brand">
-            <span className="pill">TST PlotConnect</span>
+            <span className="pill">africaRentalsGrind</span>
             <strong>{user?.name || "User dashboard"}</strong>
             <span className="portal-side-meta">{user?.phone || ""}</span>
           </div>
@@ -56,6 +72,19 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
           {children}
         </div>
       </div>
+
+      <footer className="portal-page-footer reveal-card">
+        <div>
+          <strong>africaRentalsGrind</strong>
+          <p>Built for location-first rental browsing, account management, and faster discovery across the marketplace.</p>
+        </div>
+        <nav className="portal-page-footer-links" aria-label="User page footer navigation">
+          <Link href="/about">About</Link>
+          <Link href="/contact">Contact</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/user#listings">Browse listings</Link>
+        </nav>
+      </footer>
     </main>
   );
 }
