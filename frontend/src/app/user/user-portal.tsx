@@ -299,21 +299,18 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
           <a href="#listings">Listings</a>
           <a href="#about">About</a>
           <a href="#contact">Contact</a>
-          <Link href="/main">SEO Directory</Link>
-          <Link href="/admin">Admin</Link>
         </nav>
       </section>
 
-      <section className="portal-hero reveal-card" id="dashboard">
-        <div>
-          <span className="pill" style={{ width: "fit-content" }}>User dashboard</span>
-          <h1>Search, activate, and manage access from one cleaner dashboard.</h1>
-          <p>
-            This page keeps the original backend-connected features working while modernizing the flow, visuals,
-            listing cards, and navigation around them.
+      <section className="portal-hero reveal-card" id="dashboard" style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: "2.5rem", padding: "2.5rem 2rem 2rem 2rem", background: "#f8fafc", borderRadius: "1.2rem", boxShadow: "0 2px 16px rgba(0,0,0,0.06)", marginBottom: "2rem" }}>
+        <div style={{ flex: 2, minWidth: 0 }}>
+          <span className="pill" style={{ width: "fit-content", marginBottom: "0.7rem" }}>User dashboard</span>
+          <h1 style={{ margin: 0, fontSize: "2.2rem", fontWeight: 800, color: "#0f172a" }}>Welcome to your dashboard</h1>
+          <p style={{ margin: "0.7rem 0 0.5rem", color: "#334155", fontSize: "1.1rem" }}>
+            Search, activate, and manage your access from a modern, left-aligned dashboard. Enjoy a streamlined experience with live filters, backend-powered listings, and instant account actions.
           </p>
         </div>
-        <div className="portal-hero-meta">
+        <div className="portal-hero-meta" style={{ flex: 1, minWidth: 220, display: "flex", flexDirection: "column", gap: "0.7rem", alignItems: "flex-start" }}>
           <span className="portal-meta-chip">Listings loaded: {plots.length}</span>
           <span className="portal-meta-chip">Filtered: {filtered.length}</span>
           <span className="portal-meta-chip">Category: {filters.category || "All"}</span>
@@ -512,6 +509,9 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
                       {[plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ") || "Location not specified"}
                     </p>
                     <p className="listing-description">{plot.description || "Verified listing on AfricaRentalGrid."}</p>
+                    <div className="listing-contact" style={{ marginTop: "0.5rem", fontSize: "0.97em", color: "#0f766e" }}>
+                      <strong>Contact:</strong> {plot.phone || plot.contact || "Not provided"}
+                    </div>
                   </div>
                 </article>
               );
