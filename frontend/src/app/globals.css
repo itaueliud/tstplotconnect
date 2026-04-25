@@ -565,6 +565,69 @@ body {
   gap: 1rem;
 }
 
+.reveal-card {
+  animation: revealUp 560ms ease both;
+}
+
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.portal-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1rem;
+  border-radius: 24px;
+  background: rgba(7, 17, 30, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.portal-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.portal-nav-brand strong {
+  font-size: 1rem;
+}
+
+.portal-nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.portal-nav-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 0.92rem;
+}
+
+.portal-nav-links a:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
 .portal-hero {
   display: grid;
   gap: 1rem;
@@ -615,10 +678,83 @@ body {
   gap: 1rem;
 }
 
+.portal-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.8fr) minmax(0, 1fr) minmax(320px, 0.9fr);
+  gap: 1rem;
+}
+
 .portal-auth-card,
 .portal-filter-card,
 .portal-listings-card {
   padding: 1.1rem;
+}
+
+.portal-status-card {
+  padding: 1.1rem;
+}
+
+.portal-status-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+  flex-wrap: wrap;
+}
+
+.portal-status-header h2 {
+  margin: 0.55rem 0 0;
+}
+
+.portal-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.88rem;
+}
+
+.portal-status-pill.is-active {
+  background: rgba(20, 184, 166, 0.14);
+  color: #0f766e;
+}
+
+.portal-status-pill.is-inactive {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
+.portal-status-grid {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.portal-status-metric {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.portal-status-metric strong {
+  color: var(--ink-strong);
+  font-size: 1.05rem;
+}
+
+.portal-status-metric span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.portal-status-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
 }
 
 .portal-account-line {
@@ -656,6 +792,36 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 0.8rem;
+}
+
+.portal-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+}
+
+.portal-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.04);
+  color: #0f172a;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.portal-chip:hover {
+  transform: translateY(-1px);
+}
+
+.portal-chip.is-selected {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.12), rgba(96, 165, 250, 0.12));
+  border-color: rgba(20, 184, 166, 0.35);
+  color: var(--brand-dark);
 }
 
 .portal-listing-grid {
@@ -733,6 +899,19 @@ body {
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.portal-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.portal-contact-list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.4rem 0 1rem;
+  color: var(--muted);
 }
 
 .directory-shell {
@@ -1038,7 +1217,8 @@ body {
   .dashboard-frame,
   .dashboard-grid-2,
   .login-card,
-  .portal-auth-grid {
+  .portal-auth-grid,
+  .portal-dashboard-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1067,6 +1247,16 @@ body {
     align-items: flex-start;
     flex-direction: column;
     gap: 0.5rem;
+  }
+
+  .portal-nav {
+    align-items: flex-start;
+  }
+
+  .portal-nav-brand {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
   }
 
   .dashboard-topbar .brand strong {

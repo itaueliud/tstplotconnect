@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { apiRequest } from "@/lib/api";
 
@@ -25,7 +26,10 @@ type User = {
 
 type UserStatus = {
   active?: boolean;
+  activatedAt?: string;
   expiresAt?: string;
+  remainingHours?: number;
+  remainingMinutes?: number;
 };
 
 type Props = {
@@ -48,6 +52,8 @@ const CATEGORIES = [
   "Plots for Sale"
 ] as const;
 
+const QUICK_CATEGORY_CHIPS = ["Hostels", "Bedsitters", "Lodges", "Apartments", "Plots for Sale"] as const;
+
 function sameValue(left: string, right: string): boolean {
   return left.trim().toLowerCase() === right.trim().toLowerCase();
 }
@@ -58,6 +64,12 @@ function formatPrice(value?: number): string {
 
 function listingImage(plot: Plot): string {
   return Array.isArray(plot.images) && plot.images[0] ? plot.images[0] : "";
+}
+
+function fmtDateTime(value?: string): string {
+  if (!value) return "-";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString();
 }
 
 export default function UserPortal({ initialCountry, initialCounty, initialTown, initialCategory }: Props) {
@@ -276,25 +288,82 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
   }, []);
 
   return (
-    <main className="container portal-shell" style={{ padding: "1.35rem 0 3rem" }}>
-      <section className="portal-hero">
+    <main className="container portal-shell" style={{ padding: "1.2rem 0 3rem" }}>
+      <section className="portal-nav reveal-card">
+        <div className="portal-nav-brand">
+          <span className="pill">AfricaRentalGrid</span>
+          <strong>Modern property search dashboard</strong>
+        </div>
+        <nav className="portal-nav-links" aria-label="User portal navigation">
+          <a href="#dashboard">Dashboard</a>
+          <a href="#listings">Listings</a>
+          <a href="#about">About</a>
+          <a href="#contact">Contact</a>
+          <Link href="/main">SEO Directory</Link>
+          <Link href="/admin">Admin</Link>
+        </nav>
+      </section>
+
+      <section className="portal-hero reveal-card" id="dashboard">
         <div>
-          <span className="pill" style={{ width: "fit-content" }}>Listings dashboard</span>
-          <h1>Search real listings with images, categories, and live filters.</h1>
+          <span className="pill" style={{ width: "fit-content" }}>User dashboard</span>
+          <h1>Search, activate, and manage access from one cleaner dashboard.</h1>
           <p>
-            Register or log in to unlock more access, then filter by country, county, town, area, category, and price.
+            This page keeps the original backend-connected features working while modernizing the flow, visuals,
+            listing cards, and navigation around them.
           </p>
         </div>
         <div className="portal-hero-meta">
-          <span className="portal-meta-chip">Showing {filtered.length} listing{filtered.length === 1 ? "" : "s"}</span>
-          <span className="portal-meta-chip">Country: {filters.country || "All"}</span>
+          <span className="portal-meta-chip">Listings loaded: {plots.length}</span>
+          <span className="portal-meta-chip">Filtered: {filtered.length}</span>
           <span className="portal-meta-chip">Category: {filters.category || "All"}</span>
-          <span className="portal-meta-chip">Status: {status?.active ? "Active account" : "Guest browsing"}</span>
+          <span className="portal-meta-chip">Account: {isLoggedIn ? "Signed in" : "Guest"}</span>
         </div>
       </section>
 
-      <section className="portal-auth-grid">
-        <article className="card portal-auth-card">
+      <section className="portal-dashboard-grid">
+        <article className="card portal-status-card reveal-card">
+          <div className="portal-status-header">
+            <div>
+              <span className="pill">Activation</span>
+              <h2>Account access</h2>
+            </div>
+            <span className={`portal-status-pill ${status?.active ? "is-active" : "is-inactive"}`}>
+              {status?.active ? "Active" : "Inactive"}
+            </span>
+          </div>
+          <p className="meta">
+            {status?.active
+              ? "Your account is active. You can continue browsing and unlocking more details."
+              : "Activate your account to follow the full access flow from the backend."}
+          </p>
+          <div className="portal-status-grid">
+            <div className="portal-status-metric">
+              <strong>{status?.remainingHours ?? 0}h</strong>
+              <span>Hours left</span>
+            </div>
+            <div className="portal-status-metric">
+              <strong>{status?.remainingMinutes ?? 0}m</strong>
+              <span>Minutes left</span>
+            </div>
+            <div className="portal-status-metric">
+              <strong>{status?.expiresAt ? fmtDateTime(status.expiresAt) : "-"}</strong>
+              <span>Expires at</span>
+            </div>
+          </div>
+          <div className="portal-status-actions">
+            <button className="btn btn-primary" onClick={pay} disabled={busy || !isLoggedIn}>
+              {status?.active ? "Refresh Activation" : "Activate Account"}
+            </button>
+            {isLoggedIn && (
+              <button className="btn btn-secondary" onClick={() => loadStatus(token)} disabled={busy}>
+                Check Status
+              </button>
+            )}
+          </div>
+        </article>
+
+        <article className="card portal-auth-card reveal-card">
           <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginBottom: "0.8rem" }}>
             <span className="pill">Access</span>
             {isLoggedIn && <span className="portal-account-line">Account: {user?.name || user?.phone}</span>}
@@ -335,21 +404,16 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
             <button className="btn btn-primary" onClick={isLoginMode ? loginUser : registerUser} disabled={busy}>
               {busy ? "Please wait..." : isLoginMode ? "Login" : "Register & continue"}
             </button>
-            {isLoggedIn && (
-              <button className="btn btn-secondary" onClick={pay} disabled={busy}>
-                Pay Activation
-              </button>
-            )}
           </div>
 
           {isLoggedIn && (
             <p className="meta" style={{ marginTop: "0.7rem", marginBottom: 0 }}>
-              Status: {status?.active ? "Active" : "Inactive"}
+              Logged in as {user?.name || user?.phone}. Activation state: {status?.active ? "Active" : "Inactive"}.
             </p>
           )}
         </article>
 
-        <article className="card portal-auth-card">
+        <article className="card portal-auth-card reveal-card">
           <span className="pill">Password recovery</span>
           <h2 style={{ marginBottom: "0.4rem" }}>Forgot Password (OTP)</h2>
           <p className="meta" style={{ marginTop: 0 }}>Request an OTP, verify it, and reset the password without leaving the page.</p>
@@ -369,16 +433,29 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
         </article>
       </section>
 
-      <section className="card portal-filter-card">
+      <section className="card portal-filter-card reveal-card" id="listings">
         <div className="portal-filter-header">
           <div>
             <span className="pill">Filters</span>
             <h2 style={{ margin: "0.55rem 0 0.25rem" }}>Refine the feed</h2>
-            <p className="meta" style={{ margin: 0 }}>Filter the marketplace by location, category, and budget.</p>
+            <p className="meta" style={{ margin: 0 }}>Filter the marketplace by location, category, and budget like the earlier flow, but with a cleaner layout.</p>
           </div>
           <button className="btn btn-primary" onClick={loadPlots} disabled={loading}>
             {loading ? "Loading..." : "Update results"}
           </button>
+        </div>
+
+        <div className="portal-chip-row">
+          {QUICK_CATEGORY_CHIPS.map((category) => (
+            <button
+              key={category}
+              type="button"
+              className={`portal-chip ${filters.category === category ? "is-selected" : ""}`}
+              onClick={() => setFilters((f) => ({ ...f, category: f.category === category ? "" : category }))}
+            >
+              {category}
+            </button>
+          ))}
         </div>
 
         <div className="portal-filter-grid">
@@ -404,12 +481,14 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
         </div>
       </section>
 
-      <section className="card portal-listings-card">
+      <section className="card portal-listings-card reveal-card">
         <div className="portal-filter-header">
           <div>
             <span className="pill">Listings</span>
-            <h2 style={{ margin: "0.55rem 0 0.25rem" }}>Visual marketplace feed</h2>
-            <p className="meta" style={{ margin: 0 }}>Cards surface the image, category, location, price, and description first.</p>
+            <h2 style={{ margin: "0.55rem 0 0.25rem" }}>Backend-powered marketplace feed</h2>
+            <p className="meta" style={{ margin: 0 }}>
+              Cards read from the backend and surface the plot image, category, location, price, and description first.
+            </p>
           </div>
         </div>
         {loading && <p className="meta">Loading listings...</p>}
@@ -441,8 +520,32 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
         )}
       </section>
 
+      <section className="portal-info-grid">
+        <article className="card reveal-card" id="about">
+          <span className="pill">About</span>
+          <h2 style={{ marginBottom: "0.45rem" }}>Location-first property discovery</h2>
+          <p className="meta" style={{ marginTop: 0 }}>
+            AfricaRentalGrid helps renters, travelers, and students discover verified hostels, bedsitters, lodges, apartments, and plots across East Africa.
+          </p>
+          <Link href="/about" className="btn btn-secondary">Open full About page</Link>
+        </article>
+
+        <article className="card reveal-card" id="contact">
+          <span className="pill">Contact</span>
+          <h2 style={{ marginBottom: "0.45rem" }}>Support and partnerships</h2>
+          <p className="meta" style={{ marginTop: 0 }}>
+            Need help with listings, account access, or partnerships? Reach the team through the contact page and keep the support flow consistent.
+          </p>
+          <div className="portal-contact-list">
+            <span>Email: support@africarentalgrid.com</span>
+            <span>Hours: Mon-Sat, 8:00 AM to 6:00 PM EAT</span>
+          </div>
+          <Link href="/contact" className="btn btn-secondary">Open full Contact page</Link>
+        </article>
+      </section>
+
       {(message || error) && (
-        <section className="card" style={{ marginTop: "1rem", borderColor: error ? "#fecaca" : undefined }}>
+        <section className="card reveal-card" style={{ marginTop: "1rem", borderColor: error ? "#fecaca" : undefined }}>
           <p style={{ margin: 0, color: error ? "#b91c1c" : "#0f766e", fontWeight: 700 }}>{error || message}</p>
         </section>
       )}
