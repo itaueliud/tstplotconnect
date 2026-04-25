@@ -1,41 +1,34 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "About AfricaRentalGrid",
+  title: "About TST PlotConnect",
   description:
-    "Learn how AfricaRentalGrid helps users discover verified plots, hostels, bedsitters, and lodges with county-level search across East Africa.",
+    "Learn how TST PlotConnect helps renters, students, and travelers discover verified hostels, lodges, bedsitters, apartments, and plots across Kenya.",
   alternates: { canonical: "/about" },
   keywords: [
-    "about AfricaRentalGrid",
-    "East Africa property platform",
-    "verified rental listings",
-    "county property search",
-    "real estate marketplace Kenya Uganda Tanzania"
+    "About TST PlotConnect",
+    "verified listings Kenya",
+    "hostels and lodges Kenya",
+    "property discovery platform",
+    "TST PlotConnect mission"
   ],
   robots: {
     index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1
-    }
+    follow: true
   },
   openGraph: {
-    title: "About AfricaRentalGrid",
-    description:
-      "Discover AfricaRentalGrid's mission to simplify trusted property discovery in East Africa.",
+    title: "About TST PlotConnect",
+    description: "Discover the mission, service focus, and trust model behind TST PlotConnect.",
     url: "/about",
     type: "website",
-    siteName: "AfricaRentalGrid"
+    siteName: "TST PlotConnect"
   },
   twitter: {
     card: "summary_large_image",
-    title: "About AfricaRentalGrid",
-    description: "Learn the mission and values behind AfricaRentalGrid."
+    title: "About TST PlotConnect",
+    description: "Learn what TST PlotConnect offers and how it helps people find trusted listings."
   }
 };
 
@@ -43,31 +36,86 @@ export default function AboutPage() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "AboutPage",
-    name: "About AfricaRentalGrid",
+    name: "About TST PlotConnect",
     url: "https://www.tst-plotconnect.com/about",
     description:
-      "About page describing AfricaRentalGrid's mission, service scope, and trusted listing approach.",
-    inLanguage: "en"
+      "About page describing TST PlotConnect's mission, service areas, and trusted property discovery approach.",
+    inLanguage: "en-KE"
   };
 
   return (
     <main className="container" style={{ padding: "2rem 0 3rem" }}>
-      <section className="card" style={{ padding: "1.2rem" }}>
-        <span className="pill">About</span>
-        <h1 style={{ margin: "0.8rem 0 0.4rem" }}>About AfricaRentalGrid</h1>
-        <p className="meta" style={{ margin: 0 }}>
-          AfricaRentalGrid is built to make location-first property discovery faster and clearer across Kenya, Uganda, and Tanzania.
+      <section className="card" style={{ padding: "1.4rem", background: "linear-gradient(135deg, rgba(7,17,30,0.96), rgba(15,118,110,0.82))", color: "#fff" }}>
+        <span className="pill">About TST PlotConnect</span>
+        <h1 style={{ margin: "0.85rem 0 0.55rem", fontSize: "clamp(2rem, 4vw, 3.5rem)", lineHeight: 1, letterSpacing: "-0.04em" }}>
+          Verified property discovery built for real people moving across Kenya.
+        </h1>
+        <p style={{ margin: 0, maxWidth: 760, color: "rgba(236,245,255,0.86)", lineHeight: 1.8 }}>
+          TST PlotConnect helps renters, students, travelers, and short-stay customers discover trusted hostels, bedsitters,
+          apartments, lodges, guest houses, and plots through one modern search experience.
         </p>
       </section>
 
+      <section className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", marginTop: "1rem" }}>
+        <article className="card">
+          <span className="pill">Mission</span>
+          <h2 style={{ margin: "0.7rem 0 0.45rem" }}>Make property search faster and more trustworthy.</h2>
+          <p className="meta" style={{ margin: 0 }}>
+            We focus on clear categories, location-first search, and verified listing flows so users can compare options with less friction and more confidence.
+          </p>
+        </article>
+        <article className="card">
+          <span className="pill">Who We Serve</span>
+          <h2 style={{ margin: "0.7rem 0 0.45rem" }}>Students, renters, travelers, and accommodation seekers.</h2>
+          <p className="meta" style={{ margin: 0 }}>
+            TST PlotConnect is built for people looking for everyday rentals, temporary stays, and local accommodation opportunities across active Kenyan markets.
+          </p>
+        </article>
+        <article className="card">
+          <span className="pill">Coverage</span>
+          <h2 style={{ margin: "0.7rem 0 0.45rem" }}>Search by county, town, area, and category.</h2>
+          <p className="meta" style={{ margin: 0 }}>
+            Our platform is designed around real location filters so users can narrow down listings quickly and move from browsing to contact faster.
+          </p>
+        </article>
+      </section>
+
       <section className="card" style={{ marginTop: "1rem" }}>
-        <h2 style={{ marginTop: 0 }}>What we focus on</h2>
-        <ul style={{ margin: 0, paddingLeft: "1.2rem", lineHeight: 1.7 }}>
-          <li>County-level pages designed for strong search visibility</li>
-          <li>Direct links into pre-filtered user listing results</li>
-          <li>Clear listing categories such as plots, hostels, bedsitters, and lodges</li>
-          <li>Consistent metadata and structured data across high-intent landing pages</li>
-        </ul>
+        <h2 style={{ marginTop: 0 }}>What makes TST PlotConnect useful</h2>
+        <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+          <div>
+            <strong>Verified listing flow</strong>
+            <p className="meta">Listings are presented with clearer details, categories, prices, and location information so users can make quicker decisions.</p>
+          </div>
+          <div>
+            <strong>Activation-based access</strong>
+            <p className="meta">The account and activation flow is designed to unlock deeper access while keeping the browsing experience simple and consistent.</p>
+          </div>
+          <div>
+            <strong>Support that stays reachable</strong>
+            <p className="meta">Users can contact the team for listing help, account support, payment guidance, and general assistance when needed.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="card" style={{ marginTop: "1rem" }}>
+        <h2 style={{ marginTop: 0 }}>Core categories on the platform</h2>
+        <div className="chip-row">
+          {["Hostels", "Bedsitters", "Apartments", "Lodges", "Guest Houses", "Rental Houses", "Plots for Sale"].map((item) => (
+            <span key={item} className="chip">{item}</span>
+          ))}
+        </div>
+      </section>
+
+      <section className="card" style={{ marginTop: "1rem" }}>
+        <h2 style={{ marginTop: 0 }}>Need help or want to partner?</h2>
+        <p className="meta" style={{ marginTop: 0 }}>
+          For support, listing guidance, activation help, or partnership inquiries, use the official TST PlotConnect contact channels.
+        </p>
+        <div style={{ display: "flex", gap: "0.7rem", flexWrap: "wrap" }}>
+          <Link href="/contact" className="btn btn-primary">Open Contact Page</Link>
+          <Link href="/user" className="btn btn-secondary">Back to Dashboard</Link>
+        </div>
       </section>
 
       <Script id="about-schema" type="application/ld+json" strategy="afterInteractive">

@@ -41,6 +41,16 @@ type Props = {
   initialCategory: string;
 };
 
+type FilterState = {
+  country: string;
+  county: string;
+  town: string;
+  area: string;
+  category: string;
+  minPrice: string;
+  maxPrice: string;
+};
+
 const CATEGORIES = [
   "Rental Houses",
   "Bedsitters",
@@ -74,6 +84,13 @@ function fmtDateTime(value?: string): string {
   return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString();
 }
 
+function timeRemainingLabel(status: UserStatus | null): string {
+  if (!status?.active) return "Inactive";
+  const hours = Math.max(0, Number(status.remainingHours ?? 0));
+  const minutes = Math.max(0, Number(status.remainingMinutes ?? 0));
+  return `${hours}h ${minutes}m remaining`;
+}
+
 export default function UserPortal({ initialCountry, initialCounty, initialTown, initialCategory }: Props) {
   const [token, setToken] = useState("");
   const [user, setUser] = useState<User | null>(null);
@@ -88,7 +105,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
   const [loginPhone, setLoginPhone] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
-  const [filters, setFilters] = useState({
+  const defaultFilters: FilterState = {
     country: initialCountry || "Kenya",
     county: initialCounty || "",
     town: initialTown || "",
@@ -96,7 +113,9 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
     category: initialCategory || "",
     minPrice: "",
     maxPrice: ""
-  });
+  };
+
+  const [filters, setFilters] = useState<FilterState>(defaultFilters);
 
   const [plots, setPlots] = useState<Plot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -145,17 +164,18 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
     setMessage("");
   }
 
-  async function loadPlots() {
+  async function loadPlots(nextFilters?: FilterState) {
     setLoading(true);
     try {
+      const source = nextFilters || filters;
       const query = new URLSearchParams();
-      if (filters.country) query.set("country", filters.country);
-      if (filters.county) query.set("county", filters.county);
-      if (!filters.county && filters.town) query.set("town", filters.town);
-      if (filters.area) query.set("area", filters.area);
-      if (filters.category) query.set("category", filters.category);
-      if (filters.minPrice) query.set("minPrice", filters.minPrice);
-      if (filters.maxPrice) query.set("maxPrice", filters.maxPrice);
+      if (source.country) query.set("country", source.country);
+      if (source.county) query.set("county", source.county);
+      if (!source.county && source.town) query.set("town", source.town);
+      if (source.area) query.set("area", source.area);
+      if (source.category) query.set("category", source.category);
+      if (source.minPrice) query.set("minPrice", source.minPrice);
+      if (source.maxPrice) query.set("maxPrice", source.maxPrice);
 
       const rows = await apiRequest<Plot[]>(`/api/plots${query.toString() ? `?${query.toString()}` : ""}`);
       setPlots(Array.isArray(rows) ? rows : []);
@@ -286,7 +306,17 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
     setStatus(null);
     setPlots([]);
     setAuthView("login");
+    setFilters(defaultFilters);
     showSuccess("Logged out.");
+  }
+
+  function clearFilters() {
+    const nextFilters: FilterState = {
+      ...defaultFilters,
+      country: user?.country || defaultFilters.country || "Kenya"
+    };
+    setFilters(nextFilters);
+    loadPlots(nextFilters);
   }
 
   useEffect(() => {
@@ -295,9 +325,23 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn]);
 
+  useEffect(() => {
+    if (!message && !error) return;
+    const timeout = window.setTimeout(() => {
+      setMessage("");
+      setError("");
+    }, 4000);
+    return () => window.clearTimeout(timeout);
+  }, [message, error]);
+
   if (!isLoggedIn) {
     return (
       <main className="container portal-auth-shell">
+        {(message || error) && (
+          <div className={`portal-toast ${error ? "is-error" : "is-success"}`}>
+            {error || message}
+          </div>
+        )}
         <section className="portal-auth-landing reveal-card">
           <div className="portal-auth-stage">
             <div className="portal-auth-glow portal-auth-glow-left" />
@@ -434,37 +478,49 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
 
   return (
     <main className="container portal-shell" style={{ padding: "1.2rem 0 3rem" }}>
-      <section className="portal-nav reveal-card">
-        <div className="portal-nav-brand">
-          <span className="pill">AfricaRentalGrid</span>
-          <strong>Modern property search dashboard</strong>
+      {(message || error) && (
+        <div className={`portal-toast ${error ? "is-error" : "is-success"}`}>
+          {error || message}
         </div>
-        <nav className="portal-nav-links" aria-label="User portal navigation">
-          <a href="#dashboard">Dashboard</a>
-          <a href="#listings">Listings</a>
-          <a href="#about">About</a>
-          <a href="#contact">Contact</a>
-        </nav>
-      </section>
+      )}
 
-      <section className="portal-hero reveal-card" id="dashboard" style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: "2.5rem", padding: "2.5rem 2rem 2rem 2rem", background: "#f8fafc", borderRadius: "1.2rem", boxShadow: "0 2px 16px rgba(0,0,0,0.06)", marginBottom: "2rem" }}>
-        <div style={{ flex: 2, minWidth: 0 }}>
-          <span className="pill" style={{ width: "fit-content", marginBottom: "0.7rem" }}>User dashboard</span>
-          <h1 style={{ margin: 0, fontSize: "2.2rem", fontWeight: 800, color: "#0f172a" }}>Welcome to your dashboard</h1>
-          <p style={{ margin: "0.7rem 0 0.5rem", color: "#334155", fontSize: "1.1rem" }}>
-            Search, activate, and manage your access from a modern, left-aligned dashboard. Enjoy a streamlined experience with live filters, backend-powered listings, and instant account actions.
-          </p>
-        </div>
-        <div className="portal-hero-meta" style={{ flex: 1, minWidth: 220, display: "flex", flexDirection: "column", gap: "0.7rem", alignItems: "flex-start" }}>
-          <span className="portal-meta-chip">Listings loaded: {plots.length}</span>
-          <span className="portal-meta-chip">Filtered: {filtered.length}</span>
-          <span className="portal-meta-chip">Category: {filters.category || "All"}</span>
-          <span className="portal-meta-chip">Account: {isLoggedIn ? "Signed in" : "Guest"}</span>
-        </div>
-      </section>
+      <div className="portal-dashboard-shell">
+        <aside className="card portal-side-nav reveal-card">
+          <div className="portal-side-brand">
+            <span className="pill">TST PlotConnect</span>
+            <strong>{user?.name || "User dashboard"}</strong>
+            <span className="portal-side-meta">{user?.phone || ""}</span>
+          </div>
+          <nav className="portal-side-links" aria-label="Dashboard side navigation">
+            <a href="#dashboard">Dashboard</a>
+            <a href="#listings">Listings</a>
+            <Link href="/about">About page</Link>
+            <Link href="/contact">Contact page</Link>
+          </nav>
+          <div className="portal-side-actions">
+            <button className="btn btn-secondary" onClick={logout}>Logout</button>
+          </div>
+        </aside>
 
-      <section className="portal-dashboard-grid">
-        <article className="card portal-status-card reveal-card">
+        <div className="portal-main-stack">
+          <section className="portal-hero reveal-card" id="dashboard" style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: "2.5rem", padding: "2.5rem 2rem 2rem 2rem", background: "#f8fafc", borderRadius: "1.2rem", boxShadow: "0 2px 16px rgba(0,0,0,0.06)", marginBottom: "2rem" }}>
+            <div style={{ flex: 2, minWidth: 0 }}>
+              <span className="pill" style={{ width: "fit-content", marginBottom: "0.7rem" }}>User dashboard</span>
+              <h1 style={{ margin: 0, fontSize: "2.2rem", fontWeight: 800, color: "#0f172a" }}>Welcome to your dashboard</h1>
+              <p style={{ margin: "0.7rem 0 0.5rem", color: "#334155", fontSize: "1.1rem" }}>
+                Search, activate, and manage your access from a modern, left-aligned dashboard. Enjoy a streamlined experience with live filters, backend-powered listings, and instant account actions.
+              </p>
+            </div>
+            <div className="portal-hero-meta" style={{ flex: 1, minWidth: 220, display: "flex", flexDirection: "column", gap: "0.7rem", alignItems: "flex-start" }}>
+              <span className="portal-meta-chip">{plots.length} listings loaded</span>
+              <span className="portal-meta-chip">{filtered.length} visible after filters</span>
+              <span className="portal-meta-chip">Category: {filters.category || "All"}</span>
+              <span className="portal-meta-chip">Countdown: {timeRemainingLabel(status)}</span>
+            </div>
+          </section>
+
+          <section className="portal-dashboard-grid">
+            <article className="card portal-status-card reveal-card">
           <div className="portal-status-header">
             <div>
               <span className="pill">Activation</span>
@@ -491,6 +547,10 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
             <div className="portal-status-metric">
               <strong>{status?.expiresAt ? fmtDateTime(status.expiresAt) : "-"}</strong>
               <span>Expires at</span>
+            </div>
+            <div className="portal-status-metric">
+              <strong>{timeRemainingLabel(status)}</strong>
+              <span>Countdown</span>
             </div>
           </div>
           <div className="portal-status-actions">
@@ -524,37 +584,23 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
             </p>
           )}
         </article>
+          </section>
 
-        <article className="card portal-auth-card reveal-card">
-          <span className="pill">Password recovery</span>
-          <h2 style={{ marginBottom: "0.4rem" }}>Forgot Password (OTP)</h2>
-          <p className="meta" style={{ marginTop: 0 }}>Request an OTP, verify it, and reset the password without leaving the page.</p>
-          <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-            <input className="portal-input" placeholder="Phone" value={otpPhone} onChange={(e) => setOtpPhone(e.target.value)} />
-            <input className="portal-input" placeholder="OTP code" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} />
-            <input className="portal-input" type="password" placeholder="New password" value={otpNewPassword} onChange={(e) => setOtpNewPassword(e.target.value)} />
-          </div>
-          <div style={{ marginTop: "0.8rem", display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-            <button className="btn btn-secondary" onClick={requestCode} disabled={busy}>
-              Request OTP
-            </button>
-            <button className="btn btn-secondary" onClick={verifyCodeAndReset} disabled={busy}>
-              Verify and Reset
-            </button>
-          </div>
-        </article>
-      </section>
-
-      <section className="card portal-filter-card reveal-card" id="listings">
+          <section className="card portal-filter-card reveal-card" id="listings">
         <div className="portal-filter-header">
           <div>
             <span className="pill">Filters</span>
             <h2 style={{ margin: "0.55rem 0 0.25rem" }}>Refine the feed</h2>
             <p className="meta" style={{ margin: 0 }}>Filter the marketplace by location, category, and budget like the earlier flow, but with a cleaner layout.</p>
           </div>
-          <button className="btn btn-primary" onClick={loadPlots} disabled={loading}>
-            {loading ? "Loading..." : "Update results"}
-          </button>
+          <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+            <button className="btn btn-secondary" onClick={clearFilters} disabled={loading}>
+              Clear filters
+            </button>
+            <button className="btn btn-primary" onClick={() => loadPlots()} disabled={loading}>
+              {loading ? "Loading..." : "Update results"}
+            </button>
+          </div>
         </div>
 
         <div className="portal-chip-row">
@@ -591,9 +637,9 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
           <input className="portal-input" placeholder="Min price" value={filters.minPrice} onChange={(e) => setFilters((f) => ({ ...f, minPrice: e.target.value }))} />
           <input className="portal-input" placeholder="Max price" value={filters.maxPrice} onChange={(e) => setFilters((f) => ({ ...f, maxPrice: e.target.value }))} />
         </div>
-      </section>
+          </section>
 
-      <section className="card portal-listings-card reveal-card">
+          <section className="card portal-listings-card reveal-card">
         <div className="portal-filter-header">
           <div>
             <span className="pill">Listings</span>
@@ -602,6 +648,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
               Cards read from the backend and surface the plot image, category, location, price, and description first.
             </p>
           </div>
+          <span className="portal-results-count">{filtered.length} of {plots.length} listings</span>
         </div>
         {loading && <p className="meta">Loading listings...</p>}
         {!loading && filtered.length === 0 && <p className="meta">No listings match the selected filters.</p>}
@@ -633,37 +680,9 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
             })}
           </div>
         )}
-      </section>
-
-      <section className="portal-info-grid">
-        <article className="card reveal-card" id="about">
-          <span className="pill">About</span>
-          <h2 style={{ marginBottom: "0.45rem" }}>Location-first property discovery</h2>
-          <p className="meta" style={{ marginTop: 0 }}>
-            AfricaRentalGrid helps renters, travelers, and students discover verified hostels, bedsitters, lodges, apartments, and plots across East Africa.
-          </p>
-          <Link href="/about" className="btn btn-secondary">Open full About page</Link>
-        </article>
-
-        <article className="card reveal-card" id="contact">
-          <span className="pill">Contact</span>
-          <h2 style={{ marginBottom: "0.45rem" }}>Support and partnerships</h2>
-          <p className="meta" style={{ marginTop: 0 }}>
-            Need help with listings, account access, or partnerships? Reach the team through the contact page and keep the support flow consistent.
-          </p>
-          <div className="portal-contact-list">
-            <span>Email: support@africarentalgrid.com</span>
-            <span>Hours: Mon-Sat, 8:00 AM to 6:00 PM EAT</span>
-          </div>
-          <Link href="/contact" className="btn btn-secondary">Open full Contact page</Link>
-        </article>
-      </section>
-
-      {(message || error) && (
-        <section className="card reveal-card" style={{ marginTop: "1rem", borderColor: error ? "#fecaca" : undefined }}>
-          <p style={{ margin: 0, color: error ? "#b91c1c" : "#0f766e", fontWeight: 700 }}>{error || message}</p>
-        </section>
-      )}
+          </section>
+        </div>
+      </div>
     </main>
   );
 }
