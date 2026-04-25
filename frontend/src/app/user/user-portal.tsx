@@ -44,7 +44,6 @@ type Props = {
 type FilterState = {
   country: string;
   county: string;
-  town: string;
   area: string;
   category: string;
   minPrice: string;
@@ -91,7 +90,7 @@ function timeRemainingLabel(status: UserStatus | null): string {
   return `${hours}h ${minutes}m remaining`;
 }
 
-export default function UserPortal({ initialCountry, initialCounty, initialTown, initialCategory }: Props) {
+export default function UserPortal({ initialCountry, initialCounty, initialTown: _initialTown, initialCategory }: Props) {
   const [token, setToken] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<UserStatus | null>(null);
@@ -108,7 +107,6 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
   const defaultFilters: FilterState = {
     country: initialCountry || "Kenya",
     county: initialCounty || "",
-    town: initialTown || "",
     area: "",
     category: initialCategory || "",
     minPrice: "",
@@ -138,18 +136,15 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
     return plots.filter((plot) => {
       const countryOk = filters.country ? sameValue(String(plot.country || ""), filters.country) : true;
       const countyOk = filters.county ? sameValue(String(plot.county || ""), filters.county) : true;
-      const townOk = filters.town
-        ? sameValue(String(plot.town || plot.area || ""), filters.town) || sameValue(String(plot.county || ""), filters.town)
-        : true;
       const areaOk = filters.area ? sameValue(String(plot.area || ""), filters.area) : true;
       const categoryOk = filters.category ? sameValue(String(plot.category || ""), filters.category) : true;
-      const hasMin = filters.minPrice.trim() !== "";
-      const hasMax = filters.maxPrice.trim() !== "";
+      const minPrice = filters.minPrice.trim() === "" ? null : Number(filters.minPrice);
+      const maxPrice = filters.maxPrice.trim() === "" ? null : Number(filters.maxPrice);
       const price = Number(plot.price);
 
-      if (!countryOk || !countyOk || !townOk || !areaOk || !categoryOk) return false;
-      if (hasMin && Number.isFinite(price) && price < Number(filters.minPrice)) return false;
-      if (hasMax && Number.isFinite(price) && price > Number(filters.maxPrice)) return false;
+      if (!countryOk || !countyOk || !areaOk || !categoryOk) return false;
+      if (minPrice !== null && Number.isFinite(minPrice) && Number.isFinite(price) && price < minPrice) return false;
+      if (maxPrice !== null && Number.isFinite(maxPrice) && Number.isFinite(price) && price > maxPrice) return false;
       return true;
     });
   }, [plots, filters]);
@@ -171,14 +166,16 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
       const query = new URLSearchParams();
       if (source.country) query.set("country", source.country);
       if (source.county) query.set("county", source.county);
-      if (!source.county && source.town) query.set("town", source.town);
       if (source.area) query.set("area", source.area);
       if (source.category) query.set("category", source.category);
-      if (source.minPrice) query.set("minPrice", source.minPrice);
-      if (source.maxPrice) query.set("maxPrice", source.maxPrice);
+      if (source.minPrice.trim() !== "" && Number.isFinite(Number(source.minPrice))) query.set("minPrice", source.minPrice);
+      if (source.maxPrice.trim() !== "" && Number.isFinite(Number(source.maxPrice))) query.set("maxPrice", source.maxPrice);
 
       const rows = await apiRequest<Plot[]>(`/api/plots${query.toString() ? `?${query.toString()}` : ""}`);
       setPlots(Array.isArray(rows) ? rows : []);
+      if (isLoggedIn) {
+        showSuccess(`Listings updated. ${Array.isArray(rows) ? rows.length : 0} listings loaded.`);
+      }
     } catch (e) {
       showError(e instanceof Error ? e.message : "Unable to load plots.");
       setPlots([]);
@@ -187,12 +184,18 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
     }
   }
 
-  async function loadStatus(authToken: string) {
+  async function loadStatus(authToken: string, notify = false) {
     try {
       const s = await apiRequest<UserStatus>("/api/user/status", { token: authToken });
       setStatus(s || null);
+      if (notify) {
+        showSuccess(s?.active ? `Status updated. ${timeRemainingLabel(s)}.` : "Status updated. Your account is currently inactive.");
+      }
     } catch (_e) {
       setStatus(null);
+      if (notify) {
+        showError("Unable to refresh account status right now.");
+      }
     }
   }
 
@@ -212,7 +215,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
       setUser(data.user);
       setFilters((prev) => ({ ...prev, country: data.user?.country || prev.country }));
       await loadStatus(data.token);
-      showSuccess("Registration successful. Activate your account to unlock full access.");
+      showSuccess("Registration successful. You can now log in and continue.");
       setRegisterPassword("");
       setAuthView("login");
     } catch (e) {
@@ -316,6 +319,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
       country: user?.country || defaultFilters.country || "Kenya"
     };
     setFilters(nextFilters);
+    showSuccess("Filters cleared. Showing the default feed again.");
     loadPlots(nextFilters);
   }
 
@@ -503,19 +507,31 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
         </aside>
 
         <div className="portal-main-stack">
-          <section className="portal-hero reveal-card" id="dashboard" style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: "2.5rem", padding: "2.5rem 2rem 2rem 2rem", background: "#f8fafc", borderRadius: "1.2rem", boxShadow: "0 2px 16px rgba(0,0,0,0.06)", marginBottom: "2rem" }}>
-            <div style={{ flex: 2, minWidth: 0 }}>
+          <section className="portal-hero portal-hero-surface reveal-card" id="dashboard">
+            <div className="portal-hero-copy">
               <span className="pill" style={{ width: "fit-content", marginBottom: "0.7rem" }}>User dashboard</span>
               <h1 style={{ margin: 0, fontSize: "2.2rem", fontWeight: 800, color: "#0f172a" }}>Welcome to your dashboard</h1>
               <p style={{ margin: "0.7rem 0 0.5rem", color: "#334155", fontSize: "1.1rem" }}>
                 Search, activate, and manage your access from a modern, left-aligned dashboard. Enjoy a streamlined experience with live filters, backend-powered listings, and instant account actions.
               </p>
             </div>
-            <div className="portal-hero-meta" style={{ flex: 1, minWidth: 220, display: "flex", flexDirection: "column", gap: "0.7rem", alignItems: "flex-start" }}>
-              <span className="portal-meta-chip">{plots.length} listings loaded</span>
-              <span className="portal-meta-chip">{filtered.length} visible after filters</span>
-              <span className="portal-meta-chip">Category: {filters.category || "All"}</span>
-              <span className="portal-meta-chip">Countdown: {timeRemainingLabel(status)}</span>
+            <div className="portal-hero-overview">
+              <article className="portal-overview-card">
+                <span>Total listings</span>
+                <strong>{plots.length}</strong>
+              </article>
+              <article className="portal-overview-card">
+                <span>Visible now</span>
+                <strong>{filtered.length}</strong>
+              </article>
+              <article className="portal-overview-card">
+                <span>Category</span>
+                <strong>{filters.category || "All"}</strong>
+              </article>
+              <article className="portal-overview-card">
+                <span>Countdown</span>
+                <strong>{timeRemainingLabel(status)}</strong>
+              </article>
             </div>
           </section>
 
@@ -558,7 +574,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
               {status?.active ? "Refresh Activation" : "Activate Account"}
             </button>
             {isLoggedIn && (
-              <button className="btn btn-secondary" onClick={() => loadStatus(token)} disabled={busy}>
+              <button className="btn btn-secondary" onClick={() => loadStatus(token, true)} disabled={busy}>
                 Check Status
               </button>
             )}
@@ -624,7 +640,6 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
             <option value="Tanzania">Tanzania</option>
           </select>
           <input className="portal-input" placeholder="County" value={filters.county} onChange={(e) => setFilters((f) => ({ ...f, county: e.target.value }))} />
-          <input className="portal-input" placeholder="Town" value={filters.town} onChange={(e) => setFilters((f) => ({ ...f, town: e.target.value }))} />
           <input className="portal-input" placeholder="Area" value={filters.area} onChange={(e) => setFilters((f) => ({ ...f, area: e.target.value }))} />
           <select className="portal-input" value={filters.category} onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}>
             <option value="">All categories</option>
