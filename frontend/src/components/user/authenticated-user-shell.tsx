@@ -119,7 +119,6 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
         >
           <span />
           <span />
-          <span />
         </button>
         <nav className="portal-page-links" aria-label="User page header navigation">
           <Link href="/user">Dashboard</Link>
