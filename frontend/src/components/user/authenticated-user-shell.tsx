@@ -138,7 +138,7 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
         />
         <aside
           id="portal-side-navigation"
-          className={`card portal-side-nav reveal-card ${menuOpen ? "is-open" : ""}`}
+          className={`card portal-side-nav ${menuOpen ? "is-open" : ""}`}
         >
           <button
             type="button"
