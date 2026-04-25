@@ -2241,12 +2241,15 @@ body {
     left: 0;
     z-index: 45;
     width: min(84vw, 320px);
-    height: 100vh;
+    max-width: 100vw;
+    height: 100dvh;
     align-content: start;
     border-radius: 0 24px 24px 0;
     transform: translateX(-108%);
     transition: transform 220ms ease;
     overflow-y: auto;
+    padding-top: calc(1.1rem + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px));
   }
 
   .portal-side-nav.is-open {
@@ -2412,8 +2415,9 @@ body {
   }
 
   .portal-side-nav {
-    width: min(88vw, 300px);
-    padding: 1rem;
+    width: 100vw;
+    border-radius: 0;
+    padding: calc(0.9rem + env(safe-area-inset-top, 0px)) 1rem calc(0.9rem + env(safe-area-inset-bottom, 0px));
   }
 
   .search-field input,
