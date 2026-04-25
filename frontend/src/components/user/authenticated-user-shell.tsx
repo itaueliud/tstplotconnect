@@ -51,6 +51,35 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
     setMenuOpen(false);
   }, [active]);
 
+  useEffect(() => {
+    if (!menuOpen) {
+      document.body.style.overflow = "";
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    function handleEsc(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [menuOpen]);
+
   function logout() {
     clearUserSession();
     window.location.href = "/user";
@@ -111,6 +140,14 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
           id="portal-side-navigation"
           className={`card portal-side-nav reveal-card ${menuOpen ? "is-open" : ""}`}
         >
+          <button
+            type="button"
+            className="portal-side-close"
+            aria-label="Close side navigation"
+            onClick={() => setMenuOpen(false)}
+          >
+            Close
+          </button>
           <div className="portal-side-brand">
             <div className="portal-side-profile">
               <div className="portal-side-avatar" aria-hidden="true">
