@@ -809,20 +809,20 @@ body {
 .portal-auth-stage {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 460px);
-  gap: 1.2rem;
+  grid-template-columns: minmax(0, 1.08fr) minmax(380px, 470px);
+  gap: 1.5rem;
   align-items: center;
   min-height: min(760px, calc(100vh - 3rem));
-  padding: 1.25rem;
-  border-radius: 34px;
+  padding: 1.5rem;
+  border-radius: 30px;
   overflow: hidden;
   background:
-    radial-gradient(700px 320px at 15% 10%, rgba(20, 184, 166, 0.2), transparent 65%),
-    radial-gradient(620px 300px at 88% 12%, rgba(96, 165, 250, 0.18), transparent 68%),
-    radial-gradient(520px 260px at 50% 100%, rgba(249, 115, 22, 0.12), transparent 66%),
-    linear-gradient(145deg, rgba(8, 20, 33, 0.96), rgba(14, 32, 49, 0.92));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: var(--shadow);
+    radial-gradient(760px 360px at 12% 8%, rgba(20, 184, 166, 0.2), transparent 62%),
+    radial-gradient(620px 280px at 92% 14%, rgba(96, 165, 250, 0.16), transparent 64%),
+    radial-gradient(540px 240px at 44% 100%, rgba(249, 115, 22, 0.08), transparent 62%),
+    linear-gradient(145deg, rgba(7, 19, 32, 0.98), rgba(15, 34, 53, 0.94));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  box-shadow: 0 30px 60px rgba(2, 8, 23, 0.2);
 }
 
 .portal-auth-glow {
@@ -857,83 +857,88 @@ body {
 
 .portal-auth-story {
   display: grid;
-  gap: 1rem;
-  padding: 1.25rem;
+  gap: 1.15rem;
+  padding: 1.4rem;
   color: #fff;
 }
 
 .portal-auth-story h1 {
   margin: 0;
   font-family: var(--font-display), Georgia, serif;
-  font-size: clamp(2.8rem, 5vw, 4.9rem);
-  line-height: 0.95;
-  letter-spacing: -0.05em;
-  max-width: 10ch;
+  font-size: clamp(2.9rem, 5.2vw, 4.8rem);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  max-width: 8.5ch;
   font-variation-settings: "opsz" 72;
 }
 
 .portal-auth-story p {
   margin: 0;
-  max-width: 52ch;
-  color: rgba(232, 240, 249, 0.82);
-  font-size: 1rem;
-  line-height: 1.8;
+  max-width: 46ch;
+  color: rgba(232, 240, 249, 0.8);
+  font-size: 1.04rem;
+  line-height: 1.72;
 }
 
 .portal-auth-story-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.8rem;
-  margin-top: 0.4rem;
+  gap: 0.9rem;
+  margin-top: 0.55rem;
 }
 
 .portal-auth-story-card {
   display: grid;
-  gap: 0.35rem;
-  padding: 1rem;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(14px);
+  gap: 0.45rem;
+  padding: 1.05rem 1.1rem;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(148, 163, 184, 0.06));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .portal-auth-story-card strong {
-  font-size: 1rem;
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
 }
 
 .portal-auth-story-card span {
-  color: rgba(232, 240, 249, 0.74);
-  line-height: 1.6;
-  font-size: 0.92rem;
+  color: rgba(232, 240, 249, 0.72);
+  line-height: 1.62;
+  font-size: 0.95rem;
 }
 
 .portal-auth-panel {
-  padding: 1.25rem;
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 22px 48px rgba(2, 8, 23, 0.24);
+  padding: 1.35rem;
+  border-radius: 26px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(248, 250, 252, 0.95));
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 24px 52px rgba(2, 8, 23, 0.16);
 }
 
 .portal-auth-panel-top {
   display: grid;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 1.1rem;
+  margin-bottom: 1.05rem;
 }
 
 .portal-auth-panel-top h2 {
-  margin: 0.6rem 0 0.3rem;
+  margin: 0.5rem 0 0.35rem;
   color: var(--ink-strong);
-  font-size: clamp(1.6rem, 2vw, 2rem);
-  letter-spacing: -0.04em;
+  font-size: clamp(2rem, 2.4vw, 2.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
 }
 
 .portal-auth-switcher {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.45rem;
-  padding: 0.3rem;
-  border-radius: 18px;
-  background: rgba(15, 23, 42, 0.05);
+  gap: 0.4rem;
+  padding: 0.35rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(241, 245, 249, 0.96), rgba(226, 232, 240, 0.78));
+  border: 1px solid rgba(226, 232, 240, 0.9);
 }
 
 .portal-auth-tab {
@@ -942,8 +947,9 @@ body {
   color: #475569;
   font: inherit;
   font-weight: 800;
-  padding: 0.78rem 0.7rem;
-  border-radius: 14px;
+  font-size: 1rem;
+  padding: 0.86rem 0.8rem;
+  border-radius: 13px;
   cursor: pointer;
   transition: transform 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
 }
@@ -953,20 +959,21 @@ body {
 }
 
 .portal-auth-tab.is-active {
-  background: linear-gradient(135deg, rgba(20, 184, 166, 0.14), rgba(96, 165, 250, 0.14));
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.22), rgba(96, 165, 250, 0.18));
   color: var(--brand-dark);
-  box-shadow: inset 0 0 0 1px rgba(20, 184, 166, 0.16);
+  box-shadow: 0 10px 18px rgba(20, 184, 166, 0.12), inset 0 0 0 1px rgba(20, 184, 166, 0.16);
 }
 
 .portal-auth-form {
   display: grid;
-  gap: 0.9rem;
+  gap: 1rem;
   animation: authPanelEnter 300ms ease both;
 }
 
 .portal-auth-submit {
   width: 100%;
-  min-height: 3rem;
+  min-height: 3.15rem;
+  font-size: 1rem;
 }
 
 .portal-auth-action-row {
@@ -983,6 +990,7 @@ body {
   color: var(--brand-dark);
   font: inherit;
   font-weight: 800;
+  font-size: 1rem;
   cursor: pointer;
 }
 

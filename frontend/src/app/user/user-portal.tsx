@@ -429,8 +429,8 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           <div className="portal-page-branding">
             <span className="pill">africaRentalsGrind</span>
             <div>
-              <strong>Search rentals, manage access, and keep your account in one polished user portal.</strong>
-              <p>Sign in or create an account to browse verified listings, review payments, and update your profile without leaving the page.</p>
+              <strong>Search rentals, manage access, and keep your account in one polished workspace.</strong>
+              <p>Sign in or create an account to browse verified listings, review payments, and update your profile from one cleaner user portal.</p>
             </div>
           </div>
           <nav className="portal-page-links" aria-label="User page header navigation">
@@ -446,18 +446,18 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
             <div className="portal-auth-glow portal-auth-glow-right" />
             <div className="portal-auth-story">
               <span className="pill">africaRentalsGrind</span>
-              <h1>Find your next stay from one calm, modern dashboard.</h1>
+              <h1>Find your next stay from one refined private workspace.</h1>
               <p>
-                Sign in to browse verified rentals, activate your access, and manage everything from a cleaner private workspace.
+                Sign in to browse verified rentals, activate your access, and manage your account from a cleaner, more modern dashboard.
               </p>
               <div className="portal-auth-story-grid">
                 <div className="portal-auth-story-card">
                   <strong>Verified listings</strong>
-                  <span>Real locations, categories, and prices in one flow.</span>
+                  <span>Real locations, categories, and prices in a clearer browsing flow.</span>
                 </div>
                 <div className="portal-auth-story-card">
                   <strong>Fast access</strong>
-                  <span>Register, login, or recover your password without leaving the page.</span>
+                  <span>Register, login, or recover your password without breaking the experience.</span>
                 </div>
               </div>
             </div>
