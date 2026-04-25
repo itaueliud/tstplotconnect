@@ -15,6 +15,8 @@ type Plot = {
   price?: number;
   description?: string;
   images?: string[];
+  phone?: string;
+  contact?: string;
 };
 
 type User = {
