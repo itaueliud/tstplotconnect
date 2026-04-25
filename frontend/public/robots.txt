@@ -7,4 +7,4 @@ Disallow: /blog-admin.html
 Disallow: /superadmin
 Disallow: /superadmin.html
 
-Sitemap: https://www.tst-plotconnect.com/sitemap.xml
+Sitemap: https://africagrindrentals.vercel.app/sitemap.xml

@@ -46,27 +46,27 @@ export default async function CountryPage({ params }: Props) {
   const displayCountry = countryDisplayNames[country];
 
   return (
-    <main className="container" style={{ padding: "2rem 0 3rem" }}>
-      <section className="card" style={{ marginBottom: "1rem" }}>
+    <main className="container directory-shell" style={{ padding: "2rem 0 3rem" }}>
+      <section className="directory-header">
         <span className="pill">{displayCountry}</span>
-        <h1 style={{ margin: "0.75rem 0 0.3rem" }}>{displayCountry} county pages</h1>
+        <h1>{displayCountry} county index</h1>
         <p className="meta" style={{ margin: 0 }}>
-          Select any county to open a fully optimized county page with direct route into filtered user listings.
+          Lightweight SEO route directory for {displayCountry}. Use any county link below, or skip directly into the live listings page.
         </p>
+        <div className="directory-actions">
+          <Link href="/user" className="btn btn-primary">Open Listings Dashboard</Link>
+        </div>
       </section>
 
-      <section className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+      <section className="directory-links">
         {counties.map((county) => (
           <Link
             key={county}
             href={`/main/${country}/${slugify(county)}`}
-            className="card"
-            style={{ display: "block", padding: "0.9rem" }}
+            className="directory-link"
           >
-            <h2 style={{ margin: "0 0 0.25rem", fontSize: "1.05rem" }}>{county}</h2>
-            <p className="meta" style={{ margin: 0 }}>
-              Open SEO page and jump to filtered listings in {county}, {displayCountry}.
-            </p>
+            <strong>{county}</strong>
+            <span>Open county landing page</span>
           </Link>
         ))}
       </section>

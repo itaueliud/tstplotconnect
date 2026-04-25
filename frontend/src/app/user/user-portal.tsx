@@ -13,6 +13,7 @@ type Plot = {
   category?: string;
   price?: number;
   description?: string;
+  images?: string[];
 };
 
 type User = {
@@ -31,21 +32,35 @@ type Props = {
   initialCountry: string;
   initialCounty: string;
   initialTown: string;
+  initialCategory: string;
 };
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  border: "1px solid #cbd5e1",
-  borderRadius: 10,
-  padding: "0.6rem 0.7rem",
-  background: "#fff"
-};
+const CATEGORIES = [
+  "Rental Houses",
+  "Bedsitters",
+  "Hostels",
+  "Apartments",
+  "Lodges",
+  "AirBnB",
+  "Vacant Shops",
+  "Office Spaces",
+  "Guest Houses",
+  "Plots for Sale"
+] as const;
 
 function sameValue(left: string, right: string): boolean {
   return left.trim().toLowerCase() === right.trim().toLowerCase();
 }
 
-export default function UserPortal({ initialCountry, initialCounty, initialTown }: Props) {
+function formatPrice(value?: number): string {
+  return typeof value === "number" ? `KES ${value.toLocaleString()}` : "Price on request";
+}
+
+function listingImage(plot: Plot): string {
+  return Array.isArray(plot.images) && plot.images[0] ? plot.images[0] : "";
+}
+
+export default function UserPortal({ initialCountry, initialCounty, initialTown, initialCategory }: Props) {
   const [token, setToken] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<UserStatus | null>(null);
@@ -60,11 +75,11 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown 
   const [isLoginMode, setIsLoginMode] = useState(true);
 
   const [filters, setFilters] = useState({
-    country: initialCountry || "",
+    country: initialCountry || "Kenya",
     county: initialCounty || "",
     town: initialTown || "",
     area: "",
-    category: "",
+    category: initialCategory || "",
     minPrice: "",
     maxPrice: ""
   });
@@ -81,6 +96,11 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown 
 
   const isLoggedIn = Boolean(token && user);
 
+  const availableCategories = useMemo(() => {
+    const dynamic = plots.map((plot) => String(plot.category || "").trim()).filter(Boolean);
+    return Array.from(new Set([...CATEGORIES, ...dynamic]));
+  }, [plots]);
+
   const filtered = useMemo(() => {
     return plots.filter((plot) => {
       const countryOk = filters.country ? sameValue(String(plot.country || ""), filters.country) : true;
@@ -93,6 +113,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown 
       const hasMin = filters.minPrice.trim() !== "";
       const hasMax = filters.maxPrice.trim() !== "";
       const price = Number(plot.price);
+
       if (!countryOk || !countyOk || !townOk || !areaOk || !categoryOk) return false;
       if (hasMin && Number.isFinite(price) && price < Number(filters.minPrice)) return false;
       if (hasMax && Number.isFinite(price) && price > Number(filters.maxPrice)) return false;
@@ -255,116 +276,167 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown 
   }, []);
 
   return (
-    <main className="container" style={{ padding: "2rem 0 3rem" }}>
-      <section className="card" style={{ marginBottom: "1rem" }}>
-        <span className="pill">User Dashboard</span>
-        <h1 style={{ margin: "0.8rem 0 0.4rem" }}>User Listings and Access</h1>
-        <p className="meta" style={{ margin: 0 }}>
-          Register or log in, activate your account, then browse filtered listings.
-        </p>
-      </section>
-
-      <section className="card" style={{ marginBottom: "1rem" }}>
-        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginBottom: "0.8rem" }}>
-          <button className={`btn ${isLoginMode ? "btn-primary" : "btn-secondary"}`} onClick={() => setIsLoginMode(true)}>
-            Login
-          </button>
-          <button className={`btn ${!isLoginMode ? "btn-primary" : "btn-secondary"}`} onClick={() => setIsLoginMode(false)}>
-            Register
-          </button>
-          {isLoggedIn && (
-            <button className="btn btn-secondary" onClick={logout}>
-              Logout
-            </button>
-          )}
-        </div>
-
-        {isLoginMode ? (
-          <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-            <input style={inputStyle} placeholder="Phone" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} />
-            <input style={inputStyle} type="password" placeholder="Password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
-          </div>
-        ) : (
-          <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-            <input style={inputStyle} placeholder="Full name" value={registerName} onChange={(e) => setRegisterName(e.target.value)} />
-            <input style={inputStyle} placeholder="Country" value={registerCountry} onChange={(e) => setRegisterCountry(e.target.value)} />
-            <input style={inputStyle} placeholder="Phone" value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} />
-            <input style={inputStyle} type="password" placeholder="Password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} />
-          </div>
-        )}
-
-        <div style={{ marginTop: "0.8rem", display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-          <button className="btn btn-primary" onClick={isLoginMode ? loginUser : registerUser} disabled={busy}>
-            {busy ? "Please wait..." : isLoginMode ? "Login" : "Register"}
-          </button>
-          {isLoggedIn && (
-            <button className="btn btn-secondary" onClick={pay} disabled={busy}>
-              Pay Activation
-            </button>
-          )}
-        </div>
-
-        {isLoggedIn && (
-          <p className="meta" style={{ marginTop: "0.7rem", marginBottom: 0 }}>
-            Account: {user?.name || user?.phone} | Status: {status?.active ? "Active" : "Inactive"}
+    <main className="container portal-shell" style={{ padding: "1.35rem 0 3rem" }}>
+      <section className="portal-hero">
+        <div>
+          <span className="pill" style={{ width: "fit-content" }}>Listings dashboard</span>
+          <h1>Search real listings with images, categories, and live filters.</h1>
+          <p>
+            Register or log in to unlock more access, then filter by country, county, town, area, category, and price.
           </p>
-        )}
-      </section>
-
-      <section className="card" style={{ marginBottom: "1rem" }}>
-        <h2 style={{ marginTop: 0 }}>Forgot Password (OTP)</h2>
-        <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-          <input style={inputStyle} placeholder="Phone" value={otpPhone} onChange={(e) => setOtpPhone(e.target.value)} />
-          <input style={inputStyle} placeholder="OTP code" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} />
-          <input style={inputStyle} type="password" placeholder="New password" value={otpNewPassword} onChange={(e) => setOtpNewPassword(e.target.value)} />
         </div>
-        <div style={{ marginTop: "0.8rem", display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-          <button className="btn btn-secondary" onClick={requestCode} disabled={busy}>
-            Request OTP
-          </button>
-          <button className="btn btn-secondary" onClick={verifyCodeAndReset} disabled={busy}>
-            Verify and Reset
-          </button>
+        <div className="portal-hero-meta">
+          <span className="portal-meta-chip">Showing {filtered.length} listing{filtered.length === 1 ? "" : "s"}</span>
+          <span className="portal-meta-chip">Country: {filters.country || "All"}</span>
+          <span className="portal-meta-chip">Category: {filters.category || "All"}</span>
+          <span className="portal-meta-chip">Status: {status?.active ? "Active account" : "Guest browsing"}</span>
         </div>
       </section>
 
-      <section className="card" style={{ marginBottom: "1rem" }}>
-        <h2 style={{ marginTop: 0 }}>Listing Filters</h2>
-        <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-          <input style={inputStyle} placeholder="Country" value={filters.country} onChange={(e) => setFilters((f) => ({ ...f, country: e.target.value }))} />
-          <input style={inputStyle} placeholder="County" value={filters.county} onChange={(e) => setFilters((f) => ({ ...f, county: e.target.value }))} />
-          <input style={inputStyle} placeholder="Town" value={filters.town} onChange={(e) => setFilters((f) => ({ ...f, town: e.target.value }))} />
-          <input style={inputStyle} placeholder="Area" value={filters.area} onChange={(e) => setFilters((f) => ({ ...f, area: e.target.value }))} />
-          <input style={inputStyle} placeholder="Category" value={filters.category} onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))} />
-          <input style={inputStyle} placeholder="Min price" value={filters.minPrice} onChange={(e) => setFilters((f) => ({ ...f, minPrice: e.target.value }))} />
-          <input style={inputStyle} placeholder="Max price" value={filters.maxPrice} onChange={(e) => setFilters((f) => ({ ...f, maxPrice: e.target.value }))} />
-        </div>
-        <div style={{ marginTop: "0.8rem" }}>
+      <section className="portal-auth-grid">
+        <article className="card portal-auth-card">
+          <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginBottom: "0.8rem" }}>
+            <span className="pill">Access</span>
+            {isLoggedIn && <span className="portal-account-line">Account: {user?.name || user?.phone}</span>}
+          </div>
+          <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginBottom: "0.8rem" }}>
+            <button className={`btn ${isLoginMode ? "btn-primary" : "btn-secondary"}`} onClick={() => setIsLoginMode(true)}>
+              Login
+            </button>
+            <button className={`btn ${!isLoginMode ? "btn-primary" : "btn-secondary"}`} onClick={() => setIsLoginMode(false)}>
+              Register
+            </button>
+            {isLoggedIn && (
+              <button className="btn btn-secondary" onClick={logout}>
+                Logout
+              </button>
+            )}
+          </div>
+
+          {isLoginMode ? (
+            <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+              <input className="portal-input" placeholder="Phone" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} />
+              <input className="portal-input" type="password" placeholder="Password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
+            </div>
+          ) : (
+            <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+              <input className="portal-input" placeholder="Full name" value={registerName} onChange={(e) => setRegisterName(e.target.value)} />
+              <select className="portal-input" value={registerCountry} onChange={(e) => setRegisterCountry(e.target.value)}>
+                <option>Kenya</option>
+                <option>Uganda</option>
+                <option>Tanzania</option>
+              </select>
+              <input className="portal-input" placeholder="Phone" value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} />
+              <input className="portal-input" type="password" placeholder="Password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} />
+            </div>
+          )}
+
+          <div style={{ marginTop: "0.8rem", display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+            <button className="btn btn-primary" onClick={isLoginMode ? loginUser : registerUser} disabled={busy}>
+              {busy ? "Please wait..." : isLoginMode ? "Login" : "Register & continue"}
+            </button>
+            {isLoggedIn && (
+              <button className="btn btn-secondary" onClick={pay} disabled={busy}>
+                Pay Activation
+              </button>
+            )}
+          </div>
+
+          {isLoggedIn && (
+            <p className="meta" style={{ marginTop: "0.7rem", marginBottom: 0 }}>
+              Status: {status?.active ? "Active" : "Inactive"}
+            </p>
+          )}
+        </article>
+
+        <article className="card portal-auth-card">
+          <span className="pill">Password recovery</span>
+          <h2 style={{ marginBottom: "0.4rem" }}>Forgot Password (OTP)</h2>
+          <p className="meta" style={{ marginTop: 0 }}>Request an OTP, verify it, and reset the password without leaving the page.</p>
+          <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+            <input className="portal-input" placeholder="Phone" value={otpPhone} onChange={(e) => setOtpPhone(e.target.value)} />
+            <input className="portal-input" placeholder="OTP code" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} />
+            <input className="portal-input" type="password" placeholder="New password" value={otpNewPassword} onChange={(e) => setOtpNewPassword(e.target.value)} />
+          </div>
+          <div style={{ marginTop: "0.8rem", display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+            <button className="btn btn-secondary" onClick={requestCode} disabled={busy}>
+              Request OTP
+            </button>
+            <button className="btn btn-secondary" onClick={verifyCodeAndReset} disabled={busy}>
+              Verify and Reset
+            </button>
+          </div>
+        </article>
+      </section>
+
+      <section className="card portal-filter-card">
+        <div className="portal-filter-header">
+          <div>
+            <span className="pill">Filters</span>
+            <h2 style={{ margin: "0.55rem 0 0.25rem" }}>Refine the feed</h2>
+            <p className="meta" style={{ margin: 0 }}>Filter the marketplace by location, category, and budget.</p>
+          </div>
           <button className="btn btn-primary" onClick={loadPlots} disabled={loading}>
-            {loading ? "Loading..." : "Apply Filters"}
+            {loading ? "Loading..." : "Update results"}
           </button>
+        </div>
+
+        <div className="portal-filter-grid">
+          <select className="portal-input" value={filters.country} onChange={(e) => setFilters((f) => ({ ...f, country: e.target.value }))}>
+            <option value="">All countries</option>
+            <option value="Kenya">Kenya</option>
+            <option value="Uganda">Uganda</option>
+            <option value="Tanzania">Tanzania</option>
+          </select>
+          <input className="portal-input" placeholder="County" value={filters.county} onChange={(e) => setFilters((f) => ({ ...f, county: e.target.value }))} />
+          <input className="portal-input" placeholder="Town" value={filters.town} onChange={(e) => setFilters((f) => ({ ...f, town: e.target.value }))} />
+          <input className="portal-input" placeholder="Area" value={filters.area} onChange={(e) => setFilters((f) => ({ ...f, area: e.target.value }))} />
+          <select className="portal-input" value={filters.category} onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}>
+            <option value="">All categories</option>
+            {availableCategories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+          <input className="portal-input" placeholder="Min price" value={filters.minPrice} onChange={(e) => setFilters((f) => ({ ...f, minPrice: e.target.value }))} />
+          <input className="portal-input" placeholder="Max price" value={filters.maxPrice} onChange={(e) => setFilters((f) => ({ ...f, maxPrice: e.target.value }))} />
         </div>
       </section>
 
-      <section className="card">
-        <h2 style={{ marginTop: 0 }}>Listings</h2>
+      <section className="card portal-listings-card">
+        <div className="portal-filter-header">
+          <div>
+            <span className="pill">Listings</span>
+            <h2 style={{ margin: "0.55rem 0 0.25rem" }}>Visual marketplace feed</h2>
+            <p className="meta" style={{ margin: 0 }}>Cards surface the image, category, location, price, and description first.</p>
+          </div>
+        </div>
         {loading && <p className="meta">Loading listings...</p>}
         {!loading && filtered.length === 0 && <p className="meta">No listings match the selected filters.</p>}
         {!loading && filtered.length > 0 && (
-          <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
-            {filtered.map((plot) => (
-              <article key={plot.id || `${plot.title}-${plot.area}`} style={{ border: "1px solid #dbe4ee", borderRadius: 12, padding: "0.7rem" }}>
-                <h3 style={{ margin: "0 0 0.35rem", fontSize: "1rem" }}>{plot.title || "Listing"}</h3>
-                <p className="meta" style={{ margin: "0 0 0.25rem" }}>
-                  {plot.county || plot.town || "County"}, {plot.area || "Area"}
-                </p>
-                <p className="meta" style={{ margin: "0 0 0.25rem" }}>{plot.category || "Property"}</p>
-                <p className="meta" style={{ margin: "0 0 0.25rem" }}>
-                  {typeof plot.price === "number" ? `KES ${plot.price.toLocaleString()}` : "Price on request"}
-                </p>
-                <p className="meta" style={{ margin: 0 }}>{plot.description || "Verified listing on AfricaRentalGrid."}</p>
-              </article>
-            ))}
+          <div className="portal-listing-grid">
+            {filtered.map((plot) => {
+              const image = listingImage(plot);
+              return (
+                <article key={plot.id || `${plot.title}-${plot.area}`} className="listing-card">
+                  <div
+                    className="listing-media"
+                    style={image ? { backgroundImage: `linear-gradient(180deg, rgba(2, 8, 23, 0.08), rgba(2, 8, 23, 0.44)), url(${image})` } : undefined}
+                  >
+                    <span className="listing-badge">{plot.category || "Property"}</span>
+                    <div className="listing-price">{formatPrice(plot.price)}</div>
+                  </div>
+                  <div className="listing-body">
+                    <h3>{plot.title || "Listing"}</h3>
+                    <p className="listing-location">
+                      {[plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ") || "Location not specified"}
+                    </p>
+                    <p className="listing-description">{plot.description || "Verified listing on AfricaRentalGrid."}</p>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

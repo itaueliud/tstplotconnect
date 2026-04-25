@@ -20,7 +20,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const title = place ? `${place} User Listings | AfricaRentalGrid` : "User Listings | AfricaRentalGrid";
   const description = place
     ? `Open user listing results filtered for ${place}, including plots, hostels, bedsitters, and lodges.`
-    : "Open user listing results with country, county, and town filters for plots, hostels, bedsitters, and lodges.";
+    : "Open user listing results with country, county, town, and category filters for plots, hostels, bedsitters, and lodges.";
 
   return {
     title,
@@ -34,6 +34,7 @@ export default async function UserPage({ searchParams }: Props) {
   const country = pick(params.country);
   const county = pick(params.county);
   const town = pick(params.town);
+  const category = pick(params.category);
 
-  return <UserPortal initialCountry={country} initialCounty={county} initialTown={town} />;
+  return <UserPortal initialCountry={country} initialCounty={county} initialTown={town} initialCategory={category} />;
 }

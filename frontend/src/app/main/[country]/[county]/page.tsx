@@ -43,8 +43,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!resolvedCounty) {
     return {
-      title: `County Not Found | AfricaRentalGrid`,
-      description: `The county page you requested does not exist.`,
+      title: "County Not Found | AfricaRentalGrid",
+      description: "The county page you requested does not exist.",
       robots: { index: false, follow: false }
     };
   }
@@ -97,24 +97,21 @@ export default async function CountyPage({ params }: Props) {
 
   const towns = await getTownsForCounty(country, resolvedCounty);
   const description = countyMetaDescription(displayCountry, resolvedCounty, towns);
-
-  const displayCounty = resolvedCounty;
-
-  const targetUrl = filteredUserUrl(displayCountry, displayCounty);
+  const targetUrl = filteredUserUrl(displayCountry, resolvedCounty);
 
   const schema = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "WebPage",
-        name: `${displayCounty} Listings in ${displayCountry}`,
+        name: `${resolvedCounty} Listings in ${displayCountry}`,
         description,
-        url: `https://www.tst-plotconnect.com/main/${country}/${county}`,
+        url: `https://africagrindrentals.vercel.app/main/${country}/${county}`,
         inLanguage: "en"
       },
       {
         "@type": "ItemList",
-        name: `${displayCounty} rentals and plots by town`,
+        name: `${resolvedCounty} rentals and plots by town`,
         itemListOrder: "https://schema.org/ItemListOrderAscending",
         numberOfItems: Math.max(towns.length, 1),
         itemListElement:
@@ -122,15 +119,15 @@ export default async function CountyPage({ params }: Props) {
             ? towns.slice(0, 12).map((town, index) => ({
                 "@type": "ListItem",
                 position: index + 1,
-                name: `${town} listings in ${displayCounty}`,
-                url: `https://www.tst-plotconnect.com${filteredUserUrl(displayCountry, displayCounty, town)}`
+                name: `${town} listings in ${resolvedCounty}`,
+                url: `https://africagrindrentals.vercel.app${filteredUserUrl(displayCountry, resolvedCounty, town)}`
               }))
             : [
                 {
                   "@type": "ListItem",
                   position: 1,
-                  name: `Open ${displayCounty} filtered listings`,
-                  url: `https://www.tst-plotconnect.com${targetUrl}`
+                  name: `Open ${resolvedCounty} filtered listings`,
+                  url: `https://africagrindrentals.vercel.app${targetUrl}`
                 }
               ]
       }
@@ -138,28 +135,28 @@ export default async function CountyPage({ params }: Props) {
   };
 
   return (
-    <main className="container" style={{ padding: "2rem 0 3rem" }}>
-      <section className="card" style={{ marginBottom: "1rem" }}>
+    <main className="container directory-shell" style={{ padding: "2rem 0 3rem" }}>
+      <section className="directory-header">
         <span className="pill">{displayCountry}</span>
-        <h1 style={{ margin: "0.75rem 0 0.4rem" }}>{displayCounty} listings and plots</h1>
+        <h1>{resolvedCounty} location route</h1>
         <p className="meta" style={{ margin: 0 }}>
           {description}
         </p>
-        <div style={{ marginTop: "1rem", display: "flex", gap: "0.7rem", flexWrap: "wrap" }}>
+        <div className="directory-actions">
           <Link href={targetUrl} className="btn btn-primary">
-            Open Filtered User Listings
+            Open listings in {resolvedCounty}
           </Link>
           <Link href={`/main/${country}`} className="btn btn-secondary">
-            Back to {displayCountry} Counties
+            Back to {displayCountry}
           </Link>
         </div>
       </section>
 
       <section className="card">
-        <h2 style={{ marginTop: 0 }}>SEO focus keywords</h2>
-        <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
-          {countySeoKeywords(displayCountry, displayCounty, towns).map((keyword) => (
-            <div key={keyword} style={{ border: "1px solid #dbe4ee", borderRadius: "12px", padding: "0.6rem 0.7rem" }}>
+        <h2 style={{ marginTop: 0 }}>Search themes</h2>
+        <div className="directory-keywords">
+          {countySeoKeywords(displayCountry, resolvedCounty, towns).map((keyword) => (
+            <div key={keyword} className="directory-keyword">
               {keyword}
             </div>
           ))}
@@ -168,19 +165,19 @@ export default async function CountyPage({ params }: Props) {
 
       {towns.length > 0 && (
         <section className="card" style={{ marginTop: "1rem" }}>
-          <h2 style={{ marginTop: 0 }}>Available towns in {displayCounty}</h2>
+          <h2 style={{ marginTop: 0 }}>Town links in {resolvedCounty}</h2>
           <p className="meta" style={{ marginTop: 0 }}>
-            Searchers can open any town below and land directly on user listings with county and town filters active.
+            These support search indexing and deep linking, while still routing users into the main listings experience.
           </p>
-          <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+          <div className="directory-links">
             {towns.map((town) => (
               <Link
                 key={town}
-                href={filteredUserUrl(displayCountry, displayCounty, town)}
-                className="btn btn-secondary"
-                style={{ justifyContent: "flex-start" }}
+                href={filteredUserUrl(displayCountry, resolvedCounty, town)}
+                className="directory-link"
               >
-                {town} listings
+                <strong>{town}</strong>
+                <span>Open filtered listings</span>
               </Link>
             ))}
           </div>
