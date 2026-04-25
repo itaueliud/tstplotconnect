@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/api";
 import AuthenticatedUserShell from "@/components/user/authenticated-user-shell";
 import PasswordField from "@/components/user/password-field";
 import { clearUserSession, readUserSession, writeUserSession } from "@/components/user/user-session";
+import { countrySeeds } from "@/main";
 
 type Plot = {
   id?: string;
@@ -74,6 +75,18 @@ function sameValue(left: string, right: string): boolean {
   return left.trim().toLowerCase() === right.trim().toLowerCase();
 }
 
+function includesValue(source: string, query: string): boolean {
+  return source.trim().toLowerCase().includes(query.trim().toLowerCase());
+}
+
+function countryToSlug(country: string): keyof typeof countrySeeds | null {
+  const normalized = country.trim().toLowerCase();
+  if (normalized === "kenya" || normalized === "uganda" || normalized === "tanzania") {
+    return normalized;
+  }
+  return null;
+}
+
 function formatPrice(value?: number): string {
   return typeof value === "number" ? `KES ${value.toLocaleString()}` : "Price on request";
 }
@@ -139,10 +152,24 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     return Array.from(new Set([...CATEGORIES, ...dynamic]));
   }, [plots]);
 
+  const availableCounties = useMemo(() => {
+    const countrySlug = countryToSlug(filters.country);
+    const seeded = countrySlug ? countrySeeds[countrySlug] : [];
+    const dynamic = plots
+      .filter((plot) => !filters.country || sameValue(String(plot.country || ""), filters.country))
+      .map((plot) => String(plot.county || plot.town || "").trim())
+      .filter(Boolean);
+
+    const allCounties = Array.from(new Set([...seeded, ...dynamic])).sort((left, right) => left.localeCompare(right));
+    if (!filters.county.trim()) return allCounties;
+    return allCounties.filter((county) => includesValue(county, filters.county));
+  }, [filters.country, filters.county, plots]);
+
   const filtered = useMemo(() => {
     return plots.filter((plot) => {
       const countryOk = filters.country ? sameValue(String(plot.country || ""), filters.country) : true;
-      const countyOk = filters.county ? sameValue(String(plot.county || ""), filters.county) : true;
+      const plotCounty = String(plot.county || plot.town || "");
+      const countyOk = filters.county ? includesValue(plotCounty, filters.county) : true;
       const areaOk = filters.area ? sameValue(String(plot.area || ""), filters.area) : true;
       const categoryOk = filters.category ? sameValue(String(plot.category || ""), filters.category) : true;
       const minPrice = filters.minPrice.trim() === "" ? null : Number(filters.minPrice);
@@ -698,13 +725,24 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
         </div>
 
         <div className="portal-filter-grid">
-          <select className="portal-input" value={filters.country} onChange={(e) => setFilters((f) => ({ ...f, country: e.target.value }))}>
+          <select className="portal-input" value={filters.country} onChange={(e) => setFilters((f) => ({ ...f, country: e.target.value, county: "" }))}>
             <option value="">All countries</option>
             <option value="Kenya">Kenya</option>
             <option value="Uganda">Uganda</option>
             <option value="Tanzania">Tanzania</option>
           </select>
-          <input className="portal-input" placeholder="County" value={filters.county} onChange={(e) => setFilters((f) => ({ ...f, county: e.target.value }))} />
+          <input
+            className="portal-input"
+            list="portal-county-options"
+            placeholder={filters.country ? `Search ${filters.country} counties` : "Search county"}
+            value={filters.county}
+            onChange={(e) => setFilters((f) => ({ ...f, county: e.target.value }))}
+          />
+          <datalist id="portal-county-options">
+            {availableCounties.map((county) => (
+              <option key={county} value={county} />
+            ))}
+          </datalist>
           <input className="portal-input" placeholder="Area" value={filters.area} onChange={(e) => setFilters((f) => ({ ...f, area: e.target.value }))} />
           <select className="portal-input" value={filters.category} onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}>
             <option value="">All categories</option>

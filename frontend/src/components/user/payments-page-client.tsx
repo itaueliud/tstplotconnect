@@ -42,6 +42,7 @@ export default function PaymentsPageClient() {
   const [status, setStatus] = useState<UserStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
+  const [activating, setActivating] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -88,6 +89,34 @@ export default function PaymentsPageClient() {
     }
   }
 
+  async function refreshActivationState(authToken: string) {
+    let attempts = 0;
+    while (attempts < 8) {
+      attempts += 1;
+      await new Promise((resolve) => window.setTimeout(resolve, 4000));
+      await loadAll(authToken);
+    }
+  }
+
+  async function activateAccount() {
+    if (!token) return;
+    setActivating(true);
+    setError("");
+    try {
+      const data = await apiRequest<{ message?: string }>("/api/pay", {
+        method: "POST",
+        token
+      });
+      setMessage(data?.message || "STK push sent to your phone. Complete the KES 50 payment to activate your account.");
+      await loadAll(token);
+      void refreshActivationState(token);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to start account activation.");
+    } finally {
+      setActivating(false);
+    }
+  }
+
   useEffect(() => {
     const session = readUserSession();
     if (session?.token) {
@@ -121,8 +150,18 @@ export default function PaymentsPageClient() {
           <span className="pill">Payments</span>
           <h1 style={{ margin: 0, fontSize: "2.1rem", fontWeight: 800, color: "#0f172a" }}>Your payment history</h1>
           <p style={{ margin: "0.7rem 0 0.5rem", color: "#334155", fontSize: "1.04rem" }}>
-            Review completed and unsuccessful payments, see activation windows, and remove payment records you no longer want to keep.
+            Review completed and unsuccessful payments, send the KES 50 activation request to your phone, and track your account access window.
           </p>
+          {token && (
+            <div className="portal-status-actions" style={{ marginTop: "0.35rem" }}>
+              <button className="btn btn-primary" onClick={activateAccount} disabled={activating}>
+                {activating ? "Sending STK..." : "Activate account - KES 50"}
+              </button>
+              <button className="btn btn-secondary" onClick={() => loadAll(token)} disabled={loading || activating}>
+                Refresh payments
+              </button>
+            </div>
+          )}
         </div>
         <div className="portal-hero-overview">
           <article className="portal-overview-card">
@@ -143,6 +182,44 @@ export default function PaymentsPageClient() {
           </article>
         </div>
       </section>
+
+      {sessionReady && token && (
+        <section className="card portal-listings-card reveal-card">
+          <div className="portal-filter-header">
+            <div>
+              <span className="pill">Account activation</span>
+              <h2 style={{ margin: "0.55rem 0 0.25rem" }}>Activate with STK push</h2>
+              <p className="meta" style={{ margin: 0 }}>
+                Press the activation button to send an STK prompt to your saved phone number and unlock account access after the KES 50 payment completes.
+              </p>
+            </div>
+            <span className={`portal-status-pill ${status?.active ? "is-active" : "is-inactive"}`}>
+              {status?.active ? "Access active" : "Awaiting activation"}
+            </span>
+          </div>
+          <div className="portal-payment-grid">
+            <article className="card portal-payment-card">
+              <div className="portal-payment-head">
+                <span className="portal-status-pill is-active">Activation fee</span>
+              </div>
+              <strong className="portal-payment-amount">KES 50</strong>
+              <div className="portal-payment-meta">
+                <span>Phone: activation prompt goes to your saved account number.</span>
+                <span>Current status: {countdown(status)}</span>
+                <span>Expires: {fmtDate(status?.expiresAt)}</span>
+              </div>
+              <div className="portal-status-actions">
+                <button className="btn btn-primary" onClick={activateAccount} disabled={activating}>
+                  {activating ? "Sending STK..." : "Activate account"}
+                </button>
+                <button className="btn btn-secondary" onClick={() => loadAll(token)} disabled={loading || activating}>
+                  Check status
+                </button>
+              </div>
+            </article>
+          </div>
+        </section>
+      )}
 
       {!sessionReady && (
         <section className="card portal-session-loading reveal-card">
