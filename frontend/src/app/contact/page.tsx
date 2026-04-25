@@ -4,15 +4,15 @@ import Script from "next/script";
 import AuthenticatedUserShell from "@/components/user/authenticated-user-shell";
 
 export const metadata: Metadata = {
-  title: "Contact TST PlotConnect",
+  title: "Contact africaRentalsGrind",
   description:
-    "Contact TST PlotConnect for listing support, account help, payment guidance, WhatsApp support, and partnership inquiries across Kenya.",
+    "Contact africaRentalsGrind for listing support, account help, payment guidance, WhatsApp support, and partnership inquiries across Kenya.",
   alternates: { canonical: "/contact" },
   keywords: [
-    "Contact TST PlotConnect",
-    "TST PlotConnect support",
+    "Contact africaRentalsGrind",
+    "africaRentalsGrind support",
     "listing support Kenya",
-    "WhatsApp TST PlotConnect",
+    "WhatsApp africaRentalsGrind",
     "support@tst-plotconnect.com"
   ],
   robots: {
@@ -20,16 +20,16 @@ export const metadata: Metadata = {
     follow: true
   },
   openGraph: {
-    title: "Contact TST PlotConnect",
-    description: "Reach TST PlotConnect for support, listings help, and partnership inquiries.",
+    title: "Contact africaRentalsGrind",
+    description: "Reach africaRentalsGrind for support, listings help, and partnership inquiries.",
     url: "/contact",
     type: "website",
-    siteName: "TST PlotConnect"
+    siteName: "africaRentalsGrind"
   },
   twitter: {
     card: "summary_large_image",
-    title: "Contact TST PlotConnect",
-    description: "Official support contacts for TST PlotConnect."
+    title: "Contact africaRentalsGrind",
+    description: "Official support contacts for africaRentalsGrind."
   }
 };
 
@@ -38,16 +38,16 @@ export default function ContactPage() {
     {
       "@context": "https://schema.org",
       "@type": "ContactPage",
-      name: "Contact TST PlotConnect",
+      name: "Contact africaRentalsGrind",
       url: "https://www.tst-plotconnect.com/contact",
-      description: "Official contact page for TST PlotConnect support, partnerships, and user assistance.",
+      description: "Official contact page for africaRentalsGrind support, partnerships, and user assistance.",
       inLanguage: "en-KE"
     },
     {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
-      name: "TST PlotConnect",
-      description: "TST PlotConnect helps people discover verified hostels, bedsitters, lodges, apartments, and plots across Kenya.",
+      name: "africaRentalsGrind",
+      description: "africaRentalsGrind helps people discover verified hostels, bedsitters, lodges, apartments, and plots across Kenya.",
       url: "https://www.tst-plotconnect.com",
       telephone: "+254768622994",
       email: "support@tst-plotconnect.com",
@@ -77,12 +77,12 @@ export default function ContactPage() {
   return (
     <AuthenticatedUserShell active="contact">
       <section className="card" style={{ padding: "1.4rem", background: "linear-gradient(135deg, rgba(7,17,30,0.96), rgba(13,88,122,0.86))", color: "#fff" }}>
-        <span className="pill">Contact TST PlotConnect</span>
+        <span className="pill">Contact africaRentalsGrind</span>
         <h1 style={{ margin: "0.85rem 0 0.55rem", fontSize: "clamp(2rem, 4vw, 3.4rem)", lineHeight: 1, letterSpacing: "-0.04em" }}>
           Reach support quickly when you need listing, login, or activation help.
         </h1>
         <p style={{ margin: 0, maxWidth: 760, color: "rgba(236,245,255,0.86)", lineHeight: 1.8 }}>
-          We support account access issues, listing questions, payment guidance, and general help through official TST PlotConnect channels.
+          We support account access issues, listing questions, payment guidance, and general help through official africaRentalsGrind channels.
         </p>
       </section>
 
@@ -131,7 +131,7 @@ export default function ContactPage() {
       <section className="card" style={{ marginTop: "1rem" }}>
         <h2 style={{ marginTop: 0 }}>Quick actions</h2>
         <div style={{ display: "flex", gap: "0.7rem", flexWrap: "wrap" }}>
-          <a className="btn btn-primary" href="mailto:support@tst-plotconnect.com?subject=Support%20Request%20-%20TST%20PlotConnect">Email Support</a>
+          <a className="btn btn-primary" href="mailto:support@tst-plotconnect.com?subject=Support%20Request%20-%20africaRentalsGrind">Email Support</a>
           <a className="btn btn-secondary" href="https://wa.me/254768622994" target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a>
           <Link href="/user" className="btn btn-secondary">Back to Dashboard</Link>
         </div>
