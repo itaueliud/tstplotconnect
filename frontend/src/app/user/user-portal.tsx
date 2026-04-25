@@ -78,6 +78,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
   const [token, setToken] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<UserStatus | null>(null);
+  const [authView, setAuthView] = useState<"login" | "register" | "recover">("login");
 
   const [registerName, setRegisterName] = useState("");
   const [registerCountry, setRegisterCountry] = useState(initialCountry || "Kenya");
@@ -86,7 +87,6 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
 
   const [loginPhone, setLoginPhone] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [isLoginMode, setIsLoginMode] = useState(true);
 
   const [filters, setFilters] = useState({
     country: initialCountry || "Kenya",
@@ -194,6 +194,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
       await loadStatus(data.token);
       showSuccess("Registration successful. Activate your account to unlock full access.");
       setRegisterPassword("");
+      setAuthView("login");
     } catch (e) {
       showError(e instanceof Error ? e.message : "Registration failed.");
     } finally {
@@ -213,6 +214,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
       setFilters((prev) => ({ ...prev, country: data.user?.country || prev.country }));
       await loadStatus(data.token);
       showSuccess("Login successful.");
+      await loadPlots();
       setLoginPassword("");
     } catch (e) {
       showError(e instanceof Error ? e.message : "Login failed.");
@@ -250,6 +252,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
       showSuccess(data?.message || "Password reset successful.");
       setOtpCode("");
       setOtpNewPassword("");
+      setAuthView("login");
     } catch (e) {
       showError(e instanceof Error ? e.message : "Failed to reset password.");
     } finally {
@@ -281,13 +284,153 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
     setToken("");
     setUser(null);
     setStatus(null);
+    setPlots([]);
+    setAuthView("login");
     showSuccess("Logged out.");
   }
 
   useEffect(() => {
+    if (!isLoggedIn) return;
     loadPlots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isLoggedIn]);
+
+  if (!isLoggedIn) {
+    return (
+      <main className="container portal-auth-shell">
+        <section className="portal-auth-landing reveal-card">
+          <div className="portal-auth-stage">
+            <div className="portal-auth-glow portal-auth-glow-left" />
+            <div className="portal-auth-glow portal-auth-glow-right" />
+            <div className="portal-auth-story">
+              <span className="pill">AfricaRentalGrid</span>
+              <h1>Find your next stay from one calm, modern dashboard.</h1>
+              <p>
+                Sign in to browse verified rentals, activate your access, and manage everything from a cleaner private workspace.
+              </p>
+              <div className="portal-auth-story-grid">
+                <div className="portal-auth-story-card">
+                  <strong>Verified listings</strong>
+                  <span>Real locations, categories, and prices in one flow.</span>
+                </div>
+                <div className="portal-auth-story-card">
+                  <strong>Fast access</strong>
+                  <span>Register, login, or recover your password without leaving the page.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="card portal-auth-panel">
+              <div className="portal-auth-panel-top">
+                <div>
+                  <span className="pill">Welcome</span>
+                  <h2>
+                    {authView === "login"
+                      ? "Login to continue"
+                      : authView === "register"
+                        ? "Create your account"
+                        : "Reset your password"}
+                  </h2>
+                  <p className="meta">
+                    {authView === "login"
+                      ? "Access your private dashboard and continue where you left off."
+                      : authView === "register"
+                        ? "Start with a simple account and unlock your personalized dashboard."
+                        : "Request an OTP, verify it, and get back into your account quickly."}
+                  </p>
+                </div>
+
+                <div className="portal-auth-switcher" aria-label="Authentication views">
+                  <button
+                    type="button"
+                    className={`portal-auth-tab ${authView === "login" ? "is-active" : ""}`}
+                    onClick={() => setAuthView("login")}
+                  >
+                    Login
+                  </button>
+                  <button
+                    type="button"
+                    className={`portal-auth-tab ${authView === "register" ? "is-active" : ""}`}
+                    onClick={() => setAuthView("register")}
+                  >
+                    Register
+                  </button>
+                  <button
+                    type="button"
+                    className={`portal-auth-tab ${authView === "recover" ? "is-active" : ""}`}
+                    onClick={() => setAuthView("recover")}
+                  >
+                    Forgot password
+                  </button>
+                </div>
+              </div>
+
+              {authView === "login" && (
+                <div className="portal-auth-form">
+                  <div className="grid" style={{ gridTemplateColumns: "1fr", gap: "0.9rem" }}>
+                    <input className="portal-input" placeholder="Phone number" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} />
+                    <input className="portal-input" type="password" placeholder="Password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
+                  </div>
+                  <button className="btn btn-primary portal-auth-submit" onClick={loginUser} disabled={busy}>
+                    {busy ? "Signing you in..." : "Login"}
+                  </button>
+                  <button type="button" className="portal-inline-link" onClick={() => setAuthView("recover")}>
+                    Forgot your password?
+                  </button>
+                </div>
+              )}
+
+              {authView === "register" && (
+                <div className="portal-auth-form">
+                  <div className="grid" style={{ gridTemplateColumns: "1fr", gap: "0.9rem" }}>
+                    <input className="portal-input" placeholder="Full name" value={registerName} onChange={(e) => setRegisterName(e.target.value)} />
+                    <select className="portal-input" value={registerCountry} onChange={(e) => setRegisterCountry(e.target.value)}>
+                      <option>Kenya</option>
+                      <option>Uganda</option>
+                      <option>Tanzania</option>
+                    </select>
+                    <input className="portal-input" placeholder="Phone number" value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} />
+                    <input className="portal-input" type="password" placeholder="Create password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} />
+                  </div>
+                  <button className="btn btn-primary portal-auth-submit" onClick={registerUser} disabled={busy}>
+                    {busy ? "Creating your account..." : "Register"}
+                  </button>
+                  <p className="meta portal-auth-footnote">You can activate access right after signing in.</p>
+                </div>
+              )}
+
+              {authView === "recover" && (
+                <div className="portal-auth-form">
+                  <div className="grid" style={{ gridTemplateColumns: "1fr", gap: "0.9rem" }}>
+                    <input className="portal-input" placeholder="Phone number" value={otpPhone} onChange={(e) => setOtpPhone(e.target.value)} />
+                    <input className="portal-input" placeholder="OTP code" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} />
+                    <input className="portal-input" type="password" placeholder="New password" value={otpNewPassword} onChange={(e) => setOtpNewPassword(e.target.value)} />
+                  </div>
+                  <div className="portal-auth-action-row">
+                    <button className="btn btn-secondary" onClick={requestCode} disabled={busy}>
+                      Request OTP
+                    </button>
+                    <button className="btn btn-primary" onClick={verifyCodeAndReset} disabled={busy}>
+                      {busy ? "Updating..." : "Reset password"}
+                    </button>
+                  </div>
+                  <button type="button" className="portal-inline-link" onClick={() => setAuthView("login")}>
+                    Back to login
+                  </button>
+                </div>
+              )}
+
+              {(message || error) && (
+                <section className="portal-auth-message" style={{ borderColor: error ? "#fecaca" : undefined }}>
+                  <p style={{ margin: 0, color: error ? "#b91c1c" : "#0f766e", fontWeight: 700 }}>{error || message}</p>
+                </section>
+              )}
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="container portal-shell" style={{ padding: "1.2rem 0 3rem" }}>
@@ -368,41 +511,11 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
             {isLoggedIn && <span className="portal-account-line">Account: {user?.name || user?.phone}</span>}
           </div>
           <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginBottom: "0.8rem" }}>
-            <button className={`btn ${isLoginMode ? "btn-primary" : "btn-secondary"}`} onClick={() => setIsLoginMode(true)}>
-              Login
-            </button>
-            <button className={`btn ${!isLoginMode ? "btn-primary" : "btn-secondary"}`} onClick={() => setIsLoginMode(false)}>
-              Register
-            </button>
             {isLoggedIn && (
               <button className="btn btn-secondary" onClick={logout}>
                 Logout
               </button>
             )}
-          </div>
-
-          {isLoginMode ? (
-            <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-              <input className="portal-input" placeholder="Phone" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} />
-              <input className="portal-input" type="password" placeholder="Password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
-            </div>
-          ) : (
-            <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-              <input className="portal-input" placeholder="Full name" value={registerName} onChange={(e) => setRegisterName(e.target.value)} />
-              <select className="portal-input" value={registerCountry} onChange={(e) => setRegisterCountry(e.target.value)}>
-                <option>Kenya</option>
-                <option>Uganda</option>
-                <option>Tanzania</option>
-              </select>
-              <input className="portal-input" placeholder="Phone" value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} />
-              <input className="portal-input" type="password" placeholder="Password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} />
-            </div>
-          )}
-
-          <div style={{ marginTop: "0.8rem", display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-            <button className="btn btn-primary" onClick={isLoginMode ? loginUser : registerUser} disabled={busy}>
-              {busy ? "Please wait..." : isLoginMode ? "Login" : "Register & continue"}
-            </button>
           </div>
 
           {isLoggedIn && (
