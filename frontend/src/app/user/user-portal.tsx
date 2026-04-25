@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { apiRequest } from "@/lib/api";
+import AuthenticatedUserShell from "@/components/user/authenticated-user-shell";
+import { clearUserSession, readUserSession, writeUserSession } from "@/components/user/user-session";
 
 type Plot = {
   id?: string;
@@ -21,7 +23,9 @@ type Plot = {
 
 type User = {
   id?: string;
+  displayId?: string;
   name?: string;
+  email?: string;
   phone?: string;
   country?: string;
 };
@@ -95,6 +99,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<UserStatus | null>(null);
   const [authView, setAuthView] = useState<"login" | "register" | "recover">("login");
+  const [activeSection, setActiveSection] = useState<"dashboard" | "listings">("dashboard");
 
   const [registerName, setRegisterName] = useState("");
   const [registerCountry, setRegisterCountry] = useState(initialCountry || "Kenya");
@@ -213,6 +218,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
       });
       setToken(data.token);
       setUser(data.user);
+      writeUserSession({ token: data.token, user: data.user });
       setFilters((prev) => ({ ...prev, country: data.user?.country || prev.country }));
       await loadStatus(data.token);
       showSuccess("Registration successful. You can now log in and continue.");
@@ -234,6 +240,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
       });
       setToken(data.token);
       setUser(data.user);
+      writeUserSession({ token: data.token, user: data.user });
       setFilters((prev) => ({ ...prev, country: data.user?.country || prev.country }));
       await loadStatus(data.token);
       showSuccess("Login successful.");
@@ -310,6 +317,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     setPlots([]);
     setAuthView("login");
     setFilters(defaultFilters);
+    clearUserSession();
     showSuccess("Logged out.");
   }
 
@@ -322,6 +330,25 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     showSuccess("Filters cleared. Showing the default feed again.");
     loadPlots(nextFilters);
   }
+
+  useEffect(() => {
+    const stored = readUserSession();
+    if (!stored?.token) return;
+    setToken(stored.token);
+    setUser(stored.user as User | null);
+    if (stored.user?.country) {
+      setFilters((prev) => ({ ...prev, country: stored.user?.country || prev.country }));
+    }
+  }, []);
+
+  useEffect(() => {
+    const applyHash = () => {
+      setActiveSection(window.location.hash === "#listings" ? "listings" : "dashboard");
+    };
+    applyHash();
+    window.addEventListener("hashchange", applyHash);
+    return () => window.removeEventListener("hashchange", applyHash);
+  }, []);
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -403,13 +430,6 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                   >
                     Register
                   </button>
-                  <button
-                    type="button"
-                    className={`portal-auth-tab ${authView === "recover" ? "is-active" : ""}`}
-                    onClick={() => setAuthView("recover")}
-                  >
-                    Forgot password
-                  </button>
                 </div>
               </div>
 
@@ -481,32 +501,13 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   }
 
   return (
-    <main className="container portal-shell" style={{ padding: "1.2rem 0 3rem" }}>
+    <AuthenticatedUserShell active={activeSection}>
       {(message || error) && (
         <div className={`portal-toast ${error ? "is-error" : "is-success"}`}>
           {error || message}
         </div>
       )}
-
-      <div className="portal-dashboard-shell">
-        <aside className="card portal-side-nav reveal-card">
-          <div className="portal-side-brand">
-            <span className="pill">TST PlotConnect</span>
-            <strong>{user?.name || "User dashboard"}</strong>
-            <span className="portal-side-meta">{user?.phone || ""}</span>
-          </div>
-          <nav className="portal-side-links" aria-label="Dashboard side navigation">
-            <a href="#dashboard">Dashboard</a>
-            <a href="#listings">Listings</a>
-            <Link href="/about">About page</Link>
-            <Link href="/contact">Contact page</Link>
-          </nav>
-          <div className="portal-side-actions">
-            <button className="btn btn-secondary" onClick={logout}>Logout</button>
-          </div>
-        </aside>
-
-        <div className="portal-main-stack">
+        {activeSection !== "listings" && (
           <section className="portal-hero portal-hero-surface reveal-card" id="dashboard">
             <div className="portal-hero-copy">
               <span className="pill" style={{ width: "fit-content", marginBottom: "0.7rem" }}>User dashboard</span>
@@ -534,7 +535,9 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
               </article>
             </div>
           </section>
+        )}
 
+        {activeSection !== "listings" && (
           <section className="portal-dashboard-grid">
             <article className="card portal-status-card reveal-card">
           <div className="portal-status-header">
@@ -601,6 +604,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           )}
         </article>
           </section>
+        )}
 
           <section className="card portal-filter-card reveal-card" id="listings">
         <div className="portal-filter-header">
@@ -696,8 +700,6 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           </div>
         )}
           </section>
-        </div>
-      </div>
-    </main>
+    </AuthenticatedUserShell>
   );
 }

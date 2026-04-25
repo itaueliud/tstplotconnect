@@ -725,7 +725,7 @@ body {
 
 .portal-auth-switcher {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.45rem;
   padding: 0.3rem;
   border-radius: 18px;
@@ -1059,6 +1059,12 @@ body {
   border-color: rgba(45, 212, 191, 0.32);
 }
 
+.portal-side-links a.is-active {
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.18), rgba(96, 165, 250, 0.16));
+  border-color: rgba(45, 212, 191, 0.36);
+  color: #fff;
+}
+
 .portal-side-actions {
   display: grid;
 }
@@ -1191,6 +1197,38 @@ body {
   color: var(--ink-strong);
   font-size: 0.9rem;
   font-weight: 800;
+}
+
+.portal-payment-grid,
+.portal-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.portal-payment-card {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.portal-payment-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: start;
+  flex-wrap: wrap;
+}
+
+.portal-payment-amount {
+  color: var(--ink-strong);
+  font-size: 1.3rem;
+}
+
+.portal-payment-meta {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--muted);
+  font-size: 0.94rem;
 }
 
 .portal-filter-grid {

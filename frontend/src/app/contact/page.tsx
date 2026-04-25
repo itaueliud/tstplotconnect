@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Script from "next/script";
+import AuthenticatedUserShell from "@/components/user/authenticated-user-shell";
 
 export const metadata: Metadata = {
   title: "Contact TST PlotConnect",
@@ -74,7 +75,7 @@ export default function ContactPage() {
   ];
 
   return (
-    <main className="container" style={{ padding: "2rem 0 3rem" }}>
+    <AuthenticatedUserShell active="contact">
       <section className="card" style={{ padding: "1.4rem", background: "linear-gradient(135deg, rgba(7,17,30,0.96), rgba(13,88,122,0.86))", color: "#fff" }}>
         <span className="pill">Contact TST PlotConnect</span>
         <h1 style={{ margin: "0.85rem 0 0.55rem", fontSize: "clamp(2rem, 4vw, 3.4rem)", lineHeight: 1, letterSpacing: "-0.04em" }}>
@@ -139,6 +140,6 @@ export default function ContactPage() {
       <Script id="contact-schema" type="application/ld+json" strategy="afterInteractive">
         {JSON.stringify(schema)}
       </Script>
-    </main>
+    </AuthenticatedUserShell>
   );
 }

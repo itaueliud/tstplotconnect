@@ -1047,6 +1047,150 @@ app.get("/api/user/payments", requireAuth, async (req, res) => {
   return res.json(rows);
 });
 
+app.delete("/api/user/payments/:id", requireAuth, async (req, res) => {
+  const paymentId = String(req.params.id || "").trim();
+  if (!paymentId) {
+    return res.status(400).json({ error: "Payment ID is required" });
+  }
+
+  const payment = await paymentsCol().findOne({ id: paymentId, userId: String(req.user.id) });
+  if (!payment) {
+    return res.status(404).json({ error: "Payment not found" });
+  }
+
+  await paymentsCol().deleteOne({ id: paymentId, userId: String(req.user.id) });
+  const active = await getUserActiveActivation(req.user.id);
+  await syncUserActivationStatus(req.user.id, active);
+
+  return res.json({ message: "Payment deleted." });
+});
+
+app.get("/api/user/profile", requireAuth, async (req, res) => {
+  const user = await usersCol().findOne(
+    { id: String(req.user.id), is_admin: 0, is_super_admin: 0 },
+    {
+      projection: {
+        _id: 0,
+        id: 1,
+        displayId: 1,
+        name: 1,
+        email: 1,
+        phone: 1,
+        country: 1,
+        createdAt: 1
+      }
+    }
+  );
+
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  return res.json({
+    id: user.id,
+    displayId: user.displayId || user.id,
+    name: user.name || "",
+    email: user.email || "",
+    phone: user.phone || "",
+    country: user.country || "Kenya",
+    createdAt: user.createdAt || null
+  });
+});
+
+app.put("/api/user/profile", requireAuth, async (req, res) => {
+  const { name, email, phone, country } = req.body || {};
+
+  const updates = {};
+  if (typeof name !== "undefined") {
+    const trimmedName = String(name || "").trim();
+    if (trimmedName.length < 2) {
+      return res.status(400).json({ error: "Name must be at least 2 characters." });
+    }
+    updates.name = trimmedName;
+  }
+
+  if (typeof email !== "undefined") {
+    const trimmedEmail = String(email || "").trim().toLowerCase();
+    if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      return res.status(400).json({ error: "Enter a valid email address." });
+    }
+    updates.email = trimmedEmail;
+  }
+
+  if (typeof country !== "undefined") {
+    updates.country = String(country || "").trim() || "Kenya";
+  }
+
+  if (typeof phone !== "undefined") {
+    let normalizedPhone = "";
+    try {
+      normalizedPhone = normalizePhone(phone);
+    } catch (_err) {
+      return res.status(400).json({ error: "Invalid Kenyan phone number" });
+    }
+
+    const existing = await usersCol().findOne({
+      id: { $ne: String(req.user.id) },
+      phone: normalizedPhone
+    });
+    if (existing) {
+      return res.status(409).json({ error: "That phone number is already in use." });
+    }
+    updates.phone = normalizedPhone;
+  }
+
+  if (!Object.keys(updates).length) {
+    return res.status(400).json({ error: "No profile changes were provided." });
+  }
+
+  await usersCol().updateOne({ id: String(req.user.id) }, { $set: updates });
+  const user = await usersCol().findOne(
+    { id: String(req.user.id) },
+    { projection: { _id: 0, id: 1, displayId: 1, name: 1, email: 1, phone: 1, country: 1, createdAt: 1 } }
+  );
+
+  return res.json({
+    message: "Profile updated successfully.",
+    user: {
+      id: user.id,
+      displayId: user.displayId || user.id,
+      name: user.name || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      country: user.country || "Kenya",
+      createdAt: user.createdAt || null
+    }
+  });
+});
+
+app.put("/api/user/change-password", requireAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: "Current password and new password are required." });
+  }
+  if (String(newPassword).length < 4) {
+    return res.status(400).json({ error: "New password must be at least 4 characters." });
+  }
+
+  const user = await usersCol().findOne({ id: String(req.user.id), is_admin: 0, is_super_admin: 0 });
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+  if (!user.password || !bcrypt.compareSync(String(currentPassword), user.password)) {
+    return res.status(401).json({ error: "Current password is incorrect." });
+  }
+  if (bcrypt.compareSync(String(newPassword), user.password)) {
+    return res.status(400).json({ error: "New password must be different from the current password." });
+  }
+
+  await usersCol().updateOne(
+    { id: String(req.user.id) },
+    { $set: { password: bcrypt.hashSync(String(newPassword), 10) } }
+  );
+
+  return res.json({ message: "Password changed successfully." });
+});
+
 app.post("/api/pay", requireAuth, async (req, res) => {
   if (TEMP_FREE_ACCESS) {
     return res.json({
