@@ -9,9 +9,9 @@ type Props = {
   children: ReactNode;
 };
 
-function NavLink({ href, label, active }: { href: string; label: string; active?: boolean }) {
+function NavLink({ href, label, active, onClick }: { href: string; label: string; active?: boolean; onClick?: () => void }) {
   return (
-    <Link href={href} className={active ? "is-active" : undefined}>
+    <Link href={href} className={active ? "is-active" : undefined} onClick={onClick}>
       {label}
     </Link>
   );
@@ -19,11 +19,16 @@ function NavLink({ href, label, active }: { href: string; label: string; active?
 
 export default function AuthenticatedUserShell({ active, children }: Props) {
   const [user, setUser] = useState<StoredUser | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const session = readUserSession();
     setUser(session?.user || null);
   }, []);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [active]);
 
   function logout() {
     clearUserSession();
@@ -40,6 +45,18 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
             <p>{user?.name ? `Signed in as ${user.name}` : "Explore your dashboard, profile, payments, and listings from one streamlined workspace."}</p>
           </div>
         </div>
+        <button
+          type="button"
+          className={`portal-mobile-menu-button ${menuOpen ? "is-open" : ""}`}
+          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={menuOpen}
+          aria-controls="portal-mobile-drawer"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
         <nav className="portal-page-links" aria-label="User page header navigation">
           <Link href="/user">Dashboard</Link>
           <Link href="/user#listings">Listings</Link>
@@ -48,20 +65,30 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
         </nav>
       </header>
 
+      <div
+        className={`portal-mobile-overlay ${menuOpen ? "is-visible" : ""}`}
+        aria-hidden={!menuOpen}
+        onClick={() => setMenuOpen(false)}
+      />
+
       <div className="portal-dashboard-shell">
-        <aside className="card portal-side-nav reveal-card">
+        <aside
+          id="portal-mobile-drawer"
+          className={`card portal-side-nav reveal-card ${menuOpen ? "is-mobile-open" : ""}`}
+          aria-hidden={!menuOpen}
+        >
           <div className="portal-side-brand">
             <span className="pill">africaRentalsGrind</span>
             <strong>{user?.name || "User dashboard"}</strong>
             <span className="portal-side-meta">{user?.phone || ""}</span>
           </div>
           <nav className="portal-side-links" aria-label="Dashboard side navigation">
-            <NavLink href="/user" label="Dashboard" active={active === "dashboard"} />
-            <NavLink href="/user#listings" label="Listings" active={active === "listings"} />
-            <NavLink href="/payments" label="Payments" active={active === "payments"} />
-            <NavLink href="/profile" label="Profile" active={active === "profile"} />
-            <NavLink href="/about" label="About page" active={active === "about"} />
-            <NavLink href="/contact" label="Contact page" active={active === "contact"} />
+            <NavLink href="/user" label="Dashboard" active={active === "dashboard"} onClick={() => setMenuOpen(false)} />
+            <NavLink href="/user#listings" label="Listings" active={active === "listings"} onClick={() => setMenuOpen(false)} />
+            <NavLink href="/payments" label="Payments" active={active === "payments"} onClick={() => setMenuOpen(false)} />
+            <NavLink href="/profile" label="Profile" active={active === "profile"} onClick={() => setMenuOpen(false)} />
+            <NavLink href="/about" label="About page" active={active === "about"} onClick={() => setMenuOpen(false)} />
+            <NavLink href="/contact" label="Contact page" active={active === "contact"} onClick={() => setMenuOpen(false)} />
           </nav>
           <div className="portal-side-actions">
             <button className="btn btn-secondary" onClick={logout}>Logout</button>
