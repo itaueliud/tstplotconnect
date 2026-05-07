@@ -186,6 +186,7 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
             </div>
           </header>
           {children}
+          {!menuOpen && (
           <nav className="portal-mobile-bottom-nav" aria-label="Mobile quick navigation">
             <Link href="/user" className={active === "dashboard" ? "is-active" : ""}>
               <span>Home</span>
@@ -196,13 +197,14 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
             <Link href="/main">
               <span>Map</span>
             </Link>
-            <Link href="/user#listings">
+            <Link href="/user#saved">
               <span>Saved</span>
             </Link>
             <Link href="/profile" className={active === "profile" ? "is-active" : ""}>
               <span>Profile</span>
             </Link>
           </nav>
+          )}
         </div>
       </div>
     </main>

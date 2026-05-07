@@ -199,6 +199,12 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     });
   }, [plots, filters]);
 
+  const savedListings = useMemo(() => {
+    const savedIds = new Set(loadIds("tst_saved_listings"));
+    if (savedIds.size === 0) return [];
+    return plots.filter((plot) => savedIds.has(listingKey(plot)));
+  }, [plots]);
+
   function showSuccess(text: string) {
     setMessage(text);
     setError("");
@@ -877,6 +883,44 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
             })}
           </div>
         )}
+          </section>
+
+          <section className="card portal-listings-card reveal-card" id="saved">
+            <div className="portal-filter-header">
+              <div>
+                <span className="pill">Saved</span>
+                <h2 style={{ margin: "0.55rem 0 0.25rem" }}>Saved listings</h2>
+                <p className="meta" style={{ margin: 0 }}>
+                  Listings you saved from the search feed appear here.
+                </p>
+              </div>
+              <span className="portal-results-count">{savedListings.length} saved</span>
+            </div>
+            {savedListings.length === 0 && <p className="meta">No saved listings yet. Tap Save on any listing card.</p>}
+            {savedListings.length > 0 && (
+              <div className="portal-listing-grid">
+                {savedListings.map((plot) => {
+                  const image = listingImage(plot);
+                  return (
+                    <article key={`saved-${listingKey(plot)}`} className="listing-card">
+                      <div
+                        className="listing-media"
+                        style={image ? { backgroundImage: `linear-gradient(180deg, rgba(2, 8, 23, 0.08), rgba(2, 8, 23, 0.44)), url(${image})` } : undefined}
+                      >
+                        <span className="listing-badge">{plot.category || "Property"}</span>
+                        <div className="listing-price">{formatPrice(plot.price)}</div>
+                      </div>
+                      <div className="listing-body">
+                        <h3>{plot.title || "Listing"}</h3>
+                        <p className="listing-location">
+                          {[plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ") || "Location not specified"}
+                        </p>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </section>
     </AuthenticatedUserShell>
   );

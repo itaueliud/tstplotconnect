@@ -2675,7 +2675,7 @@ body {
   bottom: 0;
   width: 240px;
   border-radius: 0;
-  background: #1fc3c8;
+  background: #0b57d0;
   color: #fff;
   border: 0;
   overflow-y: auto;
@@ -2716,6 +2716,7 @@ body {
 
 .portal-dashboard-shell-fixed .portal-side-actions {
   margin: 0.8rem 0.45rem 0.9rem;
+  padding-bottom: 5.2rem;
 }
 
 .portal-dashboard-shell-fixed .portal-side-actions .btn {
@@ -2858,6 +2859,7 @@ body {
     z-index: 45;
     width: min(82vw, 320px);
     max-width: calc(100vw - 1.5rem);
+    padding-bottom: 6.2rem;
   }
 
   .portal-dashboard-shell-fixed .portal-side-nav.is-open {
