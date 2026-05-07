@@ -160,17 +160,6 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
         <div className="portal-main-stack portal-main-stack-fixed">
           <header className="portal-inline-topbar">
             <div className="portal-inline-topbar-left">
-              <button
-                type="button"
-                className={`portal-menu-toggle ${menuOpen ? "is-open" : ""}`}
-                aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
-                aria-expanded={menuOpen}
-                aria-controls="portal-side-navigation"
-                onClick={() => setMenuOpen((value) => !value)}
-              >
-                <span />
-                <span />
-              </button>
               <div>
                 <strong>{active === "listings" ? "Listings Workspace" : "User Dashboard"}</strong>
               </div>
@@ -183,9 +172,37 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
                   <span>{user?.phone || "-"}</span>
                 </div>
               </Link>
+              <button
+                type="button"
+                className={`portal-menu-toggle ${menuOpen ? "is-open" : ""}`}
+                aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-expanded={menuOpen}
+                aria-controls="portal-side-navigation"
+                onClick={() => setMenuOpen((value) => !value)}
+              >
+                <span />
+                <span />
+              </button>
             </div>
           </header>
           {children}
+          <nav className="portal-mobile-bottom-nav" aria-label="Mobile quick navigation">
+            <Link href="/user" className={active === "dashboard" ? "is-active" : ""}>
+              <span>Home</span>
+            </Link>
+            <Link href="/user#listings" className={active === "listings" ? "is-active" : ""}>
+              <span>Search</span>
+            </Link>
+            <Link href="/main">
+              <span>Map</span>
+            </Link>
+            <Link href="/user#listings">
+              <span>Saved</span>
+            </Link>
+            <Link href="/profile" className={active === "profile" ? "is-active" : ""}>
+              <span>Profile</span>
+            </Link>
+          </nav>
         </div>
       </div>
     </main>
