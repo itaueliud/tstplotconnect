@@ -1655,6 +1655,38 @@ body {
   gap: 1rem;
 }
 
+.portal-profile-summary-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.portal-profile-quick-links {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.portal-profile-link {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 14px;
+  background: #fff;
+  display: grid;
+  gap: 0.2rem;
+  text-align: left;
+  padding: 0.85rem 0.95rem;
+  cursor: pointer;
+}
+
+.portal-profile-link strong {
+  color: #0f172a;
+  font-size: 0.98rem;
+}
+
+.portal-profile-link span {
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
 .portal-payment-card {
   display: grid;
   gap: 0.85rem;
@@ -2727,6 +2759,13 @@ body {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  text-decoration: none;
+  border-radius: 12px;
+  padding: 0.15rem 0.25rem;
+}
+
+.portal-inline-profile:hover {
+  background: rgba(148, 163, 184, 0.14);
 }
 
 .portal-inline-profile .avatar {

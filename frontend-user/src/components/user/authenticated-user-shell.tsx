@@ -176,13 +176,13 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
               </div>
             </div>
             <div className="portal-inline-topbar-right">
-              <div className="portal-inline-profile">
+              <Link href="/profile" className="portal-inline-profile" onClick={() => setMenuOpen(false)}>
                 <span className="avatar">{(user?.name || "U").slice(0, 1).toUpperCase()}</span>
                 <div>
                   <strong>{user?.name || "User"}</strong>
                   <span>{user?.phone || "-"}</span>
                 </div>
-              </div>
+              </Link>
             </div>
           </header>
           {children}

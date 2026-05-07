@@ -34,6 +34,25 @@ export default function ProfilePageClient() {
   const [busyPassword, setBusyPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [savedTotal, setSavedTotal] = useState(0);
+  const [viewedTotal, setViewedTotal] = useState(0);
+  const [inquiriesTotal, setInquiriesTotal] = useState(0);
+
+  function readTotals() {
+    if (typeof window === "undefined") return;
+    const read = (key: string) => {
+      try {
+        const raw = window.localStorage.getItem(key);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed.length : 0;
+      } catch {
+        return 0;
+      }
+    };
+    setSavedTotal(read("tst_saved_listings"));
+    setViewedTotal(read("tst_viewed_once_listings"));
+    setInquiriesTotal(read("tst_inquiry_listings"));
+  }
 
   async function loadProfile(authToken: string) {
     try {
@@ -120,6 +139,12 @@ export default function ProfilePageClient() {
   }, []);
 
   useEffect(() => {
+    readTotals();
+    const timer = window.setInterval(readTotals, 1200);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     if (!message && !error) return;
     const timeout = window.setTimeout(() => {
       setMessage("");
@@ -180,6 +205,39 @@ export default function ProfilePageClient() {
 
       {sessionReady && token && (
         <div className="portal-profile-grid">
+          <section className="card portal-auth-card reveal-card">
+            <span className="pill">Profile summary</span>
+            <h2 style={{ marginBottom: "0.4rem" }}>Your profile snapshot</h2>
+            <div className="portal-profile-summary-grid">
+              <article className="portal-account-summary-item">
+                <span>Saved listings total</span>
+                <strong>{savedTotal}</strong>
+              </article>
+              <article className="portal-account-summary-item">
+                <span>Viewed once total</span>
+                <strong>{viewedTotal}</strong>
+              </article>
+              <article className="portal-account-summary-item">
+                <span>Inquiries total</span>
+                <strong>{inquiriesTotal}</strong>
+              </article>
+            </div>
+            <div className="portal-profile-quick-links">
+              <button className="portal-profile-link" type="button" onClick={() => setMessage("No new notifications right now.")}>
+                <strong>Notifications</strong>
+                <span>View account alerts and updates</span>
+              </button>
+              <button className="portal-profile-link" type="button" onClick={() => (window.location.href = "/contact")}>
+                <strong>Help</strong>
+                <span>Get quick help guides and assistance</span>
+              </button>
+              <button className="portal-profile-link" type="button" onClick={() => (window.location.href = "/contact")}>
+                <strong>Support</strong>
+                <span>Contact support for account issues</span>
+              </button>
+            </div>
+          </section>
+
           <section className="card portal-auth-card reveal-card">
             <span className="pill">Profile details</span>
             <h2 style={{ marginBottom: "0.4rem" }}>Your account information</h2>

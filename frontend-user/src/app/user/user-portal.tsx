@@ -107,6 +107,22 @@ function timeRemainingLabel(status: UserStatus | null): string {
   return `${hours}h ${minutes}m remaining`;
 }
 
+function loadIds(key: string): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(key);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveIds(key: string, values: string[]) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(key, JSON.stringify(values));
+}
+
 export default function UserPortal({ initialCountry, initialCounty, initialTown: _initialTown, initialCategory }: Props) {
   const [token, setToken] = useState("");
   const [user, setUser] = useState<User | null>(null);
@@ -191,6 +207,31 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   function showError(text: string) {
     setError(text);
     setMessage("");
+  }
+
+  function listingKey(plot: Plot): string {
+    return String(plot.id || `${plot.title || "listing"}-${plot.area || plot.county || "unknown"}`);
+  }
+
+  function markSaved(plot: Plot) {
+    const key = listingKey(plot);
+    const saved = loadIds("tst_saved_listings");
+    if (saved.includes(key)) return;
+    saveIds("tst_saved_listings", [...saved, key]);
+    showSuccess("Listing saved to your profile.");
+  }
+
+  function markViewed(plot: Plot) {
+    const key = listingKey(plot);
+    const viewed = loadIds("tst_viewed_once_listings");
+    if (viewed.includes(key)) return;
+    saveIds("tst_viewed_once_listings", [...viewed, key]);
+  }
+
+  function markInquiry(plot: Plot) {
+    const key = listingKey(plot);
+    const inquiries = loadIds("tst_inquiry_listings");
+    saveIds("tst_inquiry_listings", [...inquiries, key]);
   }
 
   async function loadPlots(nextFilters?: FilterState) {
@@ -825,9 +866,10 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                       <strong>Contact:</strong> {plot.phone || plot.contact || "Not provided"}
                     </div>
                     <div className="listing-actions">
-                      <button type="button" className="listing-action">Call</button>
-                      <button type="button" className="listing-action">WhatsApp</button>
-                      <button type="button" className="listing-action">Location</button>
+                      <button type="button" className="listing-action" onClick={() => markSaved(plot)}>Save</button>
+                      <button type="button" className="listing-action" onClick={() => markInquiry(plot)}>Call</button>
+                      <button type="button" className="listing-action" onClick={() => markInquiry(plot)}>WhatsApp</button>
+                      <button type="button" className="listing-action" onClick={() => markViewed(plot)}>Location</button>
                     </div>
                   </div>
                 </article>
