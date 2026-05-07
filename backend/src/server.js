@@ -1192,12 +1192,6 @@ app.put("/api/user/change-password", requireAuth, async (req, res) => {
 });
 
 app.post("/api/pay", requireAuth, async (req, res) => {
-  if (TEMP_FREE_ACCESS) {
-    return res.json({
-      message: "Temporary free access is enabled. No payment is required right now.",
-      mode: "free"
-    });
-  }
   const user = await usersCol().findOne({ id: req.user.id });
   if (!user) {
     return res.status(404).json({ error: "User not found" });
