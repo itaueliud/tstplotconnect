@@ -114,6 +114,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   const [sessionReady, setSessionReady] = useState(false);
   const [authView, setAuthView] = useState<"login" | "register" | "recover">("login");
   const [activeSection, setActiveSection] = useState<"dashboard" | "listings">("dashboard");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [registerName, setRegisterName] = useState("");
   const [registerCountry, setRegisterCountry] = useState(initialCountry || "Kenya");
@@ -395,6 +396,11 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     return () => window.clearTimeout(timeout);
   }, [message, error]);
 
+  function applyFiltersAndClose() {
+    loadPlots();
+    setFiltersOpen(false);
+  }
+
   if (!sessionReady) {
     return (
       <main className="container portal-auth-shell">
@@ -461,7 +467,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     {authView === "login"
                       ? "Access your private dashboard and continue where you left off."
                       : authView === "register"
-                        ? "Start with a simple account and unlock your personalized dashboard."
+                        ? "Sign up in seconds and unlock your personalized dashboard."
                         : "Request an OTP, verify it, and get back into your account quickly."}
                   </p>
                 </div>
@@ -479,7 +485,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     className={`portal-auth-tab ${authView === "register" ? "is-active" : ""}`}
                     onClick={() => setAuthView("register")}
                   >
-                    Register
+                    Sign up
                   </button>
                 </div>
               </div>
@@ -512,7 +518,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     <PasswordField placeholder="Create password" value={registerPassword} onChange={setRegisterPassword} />
                   </div>
                   <button className="btn btn-primary portal-auth-submit" onClick={registerUser} disabled={busy}>
-                    {busy ? "Creating your account..." : "Register"}
+                    {busy ? "Creating your account..." : "Sign up"}
                   </button>
                   <p className="meta portal-auth-footnote">You can activate access right after signing in.</p>
                 </div>
@@ -624,9 +630,6 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
             </div>
           </div>
           <div className="portal-status-actions">
-            <button className="btn btn-primary" onClick={pay} disabled={busy || !isLoggedIn}>
-              {status?.active ? "Refresh Activation" : "Activate Account"}
-            </button>
             {isLoggedIn && (
               <button className="btn btn-secondary" onClick={() => loadStatus(token, true)} disabled={busy}>
                 Check Status
@@ -656,6 +659,9 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           </div>
 
           <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+            <button className="btn btn-primary" onClick={pay} disabled={busy || !isLoggedIn}>
+              {status?.active ? "Refresh Activation" : "Activate Account"}
+            </button>
             {isLoggedIn && (
               <button className="btn btn-secondary" onClick={logout}>
                 Logout
@@ -674,6 +680,13 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
             <p className="meta" style={{ margin: 0 }}>Filter the marketplace by location, category, and budget like the earlier flow, but with a cleaner layout.</p>
           </div>
           <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className="btn btn-secondary portal-filter-hamburger"
+              onClick={() => setFiltersOpen(true)}
+            >
+              Menu Filters
+            </button>
             <button className="btn btn-secondary" onClick={clearFilters} disabled={loading}>
               Clear filters
             </button>
@@ -729,6 +742,53 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
         </div>
           </section>
 
+          {filtersOpen && (
+            <div className="portal-filter-overlay" onClick={() => setFiltersOpen(false)}>
+              <aside className="portal-filter-drawer" onClick={(e) => e.stopPropagation()}>
+                <div className="portal-filter-drawer-head">
+                  <h3>Filters</h3>
+                  <button type="button" className="btn btn-secondary" onClick={() => setFiltersOpen(false)}>Close</button>
+                </div>
+                <div className="portal-filter-drawer-body">
+                  <div className="portal-chip-row">
+                    {QUICK_CATEGORY_CHIPS.map((category) => (
+                      <button
+                        key={category}
+                        type="button"
+                        className={`portal-chip ${filters.category === category ? "is-selected" : ""}`}
+                        onClick={() => setFilters((f) => ({ ...f, category: f.category === category ? "" : category }))}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="portal-filter-grid">
+                    <select className="portal-input" value={filters.country} onChange={(e) => setFilters((f) => ({ ...f, country: e.target.value, county: "" }))}>
+                      <option value="">All countries</option>
+                      <option value="Kenya">Kenya</option>
+                      <option value="Uganda">Uganda</option>
+                      <option value="Tanzania">Tanzania</option>
+                    </select>
+                    <input className="portal-input" list="portal-county-options" placeholder={filters.country ? `Search ${filters.country} counties` : "Search county"} value={filters.county} onChange={(e) => setFilters((f) => ({ ...f, county: e.target.value }))} />
+                    <input className="portal-input" placeholder="Area" value={filters.area} onChange={(e) => setFilters((f) => ({ ...f, area: e.target.value }))} />
+                    <select className="portal-input" value={filters.category} onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}>
+                      <option value="">All categories</option>
+                      {availableCategories.map((category) => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                    <input className="portal-input" placeholder="Min price" value={filters.minPrice} onChange={(e) => setFilters((f) => ({ ...f, minPrice: e.target.value }))} />
+                    <input className="portal-input" placeholder="Max price" value={filters.maxPrice} onChange={(e) => setFilters((f) => ({ ...f, maxPrice: e.target.value }))} />
+                  </div>
+                </div>
+                <div className="portal-filter-drawer-actions">
+                  <button className="btn btn-secondary" onClick={clearFilters}>Reset</button>
+                  <button className="btn btn-primary" onClick={applyFiltersAndClose}>Apply Filters</button>
+                </div>
+              </aside>
+            </div>
+          )}
+
           <section className="card portal-listings-card reveal-card">
         <div className="portal-filter-header">
           <div>
@@ -763,6 +823,11 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     <p className="listing-description">{plot.description || "Verified listing on tstplotconnect."}</p>
                     <div className="listing-contact" style={{ marginTop: "0.5rem", fontSize: "0.97em", color: "#0f766e" }}>
                       <strong>Contact:</strong> {plot.phone || plot.contact || "Not provided"}
+                    </div>
+                    <div className="listing-actions">
+                      <button type="button" className="listing-action">Call</button>
+                      <button type="button" className="listing-action">WhatsApp</button>
+                      <button type="button" className="listing-action">Location</button>
                     </div>
                   </div>
                 </article>
