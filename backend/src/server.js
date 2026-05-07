@@ -370,6 +370,26 @@ async function syncUserActivationStatusToLatest(userId) {
   await syncUserActivationStatus(userId, latestActive || null);
 }
 
+async function buildExtendedActivationWindow(userId, hoursToAdd = 24) {
+  const now = new Date();
+  const latestCompleted = await paymentsCol().findOne(
+    { userId: String(userId), status: "Completed" },
+    { sort: { expiresAt: -1, timestamp: -1, _id: -1 }, projection: { expiresAt: 1 } }
+  );
+
+  let base = now;
+  if (latestCompleted?.expiresAt) {
+    const previousExpiry = new Date(latestCompleted.expiresAt);
+    if (Number.isFinite(previousExpiry.getTime()) && previousExpiry.getTime() > now.getTime()) {
+      base = previousExpiry;
+    }
+  }
+
+  const activatedAt = now;
+  const expiresAt = new Date(base.getTime() + hoursToAdd * 60 * 60 * 1000);
+  return { activatedAt, expiresAt };
+}
+
 async function getUnlockedFromRequest(req) {
   if (TEMP_FREE_ACCESS) return true;
   const authHeader = req.headers.authorization || "";
@@ -1213,8 +1233,7 @@ app.post("/api/pay", requireAuth, async (req, res) => {
           error: "STK is disabled because PAYMENT_MODE is not 'daraja'. Set PAYMENT_MODE=daraja and configure Daraja envs."
         });
       }
-      const now = new Date();
-      const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const { activatedAt, expiresAt } = await buildExtendedActivationWindow(req.user.id, 24);
       const receipt = `MOCK${Date.now()}`;
       const payment = {
         id: randomUUID(),
@@ -1222,8 +1241,8 @@ app.post("/api/pay", requireAuth, async (req, res) => {
         amount: 50,
         mpesaReceipt: receipt,
         status: "Completed",
-        timestamp: now,
-        activatedAt: now,
+        timestamp: activatedAt,
+        activatedAt,
         expiresAt,
         accountReference,
         phone: normalizedPhone
@@ -1235,7 +1254,7 @@ app.post("/api/pay", requireAuth, async (req, res) => {
         message: "Mock payment successful. Access unlocked for 24 hours.",
         mode: "mock",
         mpesaReceipt: receipt,
-        activatedAt: now.toISOString(),
+        activatedAt: activatedAt.toISOString(),
         expiresAt: expiresAt.toISOString()
       });
     }
@@ -1367,8 +1386,7 @@ app.post("/api/payment/callback", async (req, res) => {
       return res.status(200).json({ ok: true });
     }
 
-    const activatedAt = new Date();
-    const expiresAt = new Date(activatedAt.getTime() + 24 * 60 * 60 * 1000);
+    const { activatedAt, expiresAt } = await buildExtendedActivationWindow(payment.userId, 24);
 
     await paymentsCol().updateOne(
       { _id: payment._id },
