@@ -401,7 +401,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
       <main className="container portal-auth-shell">
         <header className="portal-page-header reveal-card">
           <div className="portal-page-branding">
-            <span className="pill">africaRentalsGrind</span>
+            <span className="pill">tstplotconnect</span>
             <div>
               <strong>Restoring your workspace.</strong>
               <p>We are checking your saved session so refresh keeps you inside the user portal.</p>
@@ -427,7 +427,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
         )}
         <header className="portal-page-header reveal-card">
           <div className="portal-page-branding">
-            <span className="pill">africaRentalsGrind</span>
+            <span className="pill">tstplotconnect</span>
             <div>
               <strong>Search rentals, manage access, and keep your account in one polished workspace.</strong>
               <p>Sign in or create an account to browse verified listings, review payments, and update your profile from one cleaner user portal.</p>
@@ -445,7 +445,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
             <div className="portal-auth-glow portal-auth-glow-left" />
             <div className="portal-auth-glow portal-auth-glow-right" />
             <div className="portal-auth-story">
-              <span className="pill">africaRentalsGrind</span>
+              <span className="pill">tstplotconnect</span>
               <h1>Find your next stay from one refined private workspace.</h1>
               <p>
                 Sign in to browse verified rentals, activate your access, and manage your account from a cleaner, more modern dashboard.
@@ -565,7 +565,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
         </section>
         <footer className="portal-page-footer reveal-card">
           <div>
-            <strong>africaRentalsGrind</strong>
+            <strong>tstplotconnect</strong>
             <p>Trusted browsing, payments, and account tools designed around cleaner rental discovery.</p>
           </div>
           <nav className="portal-page-footer-links" aria-label="User page footer navigation">
@@ -788,7 +788,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     <p className="listing-location">
                       {[plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ") || "Location not specified"}
                     </p>
-                    <p className="listing-description">{plot.description || "Verified listing on AfricaRentalGrid."}</p>
+                    <p className="listing-description">{plot.description || "Verified listing on tstplotconnect."}</p>
                     <div className="listing-contact" style={{ marginTop: "0.5rem", fontSize: "0.97em", color: "#0f766e" }}>
                       <strong>Contact:</strong> {plot.phone || plot.contact || "Not provided"}
                     </div>

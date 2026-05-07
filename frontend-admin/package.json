@@ -1,0 +1,30 @@
+{
+  "name": "tstplotconnect-frontend-admin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Next.js admin dashboard frontend for tstplotconnect",
+  "scripts": {
+    "dev": "next dev -p 5500",
+    "build": "next build",
+    "vercel-build": "npm run build",
+    "start": "next start -p 5500",
+    "lint": "next lint",
+    "seo:sync": "node scripts/sync-seo.cjs"
+  },
+  "dependencies": {
+    "next": "^15.1.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.1.6"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
