@@ -135,7 +135,9 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   const [registerName, setRegisterName] = useState("");
   const [registerCountry, setRegisterCountry] = useState(initialCountry || "Kenya");
   const [registerPhone, setRegisterPhone] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
+  const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
 
   const [loginPhone, setLoginPhone] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -281,6 +283,10 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   }
 
   async function registerUser() {
+    if (registerPassword !== registerConfirmPassword) {
+      showError("Password confirmation does not match.");
+      return;
+    }
     setBusy(true);
     try {
       const data = await apiRequest<{ token: string; user: User }>("/api/user/register", {
@@ -289,6 +295,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           name: registerName.trim(),
           country: registerCountry.trim(),
           phone: registerPhone.trim(),
+          email: registerEmail.trim(),
           password: registerPassword
         })
       });
@@ -299,6 +306,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
       await loadStatus(data.token);
       showSuccess("Registration successful. You can now log in and continue.");
       setRegisterPassword("");
+      setRegisterConfirmPassword("");
       setAuthView("login");
     } catch (e) {
       showError(e instanceof Error ? e.message : "Registration failed.");
@@ -483,18 +491,25 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
             <div className="portal-auth-glow portal-auth-glow-right" />
             <div className="portal-auth-story">
               <span className="pill">tstplotconnect</span>
-              <h1>Find your next stay from one refined private workspace.</h1>
+              <h1>Welcome back to your trusted student housing space.</h1>
               <p>
-                Sign in to browse verified rentals, activate your access, and manage your account from a cleaner, more modern dashboard.
+                Discover verified stays near campuses, compare options quickly, and manage your profile from one secure workspace.
               </p>
+              <div className="portal-auth-hero-media" aria-hidden="true">
+                <div className="portal-auth-hero-main">
+                  <img src="/favicon.svg" alt="" />
+                </div>
+                <div className="portal-auth-hero-bubble portal-auth-hero-bubble-one" />
+                <div className="portal-auth-hero-bubble portal-auth-hero-bubble-two" />
+              </div>
               <div className="portal-auth-story-grid">
                 <div className="portal-auth-story-card">
-                  <strong>Verified listings</strong>
-                  <span>Real locations, categories, and prices in a clearer browsing flow.</span>
+                  <strong>Verified places</strong>
+                  <span>Trusted listings with clear location and price details.</span>
                 </div>
                 <div className="portal-auth-story-card">
-                  <strong>Fast access</strong>
-                  <span>Register, login, or recover your password without breaking the experience.</span>
+                  <strong>Fast onboarding</strong>
+                  <span>Login or sign up in under a minute with your core details.</span>
                 </div>
               </div>
             </div>
@@ -562,7 +577,9 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                       <option>Tanzania</option>
                     </select>
                     <input className="portal-input" placeholder="Phone number" value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} />
+                    <input className="portal-input" placeholder="Email address" value={registerEmail} onChange={(e) => setRegisterEmail(e.target.value)} />
                     <PasswordField placeholder="Create password" value={registerPassword} onChange={setRegisterPassword} />
+                    <PasswordField placeholder="Confirm password" value={registerConfirmPassword} onChange={setRegisterConfirmPassword} />
                   </div>
                   <button className="btn btn-primary portal-auth-submit" onClick={registerUser} disabled={busy}>
                     {busy ? "Creating your account..." : "Sign up"}
