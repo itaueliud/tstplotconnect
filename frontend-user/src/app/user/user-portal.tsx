@@ -512,6 +512,29 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                   <span>Login or sign up in under a minute with your core details.</span>
                 </div>
               </div>
+              <div className="portal-auth-why">
+                <article className="portal-auth-why-card">
+                  <h3>Why Choose TSTPlotConnect</h3>
+                  <p>
+                    We reduce housing stress by giving students and customers one verified place to discover, compare,
+                    and contact listings with confidence.
+                  </p>
+                </article>
+                <article className="portal-auth-why-card">
+                  <h3>Our Purpose</h3>
+                  <p>
+                    To make housing discovery clearer, safer, and faster through trusted data, transparent pricing,
+                    and practical filters that match real needs.
+                  </p>
+                </article>
+                <article className="portal-auth-why-card">
+                  <h3>Our Mission</h3>
+                  <p>
+                    Connect every user to the right room, bedsitter, hostel, or apartment while improving trust between
+                    renters and property providers.
+                  </p>
+                </article>
+              </div>
             </div>
 
             <div className="card portal-auth-panel">

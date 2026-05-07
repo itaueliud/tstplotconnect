@@ -965,6 +965,33 @@ body {
   font-size: 0.95rem;
 }
 
+.portal-auth-why {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.portal-auth-why-card {
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(148, 163, 184, 0.08));
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.portal-auth-why-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  color: #ffffff;
+}
+
+.portal-auth-why-card p {
+  margin: 0;
+  max-width: 100%;
+  color: rgba(232, 240, 249, 0.83);
+  font-size: 0.94rem;
+  line-height: 1.58;
+}
+
 .portal-auth-panel {
   padding: 1.35rem;
   border-radius: 26px;
