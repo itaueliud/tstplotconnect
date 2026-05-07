@@ -13,7 +13,8 @@ const app = express();
 const PORT = Number(process.env.PORT) || 10000;
 const HOST = process.env.HOST || "0.0.0.0";
 const JWT_SECRET = process.env.JWT_SECRET || "tstplotconnect-dev-secret";
-const PAYMENT_MODE = (process.env.PAYMENT_MODE || "mock").toLowerCase();
+const PAYMENT_MODE = (process.env.PAYMENT_MODE || "daraja").toLowerCase();
+const ALLOW_MOCK_PAYMENTS = (process.env.ALLOW_MOCK_PAYMENTS || "false").toLowerCase() === "true";
 const TEMP_FREE_ACCESS = (process.env.TEMP_FREE_ACCESS || "false").toLowerCase() === "true";
 const TEMP_FREE_ACCESS_DAYS = Math.max(1, Number(process.env.TEMP_FREE_ACCESS_DAYS || 28));
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || "";
@@ -1207,6 +1208,11 @@ app.post("/api/pay", requireAuth, async (req, res) => {
     const transactionDesc = `Activate account ${accountReference}`;
 
     if (PAYMENT_MODE !== "daraja") {
+      if (!ALLOW_MOCK_PAYMENTS) {
+        return res.status(503).json({
+          error: "STK is disabled because PAYMENT_MODE is not 'daraja'. Set PAYMENT_MODE=daraja and configure Daraja envs."
+        });
+      }
       const now = new Date();
       const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       const receipt = `MOCK${Date.now()}`;
