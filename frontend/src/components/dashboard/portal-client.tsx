@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { apiRequest } from "@/lib/api";
+import PasswordField from "@/components/user/password-field";
+import { clearUserSession, readUserSession, writeUserSession } from "@/components/user/user-session";
 
 type User = {
   id?: string;
@@ -145,6 +147,23 @@ export default function DashboardPortalClient({ mode }: Props) {
     setMessage("");
   }
 
+  useEffect(() => {
+    if (!message && !error) return;
+    const timeout = window.setTimeout(() => {
+      setMessage("");
+      setError("");
+    }, 4000);
+    return () => window.clearTimeout(timeout);
+  }, [message, error]);
+
+  useEffect(() => {
+    const stored = readUserSession();
+    if (!stored?.token) return;
+    setToken(stored.token);
+    setCurrentUser(stored.user as User | null);
+    void loadDashboardData(stored.token);
+  }, []);
+
   async function loadDashboardData(authToken: string) {
     const [plotsRows, usersRows, paymentsRows, analyticsData, activeRows, metaRows] = await Promise.all([
       apiRequest<Plot[]>("/api/admin/plots", { token: authToken }),
@@ -196,6 +215,7 @@ export default function DashboardPortalClient({ mode }: Props) {
 
       setToken(data.token);
       setCurrentUser(data.user);
+      writeUserSession({ token: data.token, user: data.user });
       await loadDashboardData(data.token);
       showSuccess("Dashboard login successful.");
     } catch (e) {
@@ -343,6 +363,7 @@ export default function DashboardPortalClient({ mode }: Props) {
     setCurrentUser(null);
     setMessage("");
     setError("");
+    clearUserSession();
   }
 
   return (
@@ -388,7 +409,7 @@ export default function DashboardPortalClient({ mode }: Props) {
                   </label>
                   <label className="search-field">
                     <span>Password</span>
-                    <input style={inputStyle} type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
+                    <PasswordField placeholder="Password" value={password} onChange={setPassword} />
                   </label>
                 </div>
                 <button className="btn btn-primary" onClick={login} disabled={busy} style={{ width: "100%", marginTop: "1rem", padding: "0.95rem 1rem" }}>
@@ -566,7 +587,7 @@ export default function DashboardPortalClient({ mode }: Props) {
                     <article className="feature-card">
                       <h3>Create admin</h3>
                       <label className="search-field"><span>Admin phone</span><input style={inputStyle} value={newAdminPhone} onChange={(e) => setNewAdminPhone(e.target.value)} /></label>
-                      <label className="search-field" style={{ marginTop: "0.6rem" }}><span>Temporary password</span><input style={inputStyle} type="password" value={newAdminPassword} onChange={(e) => setNewAdminPassword(e.target.value)} /></label>
+                      <label className="search-field" style={{ marginTop: "0.6rem" }}><span>Temporary password</span><PasswordField placeholder="Temporary password" value={newAdminPassword} onChange={setNewAdminPassword} /></label>
                       <button className="btn btn-primary" onClick={createAdmin} style={{ marginTop: "0.8rem" }}>Create Admin</button>
                     </article>
                     <article className="feature-card">
