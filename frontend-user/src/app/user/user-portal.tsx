@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { apiRequest } from "@/lib/api";
 import AuthenticatedUserShell from "@/components/user/authenticated-user-shell";
 import PasswordField from "@/components/user/password-field";
@@ -487,11 +488,11 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           </div>
         )}
         <header className="portal-landing-nav">
-          <a href="/" className="portal-landing-brand">tstplotconnect</a>
+          <Link href="/" className="portal-landing-brand">tstplotconnect</Link>
           <nav className="portal-landing-links">
-            <a href="/about">About</a>
-            <a href="/blog">Blog</a>
-            <a href="/contact">Contact</a>
+            <Link href="/about">About</Link>
+            <Link href="/blog">Blog</Link>
+            <Link href="/contact">Contact</Link>
           </nav>
           <div className="portal-landing-actions">
             <button type="button" className="portal-landing-action-muted" onClick={() => setAuthView("login")}>Sign in</button>
@@ -587,7 +588,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           <div><strong>30+</strong><span>Counties</span></div>
           <div><strong>3</strong><span>Countries</span></div>
           <div><strong>KES 50</strong><span>Full access</span></div>
-          <p>"Find your next home without the hassle."</p>
+          <p>&quot;Find your next home without the hassle.&quot;</p>
         </section>
 
         <section className="portal-landing-feature-row">

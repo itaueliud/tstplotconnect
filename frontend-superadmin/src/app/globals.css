@@ -2626,3 +2626,64 @@ body {
   }
 }
 
+
+/* Unified brand gradient override (buttons and notifications intentionally excluded) */
+:root {
+  --brand-surface-gradient: linear-gradient(90deg, #08344b 0%, #12345f 100%);
+  --brand-surface-gradient-soft: linear-gradient(90deg, rgba(8, 52, 75, 0.92) 0%, rgba(18, 52, 95, 0.92) 100%);
+}
+
+.portal-side-nav,
+.portal-dashboard-shell-fixed .portal-side-nav,
+.portal-page-header,
+.portal-page-footer,
+.portal-hero,
+.dashboard-hero,
+.login-visual,
+.portal-auth-stage,
+.portal-auth-hero-media,
+.portal-landing-hero,
+.portal-landing-action-strong,
+.portal-landing-submit {
+  background: var(--brand-surface-gradient-soft);
+}
+
+.portal-landing-hero,
+.portal-landing-action-strong,
+.portal-landing-submit,
+.portal-landing-tabs button.is-active,
+.portal-landing-action-muted {
+  border-color: #12345f;
+}
+
+.portal-landing-action-muted {
+  color: #12345f;
+}
+
+.portal-landing-kicker,
+.portal-landing-left li,
+.portal-landing-left p,
+.portal-landing-stats span,
+.portal-landing-stats p {
+  color: rgba(235, 245, 255, 0.9);
+}
+
+.portal-landing-brand,
+.portal-landing-left h1,
+.portal-landing-stats strong,
+.portal-page-header,
+.portal-page-footer,
+.portal-side-nav,
+.portal-dashboard-shell-fixed .portal-side-nav {
+  color: #ffffff;
+}
+
+.portal-dashboard-shell-fixed .portal-side-links a.is-active,
+.portal-dashboard-shell-fixed .portal-side-links a:hover,
+.portal-side-links a.is-active,
+.portal-side-links a:hover,
+.portal-nav-link.is-active,
+.portal-nav-link:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
