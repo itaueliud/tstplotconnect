@@ -163,7 +163,7 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
           <header className="portal-inline-topbar">
             <div className="portal-inline-topbar-left">
               <div>
-                <strong>{active === "listings" ? "Listings Workspace" : "User Dashboard"}</strong>
+                <strong>{active === "search" || active === "map" || active === "saved" ? "Listings Workspace" : "User Dashboard"}</strong>
               </div>
             </div>
             <div className="portal-inline-topbar-right">
