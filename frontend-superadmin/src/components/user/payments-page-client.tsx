@@ -41,8 +41,8 @@ export default function PaymentsPageClient() {
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [status, setStatus] = useState<UserStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState("");
   const [activating, setActivating] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -71,31 +71,25 @@ export default function PaymentsPageClient() {
     }
   }
 
-  async function deletePayment(paymentId: string) {
-    if (!token) return;
-    setBusyId(paymentId);
-    setError("");
-    try {
-      const data = await apiRequest<{ message?: string }>(`/api/user/payments/${paymentId}`, {
-        method: "DELETE",
-        token
-      });
-      await loadAll(token);
-      setMessage(data?.message || "Payment deleted.");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to delete payment.");
-    } finally {
-      setBusyId("");
+  async function waitForActivation(authToken: string) {
+    setCheckingPayment(true);
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 10000));
+      try {
+        const latest = await apiRequest<UserStatus>("/api/user/status", { token: authToken });
+        setStatus(latest || null);
+        if (latest?.active) {
+          await loadAll(authToken);
+          setMessage("Payment confirmed. Your account is now active.");
+          setCheckingPayment(false);
+          return;
+        }
+      } catch (_e) {
+        // Keep polling until timeout.
+      }
     }
-  }
-
-  async function refreshActivationState(authToken: string) {
-    let attempts = 0;
-    while (attempts < 8) {
-      attempts += 1;
-      await new Promise((resolve) => window.setTimeout(resolve, 4000));
-      await loadAll(authToken);
-    }
+    setCheckingPayment(false);
+    setMessage("Still waiting for payment confirmation. Tap Refresh payments in a few seconds.");
   }
 
   async function activateAccount() {
@@ -107,9 +101,9 @@ export default function PaymentsPageClient() {
         method: "POST",
         token
       });
-      setMessage(data?.message || "STK push sent to your phone. Complete the KES 50 payment to activate your account.");
+      setMessage(data?.message || "STK push sent. Complete payment on your phone, we are checking status every 10 seconds.");
       await loadAll(token);
-      void refreshActivationState(token);
+      void waitForActivation(token);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to start account activation.");
     } finally {
@@ -142,6 +136,11 @@ export default function PaymentsPageClient() {
       {(message || error) && (
         <div className={`portal-toast ${error ? "is-error" : "is-success"}`}>
           {error || message}
+        </div>
+      )}
+      {checkingPayment && (
+        <div className="portal-toast is-success">
+          Waiting for M-Pesa callback confirmation. We are auto-refreshing your status.
         </div>
       )}
 
@@ -252,9 +251,6 @@ export default function PaymentsPageClient() {
                   <article key={payment.id} className="card portal-payment-card">
                     <div className="portal-payment-head">
                       <span className="portal-status-pill is-active">Successful</span>
-                      <button className="btn btn-secondary" onClick={() => deletePayment(payment.id)} disabled={busyId === payment.id}>
-                        {busyId === payment.id ? "Deleting..." : "Delete"}
-                      </button>
                     </div>
                     <strong className="portal-payment-amount">KES {Number(payment.amount || 0).toLocaleString()}</strong>
                     <div className="portal-payment-meta">
@@ -284,9 +280,6 @@ export default function PaymentsPageClient() {
                   <article key={payment.id} className="card portal-payment-card">
                     <div className="portal-payment-head">
                       <span className="portal-status-pill is-inactive">{payment.status || "Failed"}</span>
-                      <button className="btn btn-secondary" onClick={() => deletePayment(payment.id)} disabled={busyId === payment.id}>
-                        {busyId === payment.id ? "Deleting..." : "Delete"}
-                      </button>
                     </div>
                     <strong className="portal-payment-amount">KES {Number(payment.amount || 0).toLocaleString()}</strong>
                     <div className="portal-payment-meta">

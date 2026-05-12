@@ -1170,21 +1170,9 @@ app.get("/api/user/payments", requireAuth, async (req, res) => {
 });
 
 app.delete("/api/user/payments/:id", requireAuth, async (req, res) => {
-  const paymentId = String(req.params.id || "").trim();
-  if (!paymentId) {
-    return res.status(400).json({ error: "Payment ID is required" });
-  }
-
-  const payment = await paymentsCol().findOne({ id: paymentId, userId: String(req.user.id) });
-  if (!payment) {
-    return res.status(404).json({ error: "Payment not found" });
-  }
-
-  await paymentsCol().deleteOne({ id: paymentId, userId: String(req.user.id) });
-  const active = await getUserActiveActivation(req.user.id);
-  await syncUserActivationStatus(req.user.id, active);
-
-  return res.json({ message: "Payment deleted." });
+  return res.status(403).json({
+    error: "Deleting payments from user accounts is disabled. Contact support or an admin."
+  });
 });
 
 app.get("/api/user/profile", requireAuth, async (req, res) => {

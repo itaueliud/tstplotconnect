@@ -15,11 +15,15 @@
   <meta property="og:title" content="tstplotconnect | Find Hostels, Bedsitters &amp; Lodges Near You">
   <meta property="og:description" content="tstplotconnect helps students and travelers find verified hostels, bedsitters, lodges, and affordable rentals across Kenya with trusted local listings.">
   <meta property="og:url" content="https://www.tst-plotconnect.com/">
-  <meta property="og:image" content="https://www.tst-plotconnect.com/favicon.svg">
+  <meta property="og:image" content="https://www.tst-plotconnect.com/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="tstplotconnect | Find Hostels, Bedsitters &amp; Lodges Near You">
   <meta name="twitter:description" content="tstplotconnect helps students and travelers find verified hostels, bedsitters, lodges, and affordable rentals across Kenya with trusted local listings.">
-  <meta name="twitter:image" content="https://www.tst-plotconnect.com/favicon.svg">
+  <meta name="twitter:image" content="https://www.tst-plotconnect.com/og-image.png">
+  <link rel="alternate" hreflang="en-ke" href="https://www.tst-plotconnect.com/">
+  <link rel="alternate" hreflang="en-ug" href="https://www.tst-plotconnect.com/">
+  <link rel="alternate" hreflang="en-tz" href="https://www.tst-plotconnect.com/">
+  <link rel="alternate" hreflang="x-default" href="https://www.tst-plotconnect.com/">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <script type="application/ld+json" data-seo-schema="true">
     {
@@ -59,11 +63,72 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
+  <main style="max-width:1080px;margin:0 auto;padding:1.2rem 1rem 0.8rem;font-family:'Plus Jakarta Sans',system-ui,sans-serif;">
+    <section style="background:linear-gradient(135deg,#065f46,#14532d);color:#fff;border-radius:20px;padding:1.2rem 1rem;">
+      <p style="margin:0 0 0.45rem;font-size:0.92rem;opacity:0.9;">Kenya · Uganda · Tanzania</p>
+      <h1 style="margin:0 0 0.55rem;font-size:2rem;line-height:1.1;">Find verified rentals, hostels, and plots fast.</h1>
+      <p style="margin:0 0 0.85rem;max-width:760px;opacity:0.95;">Search by county and category, preview listings, then sign in to unlock caretaker contacts and full property details.</p>
+      <form action="/plots.html" method="get" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.5rem;">
+        <select name="county" aria-label="Select county" style="padding:0.7rem;border-radius:12px;border:none;">
+          <option value="">Any county</option>
+          <option value="Nairobi">Nairobi</option>
+          <option value="Machakos">Machakos</option>
+          <option value="Mombasa">Mombasa</option>
+          <option value="Kiambu">Kiambu</option>
+        </select>
+        <select name="category" aria-label="Select category" style="padding:0.7rem;border-radius:12px;border:none;">
+          <option value="">Any category</option>
+          <option value="Hostels">Hostels</option>
+          <option value="Bedsitters">Bedsitters</option>
+          <option value="Lodges">Lodges</option>
+          <option value="Apartments">Apartments</option>
+        </select>
+        <button type="submit" style="padding:0.72rem;border-radius:12px;border:none;background:#ecfeff;color:#065f46;font-weight:700;">Search listings</button>
+      </form>
+    </section>
+
+    <section style="margin-top:1.1rem;">
+      <h2 style="margin:0 0 0.5rem;font-size:1.2rem;color:#0f172a;">Popular counties</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:0.45rem;">
+        <a href="/nairobi-hostels.html">Nairobi hostels</a>
+        <a href="/nairobi-bedsitters.html">Nairobi bedsitters</a>
+        <a href="/machakos-hostels.html">Machakos hostels</a>
+        <a href="/machakos-lodges.html">Machakos lodges</a>
+        <a href="/mombasa-hostels.html">Mombasa hostels</a>
+        <a href="/kiambu-hostels.html">Kiambu hostels</a>
+      </div>
+    </section>
+
+    <section style="margin-top:1rem;">
+      <h2 style="margin:0 0 0.55rem;font-size:1.2rem;color:#0f172a;">Sample listings</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.6rem;">
+        <article style="border:1px solid #dbe4ee;border-radius:14px;padding:0.7rem;">
+          <strong>Student hostel in Nairobi</strong>
+          <p style="margin:0.35rem 0;color:#334155;">Nairobi · Hostels · KES 9,500/month</p>
+        </article>
+        <article style="border:1px solid #dbe4ee;border-radius:14px;padding:0.7rem;">
+          <strong>Affordable bedsitter in Thika</strong>
+          <p style="margin:0.35rem 0;color:#334155;">Kiambu · Bedsitters · KES 7,000/month</p>
+        </article>
+        <article style="border:1px solid #dbe4ee;border-radius:14px;padding:0.7rem;">
+          <strong>Lodge room in Machakos</strong>
+          <p style="margin:0.35rem 0;color:#334155;">Machakos · Lodges · KES 1,800/night</p>
+        </article>
+      </div>
+    </section>
+  </main>
   <div id="app"></div>
   <noscript>
-    <main>
+    <main style="max-width:900px;margin:0 auto;padding:1rem;">
       <h1>tstplotconnect | Find Hostels, Bedsitters & Lodges Near You</h1>
       <p>tstplotconnect helps students and travelers find nearby hostels, bedsitters, and lodges quickly and affordably. Safe, verified, and convenient options near you.</p>
+      <h2>Popular county pages</h2>
+      <ul>
+        <li><a href="/nairobi-hostels.html">Nairobi hostels</a></li>
+        <li><a href="/machakos-hostels.html">Machakos hostels</a></li>
+        <li><a href="/mombasa-hostels.html">Mombasa hostels</a></li>
+        <li><a href="/kiambu-hostels.html">Kiambu hostels</a></li>
+      </ul>
     </main>
   </noscript>
   <script>

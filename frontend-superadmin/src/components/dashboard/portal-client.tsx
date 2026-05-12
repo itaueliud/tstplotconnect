@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type CSSProperties } from "react";
-import { apiRequest, getApiBase } from "@/lib/api";
+import { apiRequest } from "@/lib/api";
 
 type User = {
   id?: string;
@@ -21,6 +21,11 @@ type Plot = {
   area?: string;
   price?: number;
   priority?: string;
+  caretaker?: string;
+  whatsapp?: string;
+  description?: string;
+  images?: string[];
+  videos?: string[];
 };
 
 type Payment = {
@@ -119,6 +124,7 @@ export default function DashboardPortalClient({ mode }: Props) {
     images: "",
     videos: ""
   });
+  const [editingPlotId, setEditingPlotId] = useState("");
 
   const [newAdminPhone, setNewAdminPhone] = useState("");
   const [newAdminPassword, setNewAdminPassword] = useState("");
@@ -209,15 +215,17 @@ export default function DashboardPortalClient({ mode }: Props) {
     if (!token) return;
     setBusy(true);
     try {
-      await apiRequest("/api/admin/plots", {
-        method: "POST",
+      const payload = {
+        ...plotForm,
+        price: Number(plotForm.price) || 0,
+        images: splitCsv(plotForm.images),
+        videos: splitCsv(plotForm.videos)
+      };
+
+      await apiRequest(editingPlotId ? `/api/admin/plots/${editingPlotId}` : "/api/admin/plots", {
+        method: editingPlotId ? "PUT" : "POST",
         token,
-        body: JSON.stringify({
-          ...plotForm,
-          price: Number(plotForm.price) || 0,
-          images: splitCsv(plotForm.images),
-          videos: splitCsv(plotForm.videos)
-        })
+        body: JSON.stringify(payload)
       });
       await loadDashboardData(token);
       setPlotForm({
@@ -234,11 +242,67 @@ export default function DashboardPortalClient({ mode }: Props) {
         images: "",
         videos: ""
       });
-      showSuccess("Plot created successfully.");
+      setEditingPlotId("");
+      showSuccess(editingPlotId ? "Plot updated successfully." : "Plot created successfully.");
     } catch (e) {
-      showError(e instanceof Error ? e.message : "Failed to create plot.");
+      showError(e instanceof Error ? e.message : `Failed to ${editingPlotId ? "update" : "create"} plot.`);
     } finally {
       setBusy(false);
+    }
+  }
+
+  function beginEditPlot(plot: Plot) {
+    setEditingPlotId(String(plot.id || ""));
+    setPlotForm({
+      title: String(plot.title || ""),
+      price: String(typeof plot.price === "number" ? plot.price : ""),
+      category: String(plot.category || ""),
+      country: String(plot.country || "Kenya"),
+      county: String(plot.county || ""),
+      area: String(plot.area || ""),
+      caretaker: String(plot.caretaker || ""),
+      whatsapp: String(plot.whatsapp || ""),
+      description: String(plot.description || ""),
+      priority: String(plot.priority || "medium"),
+      images: Array.isArray(plot.images) ? plot.images.join(", ") : "",
+      videos: Array.isArray(plot.videos) ? plot.videos.join(", ") : ""
+    });
+    showSuccess("Edit mode enabled. Update fields and click Save Changes.");
+  }
+
+  function cancelEditPlot() {
+    setEditingPlotId("");
+    setPlotForm({
+      title: "",
+      price: "",
+      category: "",
+      country: "Kenya",
+      county: "",
+      area: "",
+      caretaker: "",
+      whatsapp: "",
+      description: "",
+      priority: "medium",
+      images: "",
+      videos: ""
+    });
+  }
+
+  async function deletePlot(plotId: string) {
+    if (!token || !plotId) return;
+    if (!window.confirm("Delete this plot permanently?")) return;
+    try {
+      await apiRequest(`/api/admin/plots/${plotId}`, {
+        method: "DELETE",
+        token
+      });
+      await loadDashboardData(token);
+      if (editingPlotId === plotId) {
+        cancelEditPlot();
+      }
+      showSuccess("Plot deleted successfully.");
+    } catch (e) {
+      showError(e instanceof Error ? e.message : "Failed to delete plot.");
     }
   }
 
@@ -259,6 +323,7 @@ export default function DashboardPortalClient({ mode }: Props) {
 
   async function revokeAccount(userId: string) {
     if (!token || !userId) return;
+    if (!window.confirm("Are you sure you want to revoke this user's activation now?")) return;
     try {
       await apiRequest("/api/admin/revoke", {
         method: "POST",
@@ -273,7 +338,11 @@ export default function DashboardPortalClient({ mode }: Props) {
   }
 
   async function createAdmin() {
-    if (!token || !canManageSuperAdmin) return;
+    if (!token) return;
+    if (!canManageSuperAdmin) {
+      showError("Only superadmin accounts can create admin users.");
+      return;
+    }
     try {
       await apiRequest("/api/admin/create-admin", {
         method: "POST",
@@ -290,7 +359,11 @@ export default function DashboardPortalClient({ mode }: Props) {
   }
 
   async function addCounty() {
-    if (!token || !canManageSuperAdmin) return;
+    if (!token) return;
+    if (!canManageSuperAdmin) {
+      showError("Only superadmin accounts can add counties.");
+      return;
+    }
     try {
       await apiRequest("/api/super-admin/locations/county", {
         method: "POST",
@@ -306,7 +379,11 @@ export default function DashboardPortalClient({ mode }: Props) {
   }
 
   async function addArea() {
-    if (!token || !canManageSuperAdmin) return;
+    if (!token) return;
+    if (!canManageSuperAdmin) {
+      showError("Only superadmin accounts can add areas.");
+      return;
+    }
     try {
       await apiRequest("/api/super-admin/locations/area", {
         method: "POST",
@@ -334,7 +411,7 @@ export default function DashboardPortalClient({ mode }: Props) {
 
   return (
     <main className="dashboard-shell">
-      <div className="container">
+      <div className="dashboard-container">
         <div className="dashboard-topbar">
           <div className="brand">
             <span className="pill" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", borderColor: "rgba(255,255,255,0.08)" }}>
@@ -343,7 +420,6 @@ export default function DashboardPortalClient({ mode }: Props) {
             <strong>tstplotconnect control center</strong>
           </div>
           <div className="chip-row">
-            <span className="hero-badge">API Base: {getApiBase()}</span>
             {isLoggedIn ? <button className="btn btn-secondary" onClick={logout}>Logout</button> : null}
           </div>
         </div>
@@ -436,7 +512,7 @@ export default function DashboardPortalClient({ mode }: Props) {
               <div className="dashboard-grid-2">
                 <section className="dashboard-panel" id="dashboard-plots">
                   <p className="section-kicker" style={{ color: "#0f766e" }}>Create listing</p>
-                  <h2 style={{ marginTop: 0 }}>Add a new plot</h2>
+                  <h2 style={{ marginTop: 0 }}>{editingPlotId ? "Edit plot" : "Add a new plot"}</h2>
                   <div className="search-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
                     <label className="search-field"><span>Title</span><input style={inputStyle} value={plotForm.title} onChange={(e) => setPlotForm((p) => ({ ...p, title: e.target.value }))} /></label>
                     <label className="search-field"><span>Category</span><input style={inputStyle} value={plotForm.category} onChange={(e) => setPlotForm((p) => ({ ...p, category: e.target.value }))} /></label>
@@ -454,9 +530,12 @@ export default function DashboardPortalClient({ mode }: Props) {
                     <span>Description</span>
                     <textarea style={{ ...inputStyle, minHeight: 130 }} value={plotForm.description} onChange={(e) => setPlotForm((p) => ({ ...p, description: e.target.value }))} />
                   </label>
-                  <button className="btn btn-primary" onClick={createPlot} disabled={busy} style={{ marginTop: "0.9rem" }}>
-                    Save Plot
-                  </button>
+                  <div className="chip-row" style={{ marginTop: "0.9rem" }}>
+                    <button className="btn btn-primary" onClick={createPlot} disabled={busy}>
+                      {editingPlotId ? "Save Changes" : "Save Plot"}
+                    </button>
+                    {editingPlotId ? <button className="btn btn-secondary" onClick={cancelEditPlot}>Cancel Edit</button> : null}
+                  </div>
                 </section>
 
                 <section className="dashboard-panel">
@@ -478,6 +557,48 @@ export default function DashboardPortalClient({ mode }: Props) {
                   </div>
                 </section>
               </div>
+
+              <section className="dashboard-table">
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", alignItems: "end" }}>
+                  <div>
+                    <p className="section-kicker" style={{ color: "#0f766e" }}>Listings</p>
+                    <h2 style={{ marginTop: 0 }}>View and manage plot properties</h2>
+                  </div>
+                </div>
+                <div className="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Location</th>
+                        <th>Price</th>
+                        <th>Caretaker</th>
+                        <th>Priority</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {plots.slice(0, 200).map((plot) => (
+                        <tr key={plot.id || `${plot.title}-${plot.county}-${plot.area}`}>
+                          <td>{plot.title || "-"}</td>
+                          <td>{plot.category || "-"}</td>
+                          <td>{[plot.country, plot.county, plot.area].filter(Boolean).join(", ") || "-"}</td>
+                          <td>{typeof plot.price === "number" ? `KES ${plot.price.toLocaleString()}` : "-"}</td>
+                          <td>{plot.caretaker || "-"}</td>
+                          <td>{plot.priority || "-"}</td>
+                          <td>
+                            <div className="chip-row">
+                              <button className="btn btn-secondary" onClick={() => beginEditPlot(plot)}>Edit</button>
+                              <button className="btn btn-secondary" onClick={() => deletePlot(String(plot.id || ""))}>Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
 
               <section className="dashboard-table" id="dashboard-users">
                 <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", alignItems: "end" }}>

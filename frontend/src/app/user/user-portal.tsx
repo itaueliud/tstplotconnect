@@ -95,6 +95,8 @@ function listingImage(plot: Plot): string {
   return Array.isArray(plot.images) && plot.images[0] ? plot.images[0] : "";
 }
 
+const LISTINGS_PAGE_SIZE = 24;
+
 function fmtDateTime(value?: string): string {
   if (!value) return "-";
   const date = new Date(value);
@@ -108,7 +110,7 @@ function timeRemainingLabel(status: UserStatus | null): string {
   return `${hours}h ${minutes}m remaining`;
 }
 
-export default function UserPortal({ initialCountry, initialCounty, initialTown: _initialTown, initialCategory }: Props) {
+export default function UserPortal({ initialCountry, initialCounty, initialTown, initialCategory }: Props) {
   const [token, setToken] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<UserStatus | null>(null);
@@ -126,8 +128,8 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
 
   const defaultFilters: FilterState = {
     country: initialCountry || "Kenya",
-    county: initialCounty || "",
-    area: "",
+    county: initialCounty || initialTown || "",
+    area: initialTown || "",
     category: initialCategory || "",
     minPrice: "",
     maxPrice: ""
@@ -138,6 +140,8 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   const [plots, setPlots] = useState<Plot[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(LISTINGS_PAGE_SIZE);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -182,6 +186,8 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
       return true;
     });
   }, [plots, filters]);
+
+  const visibleListings = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
 
   function showSuccess(text: string) {
     setMessage(text);
@@ -331,12 +337,33 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
         token
       });
       await loadStatus(token);
-      showSuccess(data?.message || "Payment initiated.");
+      showSuccess(data?.message || "STK push sent. Complete payment on your phone, we are checking status every 10 seconds.");
+      void waitForActivationFromDashboard(token);
     } catch (e) {
       showError(e instanceof Error ? e.message : "Payment failed.");
     } finally {
       setBusy(false);
     }
+  }
+
+  async function waitForActivationFromDashboard(authToken: string) {
+    setCheckingPayment(true);
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 10000));
+      try {
+        const latest = await apiRequest<UserStatus>("/api/user/status", { token: authToken });
+        setStatus(latest || null);
+        if (latest?.active) {
+          showSuccess(`Payment confirmed. ${timeRemainingLabel(latest)}.`);
+          setCheckingPayment(false);
+          return;
+        }
+      } catch (_e) {
+        // Keep polling until timeout.
+      }
+    }
+    setCheckingPayment(false);
+    showSuccess("Still waiting for payment confirmation. Use Check Status in a few seconds.");
   }
 
   function logout() {
@@ -386,6 +413,10 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     loadPlots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    setVisibleCount(LISTINGS_PAGE_SIZE);
+  }, [filters, plots.length]);
 
   useEffect(() => {
     if (!message && !error) return;
@@ -586,6 +617,11 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           {error || message}
         </div>
       )}
+      {checkingPayment && (
+        <div className="portal-toast is-success">
+          Waiting for M-Pesa callback confirmation. We are auto-refreshing your status.
+        </div>
+      )}
         {activeSection !== "listings" && (
           <section className="portal-hero portal-hero-surface reveal-card" id="dashboard">
             <div className="portal-hero-copy">
@@ -766,21 +802,24 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
               Cards read from the backend and surface the plot image, category, location, price, and description first.
             </p>
           </div>
-          <span className="portal-results-count">{filtered.length} of {plots.length} listings</span>
+          <span className="portal-results-count">{visibleListings.length} of {filtered.length} listings</span>
         </div>
         {loading && <p className="meta">Loading listings...</p>}
         {!loading && filtered.length === 0 && <p className="meta">No listings match the selected filters.</p>}
         {!loading && filtered.length > 0 && (
           <div className="portal-listing-grid">
-            {filtered.map((plot) => {
+            {visibleListings.map((plot) => {
               const image = listingImage(plot);
               return (
                 <article key={plot.id || `${plot.title}-${plot.area}`} className="listing-card">
                   <div
                     className="listing-media"
-                    style={image ? { backgroundImage: `linear-gradient(180deg, rgba(2, 8, 23, 0.08), rgba(2, 8, 23, 0.44)), url(${image})` } : undefined}
+                    style={image
+                      ? { backgroundImage: `linear-gradient(180deg, rgba(2, 8, 23, 0.08), rgba(2, 8, 23, 0.44)), url(${image})` }
+                      : { backgroundImage: "linear-gradient(140deg, #0f766e, #14532d)" }}
                   >
                     <span className="listing-badge">{plot.category || "Property"}</span>
+                    {!image && <span className="listing-badge" style={{ marginLeft: "0.45rem" }}>No image</span>}
                     <div className="listing-price">{formatPrice(plot.price)}</div>
                   </div>
                   <div className="listing-body">
@@ -796,6 +835,13 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                 </article>
               );
             })}
+          </div>
+        )}
+        {!loading && filtered.length > visibleCount && (
+          <div style={{ marginTop: "0.9rem", display: "flex", justifyContent: "center" }}>
+            <button className="btn btn-secondary" onClick={() => setVisibleCount((count) => count + LISTINGS_PAGE_SIZE)}>
+              Load more listings
+            </button>
           </div>
         )}
           </section>

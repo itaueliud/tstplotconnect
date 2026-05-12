@@ -1890,13 +1890,19 @@ body {
 .dashboard-shell {
   position: relative;
   min-height: 100vh;
-  padding: 1rem;
+  padding: 1rem 1.1rem 1.6rem;
+}
+
+.dashboard-container {
+  width: min(1760px, 100%);
+  margin: 0;
 }
 
 .dashboard-frame {
   display: grid;
-  grid-template-columns: 290px minmax(0, 1fr);
-  gap: 1rem;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 1.05rem;
+  align-items: start;
 }
 
 .dashboard-topbar {
@@ -1932,7 +1938,11 @@ body {
   gap: 0.9rem;
   padding: 1rem;
   border-radius: 26px;
-  background: rgba(255, 255, 255, 0.92);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  background:
+    radial-gradient(300px 180px at 8% 0%, rgba(45, 212, 191, 0.1), transparent 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
   color: var(--ink);
   border: 1px solid rgba(148, 163, 184, 0.18);
   box-shadow: var(--shadow-soft);
@@ -1963,12 +1973,15 @@ body {
 .dashboard-content {
   display: grid;
   gap: 1rem;
+  min-width: 0;
 }
 
 .dashboard-hero {
   padding: 1.2rem;
   border-radius: 28px;
-  background: linear-gradient(135deg, rgba(7, 17, 30, 0.96), rgba(15, 118, 110, 0.82));
+  background:
+    radial-gradient(420px 200px at 0% 0%, rgba(45, 212, 191, 0.24), transparent 68%),
+    linear-gradient(130deg, rgba(2, 12, 27, 0.98), rgba(7, 89, 133, 0.88), rgba(15, 118, 110, 0.84));
   color: #fff;
   box-shadow: var(--shadow);
 }
@@ -2016,17 +2029,41 @@ body {
 
 .dashboard-panel {
   padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96));
 }
 
 .dashboard-table {
   padding: 1rem;
   overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96));
 }
 
 .table-scroll {
   width: 100%;
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 56vh;
   -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll::-webkit-scrollbar,
+.dashboard-sidebar::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb,
+.dashboard-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(15, 118, 110, 0.38);
+  border-radius: 999px;
+}
+
+.table-scroll::-webkit-scrollbar-track,
+.dashboard-sidebar::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.16);
+  border-radius: 999px;
 }
 
 .dashboard-table table {
@@ -2230,6 +2267,10 @@ body {
 @media (max-width: 720px) {
   .container {
     width: min(100% - 1rem, 1240px);
+  }
+
+  .dashboard-container {
+    width: 100%;
   }
 
   .dashboard-shell {

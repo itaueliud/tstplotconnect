@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type CSSProperties } from "react";
-import { apiRequest, getApiBase } from "@/lib/api";
+import { apiRequest } from "@/lib/api";
 
 type User = {
   id?: string;
@@ -259,6 +259,7 @@ export default function DashboardPortalClient({ mode }: Props) {
 
   async function revokeAccount(userId: string) {
     if (!token || !userId) return;
+    if (!window.confirm("Are you sure you want to revoke this user's activation now?")) return;
     try {
       await apiRequest("/api/admin/revoke", {
         method: "POST",
@@ -273,7 +274,11 @@ export default function DashboardPortalClient({ mode }: Props) {
   }
 
   async function createAdmin() {
-    if (!token || !canManageSuperAdmin) return;
+    if (!token) return;
+    if (!canManageSuperAdmin) {
+      showError("Only superadmin accounts can create admin users.");
+      return;
+    }
     try {
       await apiRequest("/api/admin/create-admin", {
         method: "POST",
@@ -290,7 +295,11 @@ export default function DashboardPortalClient({ mode }: Props) {
   }
 
   async function addCounty() {
-    if (!token || !canManageSuperAdmin) return;
+    if (!token) return;
+    if (!canManageSuperAdmin) {
+      showError("Only superadmin accounts can add counties.");
+      return;
+    }
     try {
       await apiRequest("/api/super-admin/locations/county", {
         method: "POST",
@@ -306,7 +315,11 @@ export default function DashboardPortalClient({ mode }: Props) {
   }
 
   async function addArea() {
-    if (!token || !canManageSuperAdmin) return;
+    if (!token) return;
+    if (!canManageSuperAdmin) {
+      showError("Only superadmin accounts can add areas.");
+      return;
+    }
     try {
       await apiRequest("/api/super-admin/locations/area", {
         method: "POST",
@@ -343,7 +356,6 @@ export default function DashboardPortalClient({ mode }: Props) {
             <strong>tstplotconnect control center</strong>
           </div>
           <div className="chip-row">
-            <span className="hero-badge">API Base: {getApiBase()}</span>
             {isLoggedIn ? <button className="btn btn-secondary" onClick={logout}>Logout</button> : null}
           </div>
         </div>

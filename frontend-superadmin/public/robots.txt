@@ -7,4 +7,4 @@ Disallow: /blog-admin.html
 Disallow: /superadmin
 Disallow: /superadmin.html
 
-Sitemap: https://tstplotconnect.vercel.app/sitemap.xml
+Sitemap: https://www.tst-plotconnect.com/sitemap.xml
