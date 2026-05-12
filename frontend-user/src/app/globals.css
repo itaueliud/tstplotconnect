@@ -3647,3 +3647,46 @@ body {
     align-items: flex-start;
   }
 }
+/* Header neutral + footer green fill */
+.portal-landing-nav {
+  background: #ffffff !important;
+  border-bottom: 1px solid #d8e0ea;
+}
+
+.portal-landing-brand .portal-brand-tagline {
+  color: #5a6f84;
+}
+
+.portal-landing-brand .portal-brand-wordmark .tst,
+.portal-landing-brand .portal-brand-wordmark .connect {
+  color: #0f172a;
+}
+
+.portal-landing-links a {
+  color: #334155;
+}
+
+.portal-landing-links a:hover {
+  color: #0f5f39;
+}
+
+.portal-landing-action-muted {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #1e293b;
+}
+
+.portal-landing-footer {
+  background: linear-gradient(90deg, #0b5a35 0%, #0e6a41 58%, #0c5f39 100%);
+  border-top: 1px solid rgba(210, 236, 222, 0.3);
+  border-radius: 14px 14px 0 0;
+}
+
+.portal-landing-footer span,
+.portal-landing-footer nav a {
+  color: #eaf7ef;
+}
+
+.portal-landing-footer nav a:hover {
+  color: #ffffff;
+}
