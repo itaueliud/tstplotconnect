@@ -1983,6 +1983,69 @@ app.post("/api/admin/create-admin", requireSecureAdmin, requireAuth, requireAdmi
   });
 });
 
+app.post("/api/super-admin/create-superadmin", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (req, res) => {
+  const { phone, password } = req.body || {};
+  if (!phone || !password || String(phone).length < 10 || String(password).length < 4) {
+    return res.status(400).json({ error: "Valid phone and password are required" });
+  }
+
+  const normalizedPhone = canonicalPhone(phone);
+  const variants = getPhoneVariants(phone);
+  const hash = bcrypt.hashSync(String(password), 10);
+  const existing = await usersCol().findOne({ phone: { $in: variants } });
+  if (existing) {
+    await usersCol().updateOne(
+      { _id: existing._id },
+      {
+        $set: {
+          is_admin: 1,
+          is_super_admin: 1,
+          role: "super_admin",
+          password: hash,
+          phone: normalizedPhone,
+          failedLoginAttempts: 0,
+          lockUntil: null
+        }
+      }
+    );
+    return res.json({
+      message: "User promoted to superadmin.",
+      user: {
+        id: existing.id,
+        phone: normalizedPhone,
+        is_admin: 1,
+        is_super_admin: 1
+      }
+    });
+  }
+
+  const superAdminUser = {
+    id: randomUUID(),
+    phone: normalizedPhone,
+    password: hash,
+    is_admin: 1,
+    is_super_admin: 1,
+    role: "super_admin",
+    failedLoginAttempts: 0,
+    lockUntil: null,
+    activatedAt: null,
+    expiresAt: null,
+    paymentStatus: false,
+    createdAt: new Date()
+  };
+  await usersCol().insertOne(superAdminUser);
+
+  return res.status(201).json({
+    message: "Superadmin account created.",
+    user: {
+      id: superAdminUser.id,
+      phone: superAdminUser.phone,
+      is_admin: 1,
+      is_super_admin: 1
+    }
+  });
+});
+
 app.get("/api/super-admin/admins", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (_req, res) => {
   const rows = await usersCol()
     .find(

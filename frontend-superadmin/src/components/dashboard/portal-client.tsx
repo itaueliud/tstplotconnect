@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { apiRequest } from "@/lib/api";
 
 type User = {
@@ -69,6 +69,21 @@ const inputStyle: CSSProperties = {
   color: "#0f172a"
 };
 
+const PLOT_CATEGORIES = [
+  "Rental Houses",
+  "Bedsitters",
+  "Hostels",
+  "Apartments",
+  "Lodges",
+  "AirBnB",
+  "Vacant Shops",
+  "Office Spaces",
+  "Guest Houses",
+  "Plots for Sale"
+];
+
+const PLOT_PRIORITIES = ["low", "medium", "high"];
+
 function fmtDate(value?: string): string {
   if (!value) return "-";
   const date = new Date(value);
@@ -134,6 +149,19 @@ export default function DashboardPortalClient({ mode }: Props) {
   const [newAreaCounty, setNewAreaCounty] = useState("");
   const [newAreaName, setNewAreaName] = useState("");
 
+  const availableCounties = useMemo(
+    () => (plotForm.country ? (locationMeta.countiesByCountry?.[plotForm.country] || []) : []),
+    [locationMeta.countiesByCountry, plotForm.country]
+  );
+  const availableAreas = useMemo(
+    () => (plotForm.county ? (locationMeta.areasByCounty?.[plotForm.county] || []) : []),
+    [locationMeta.areasByCounty, plotForm.county]
+  );
+  const availableAreaCounties = useMemo(
+    () => (newAreaCountry ? (locationMeta.countiesByCountry?.[newAreaCountry] || []) : []),
+    [locationMeta.countiesByCountry, newAreaCountry]
+  );
+
   const isLoggedIn = Boolean(token && currentUser?.isAdmin);
   const canManageSuperAdmin = Boolean(currentUser?.isSuperAdmin);
   const availableCountries = useMemo(
@@ -150,6 +178,15 @@ export default function DashboardPortalClient({ mode }: Props) {
     setError(text);
     setMessage("");
   }
+
+  useEffect(() => {
+    if (!message && !error) return;
+    const timeout = window.setTimeout(() => {
+      setMessage("");
+      setError("");
+    }, 4000);
+    return () => window.clearTimeout(timeout);
+  }, [message, error]);
 
   async function loadDashboardData(authToken: string) {
     const [plotsRows, usersRows, paymentsRows, analyticsData, activeRows, metaRows] = await Promise.all([
@@ -251,6 +288,28 @@ export default function DashboardPortalClient({ mode }: Props) {
     }
   }
 
+  async function onPlotImageFilesSelected(fileList: FileList | null) {
+    if (!fileList || !fileList.length) return;
+    const files = Array.from(fileList).slice(0, 8);
+    try {
+      const dataUrls = await Promise.all(
+        files.map((file) => new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ""));
+          reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+          reader.readAsDataURL(file);
+        }))
+      );
+      setPlotForm((prev) => {
+        const existing = splitCsv(prev.images);
+        return { ...prev, images: [...existing, ...dataUrls].join(", ") };
+      });
+      showSuccess(`${files.length} image file(s) selected.`);
+    } catch (e) {
+      showError(e instanceof Error ? e.message : "Unable to read selected image files.");
+    }
+  }
+
   function beginEditPlot(plot: Plot) {
     setEditingPlotId(String(plot.id || ""));
     setPlotForm({
@@ -337,14 +396,14 @@ export default function DashboardPortalClient({ mode }: Props) {
     }
   }
 
-  async function createAdmin() {
+  async function createSuperAdmin() {
     if (!token) return;
     if (!canManageSuperAdmin) {
-      showError("Only superadmin accounts can create admin users.");
+      showError("Only superadmin accounts can create superadmin users.");
       return;
     }
     try {
-      await apiRequest("/api/admin/create-admin", {
+      await apiRequest("/api/super-admin/create-superadmin", {
         method: "POST",
         token,
         body: JSON.stringify({ phone: newAdminPhone.trim(), password: newAdminPassword })
@@ -352,9 +411,9 @@ export default function DashboardPortalClient({ mode }: Props) {
       setNewAdminPhone("");
       setNewAdminPassword("");
       await loadDashboardData(token);
-      showSuccess("Admin account created.");
+      showSuccess("Superadmin account created.");
     } catch (e) {
-      showError(e instanceof Error ? e.message : "Failed to create admin account.");
+      showError(e instanceof Error ? e.message : "Failed to create superadmin account.");
     }
   }
 
@@ -372,7 +431,7 @@ export default function DashboardPortalClient({ mode }: Props) {
       });
       setNewCountyName("");
       await loadDashboardData(token);
-      showSuccess("County added.");
+      showSuccess("County added successfully.");
     } catch (e) {
       showError(e instanceof Error ? e.message : "Failed to add county.");
     }
@@ -396,7 +455,7 @@ export default function DashboardPortalClient({ mode }: Props) {
       });
       setNewAreaName("");
       await loadDashboardData(token);
-      showSuccess("Area added.");
+      showSuccess("Area added successfully.");
     } catch (e) {
       showError(e instanceof Error ? e.message : "Failed to add area.");
     }
@@ -423,6 +482,7 @@ export default function DashboardPortalClient({ mode }: Props) {
             {isLoggedIn ? <button className="btn btn-secondary" onClick={logout}>Logout</button> : null}
           </div>
         </div>
+        {(message || error) ? <div className={`portal-toast ${error ? "is-error" : "is-success"}`}>{error || message}</div> : null}
 
         {!isLoggedIn ? (
           <div className="login-shell">
@@ -515,17 +575,21 @@ export default function DashboardPortalClient({ mode }: Props) {
                   <h2 style={{ marginTop: 0 }}>{editingPlotId ? "Edit plot" : "Add a new plot"}</h2>
                   <div className="search-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
                     <label className="search-field"><span>Title</span><input style={inputStyle} value={plotForm.title} onChange={(e) => setPlotForm((p) => ({ ...p, title: e.target.value }))} /></label>
-                    <label className="search-field"><span>Category</span><input style={inputStyle} value={plotForm.category} onChange={(e) => setPlotForm((p) => ({ ...p, category: e.target.value }))} /></label>
+                    <label className="search-field"><span>Category</span><select style={inputStyle} value={plotForm.category} onChange={(e) => setPlotForm((p) => ({ ...p, category: e.target.value }))}><option value="">Select category</option>{PLOT_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
                     <label className="search-field"><span>Price</span><input style={inputStyle} value={plotForm.price} onChange={(e) => setPlotForm((p) => ({ ...p, price: e.target.value }))} /></label>
-                    <label className="search-field"><span>Country</span><select style={inputStyle} value={plotForm.country} onChange={(e) => setPlotForm((p) => ({ ...p, country: e.target.value }))}>{availableCountries.map((country) => <option key={country} value={country}>{country}</option>)}</select></label>
-                    <label className="search-field"><span>County</span><input style={inputStyle} value={plotForm.county} onChange={(e) => setPlotForm((p) => ({ ...p, county: e.target.value }))} /></label>
-                    <label className="search-field"><span>Area</span><input style={inputStyle} value={plotForm.area} onChange={(e) => setPlotForm((p) => ({ ...p, area: e.target.value }))} /></label>
+                    <label className="search-field"><span>Country</span><select style={inputStyle} value={plotForm.country} onChange={(e) => setPlotForm((p) => ({ ...p, country: e.target.value, county: "", area: "" }))}>{availableCountries.map((country) => <option key={country} value={country}>{country}</option>)}</select></label>
+                    <label className="search-field"><span>County</span><select style={inputStyle} value={plotForm.county} onChange={(e) => setPlotForm((p) => ({ ...p, county: e.target.value, area: "" }))}><option value="">Select county</option>{availableCounties.map((county) => <option key={county} value={county}>{county}</option>)}</select></label>
+                    <label className="search-field"><span>Area</span><select style={inputStyle} value={plotForm.area} onChange={(e) => setPlotForm((p) => ({ ...p, area: e.target.value }))}><option value="">Select area</option>{availableAreas.map((area) => <option key={area} value={area}>{area}</option>)}</select></label>
                     <label className="search-field"><span>Caretaker</span><input style={inputStyle} value={plotForm.caretaker} onChange={(e) => setPlotForm((p) => ({ ...p, caretaker: e.target.value }))} /></label>
                     <label className="search-field"><span>WhatsApp</span><input style={inputStyle} value={plotForm.whatsapp} onChange={(e) => setPlotForm((p) => ({ ...p, whatsapp: e.target.value }))} /></label>
-                    <label className="search-field"><span>Priority</span><input style={inputStyle} value={plotForm.priority} onChange={(e) => setPlotForm((p) => ({ ...p, priority: e.target.value }))} /></label>
-                    <label className="search-field"><span>Images</span><input style={inputStyle} value={plotForm.images} onChange={(e) => setPlotForm((p) => ({ ...p, images: e.target.value }))} /></label>
+                    <label className="search-field"><span>Priority</span><select style={inputStyle} value={plotForm.priority} onChange={(e) => setPlotForm((p) => ({ ...p, priority: e.target.value }))}>{PLOT_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select></label>
+                    <label className="search-field"><span>Image URLs</span><input style={inputStyle} value={plotForm.images} onChange={(e) => setPlotForm((p) => ({ ...p, images: e.target.value }))} placeholder="Paste image URL(s), comma-separated" /></label>
                     <label className="search-field"><span>Videos</span><input style={inputStyle} value={plotForm.videos} onChange={(e) => setPlotForm((p) => ({ ...p, videos: e.target.value }))} /></label>
                   </div>
+                  <label className="search-field" style={{ marginTop: "0.7rem" }}>
+                    <span>Choose image files</span>
+                    <input style={inputStyle} type="file" accept="image/*" multiple onChange={(e) => void onPlotImageFilesSelected(e.target.files)} />
+                  </label>
                   <label className="search-field" style={{ marginTop: "0.8rem" }}>
                     <span>Description</span>
                     <textarea style={{ ...inputStyle, minHeight: 130 }} value={plotForm.description} onChange={(e) => setPlotForm((p) => ({ ...p, description: e.target.value }))} />
@@ -673,21 +737,21 @@ export default function DashboardPortalClient({ mode }: Props) {
                   <h2 style={{ marginTop: 0 }}>Control location metadata and admin accounts</h2>
                   <div className="feature-grid">
                     <article className="feature-card">
-                      <h3>Create admin</h3>
-                      <label className="search-field"><span>Admin phone</span><input style={inputStyle} value={newAdminPhone} onChange={(e) => setNewAdminPhone(e.target.value)} /></label>
+                      <h3>Create superadmin</h3>
+                      <label className="search-field"><span>Superadmin phone</span><input style={inputStyle} value={newAdminPhone} onChange={(e) => setNewAdminPhone(e.target.value)} /></label>
                       <label className="search-field" style={{ marginTop: "0.6rem" }}><span>Temporary password</span><input style={inputStyle} type="password" value={newAdminPassword} onChange={(e) => setNewAdminPassword(e.target.value)} /></label>
-                      <button className="btn btn-primary" onClick={createAdmin} style={{ marginTop: "0.8rem" }}>Create Admin</button>
+                      <button className="btn btn-primary" onClick={createSuperAdmin} style={{ marginTop: "0.8rem" }}>Create Superadmin</button>
                     </article>
                     <article className="feature-card">
                       <h3>Add county</h3>
-                      <label className="search-field"><span>Country</span><input style={inputStyle} value={newCountyCountry} onChange={(e) => setNewCountyCountry(e.target.value)} /></label>
+                      <label className="search-field"><span>Country</span><select style={inputStyle} value={newCountyCountry} onChange={(e) => setNewCountyCountry(e.target.value)}>{availableCountries.map((country) => <option key={country} value={country}>{country}</option>)}</select></label>
                       <label className="search-field" style={{ marginTop: "0.6rem" }}><span>County</span><input style={inputStyle} value={newCountyName} onChange={(e) => setNewCountyName(e.target.value)} /></label>
                       <button className="btn btn-primary" onClick={addCounty} style={{ marginTop: "0.8rem" }}>Save County</button>
                     </article>
                     <article className="feature-card">
                       <h3>Add area</h3>
-                      <label className="search-field"><span>Country</span><input style={inputStyle} value={newAreaCountry} onChange={(e) => setNewAreaCountry(e.target.value)} /></label>
-                      <label className="search-field" style={{ marginTop: "0.6rem" }}><span>County</span><input style={inputStyle} value={newAreaCounty} onChange={(e) => setNewAreaCounty(e.target.value)} /></label>
+                      <label className="search-field"><span>Country</span><select style={inputStyle} value={newAreaCountry} onChange={(e) => { setNewAreaCountry(e.target.value); setNewAreaCounty(""); }}>{availableCountries.map((country) => <option key={country} value={country}>{country}</option>)}</select></label>
+                      <label className="search-field" style={{ marginTop: "0.6rem" }}><span>County</span><select style={inputStyle} value={newAreaCounty} onChange={(e) => setNewAreaCounty(e.target.value)}><option value="">Select county</option>{availableAreaCounties.map((county) => <option key={county} value={county}>{county}</option>)}</select></label>
                       <label className="search-field" style={{ marginTop: "0.6rem" }}><span>Area</span><input style={inputStyle} value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} /></label>
                       <button className="btn btn-primary" onClick={addArea} style={{ marginTop: "0.8rem" }}>Save Area</button>
                     </article>
@@ -718,11 +782,6 @@ export default function DashboardPortalClient({ mode }: Props) {
                 </section>
               )}
 
-              {(message || error) && (
-                <section className="card" style={{ borderColor: error ? "#fecaca" : undefined, background: "rgba(255,255,255,0.94)" }}>
-                  <p style={{ margin: 0, color: error ? "#b91c1c" : "#0f766e", fontWeight: 700 }}>{error || message}</p>
-                </section>
-              )}
             </section>
           </div>
         )}
