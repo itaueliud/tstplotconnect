@@ -3483,3 +3483,167 @@ body {
     row-gap: 0.45rem;
   }
 }
+/* Landing spacing, footer links, and green tone correction */
+.portal-landing-shell {
+  background:
+    radial-gradient(1200px 380px at 8% -12%, rgba(34, 197, 94, 0.1), transparent 56%),
+    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.portal-landing-nav {
+  grid-template-columns: minmax(0, 1fr) auto;
+  background: linear-gradient(90deg, #0b5a35 0%, #0e6a41 58%, #0c5f39 100%);
+  padding: 0.75rem clamp(1rem, 3vw, 2.25rem);
+}
+
+.portal-landing-actions {
+  display: inline-flex;
+  gap: 0.7rem;
+}
+
+.portal-landing-action-muted {
+  border: 1px solid rgba(231, 245, 236, 0.55);
+  background: rgba(10, 54, 34, 0.18);
+  color: #ecfdf3;
+}
+
+.portal-landing-action-strong,
+.portal-landing-submit {
+  background: linear-gradient(135deg, #0f5f39 0%, #0d4d78 100%);
+  border-color: rgba(230, 246, 238, 0.34);
+}
+
+.portal-landing-hero,
+.portal-landing-stats,
+.portal-landing-feature-row,
+.portal-landing-counties,
+.portal-landing-footer {
+  width: min(1880px, calc(100% - 2.25rem));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.portal-landing-hero {
+  margin-top: 0.7rem;
+  border-radius: 18px;
+  overflow: hidden;
+  grid-template-columns: minmax(0, 1fr) minmax(430px, 470px);
+  min-height: 560px;
+}
+
+.portal-landing-left {
+  padding: clamp(2rem, 4.5vw, 4rem) clamp(1.2rem, 3vw, 2.6rem) clamp(1.6rem, 2.6vw, 2.4rem);
+}
+
+.portal-landing-left h1 {
+  max-width: 14ch;
+  font-size: clamp(2.45rem, 4.3vw, 4.2rem);
+  letter-spacing: -0.025em;
+}
+
+.portal-landing-left p,
+.portal-landing-left li {
+  font-size: 1.06rem;
+  line-height: 1.72;
+}
+
+.portal-landing-left ul {
+  gap: 0.9rem;
+  margin-top: 1.4rem;
+}
+
+.portal-landing-right {
+  padding-bottom: 0.5rem;
+}
+
+.portal-landing-auth-card {
+  padding: 26px 30px;
+}
+
+.portal-landing-auth-card h2 {
+  font-size: clamp(2rem, 2.5vw, 3rem);
+}
+
+.portal-landing-stats {
+  margin-top: 0.8rem;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.portal-landing-feature-row {
+  padding: 1.3rem 0 0.9rem;
+  gap: 1.2rem;
+}
+
+.portal-landing-feature-card {
+  border-radius: 14px;
+  padding: 1.25rem 1.2rem;
+}
+
+.portal-landing-counties {
+  padding: 1.2rem 0 1.5rem;
+}
+
+.portal-landing-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.9rem 1rem 1.3rem;
+  border-top: 1px solid #d4dbe3;
+}
+
+.portal-landing-footer span {
+  color: #0f5f39;
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.portal-landing-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.portal-landing-footer nav a {
+  color: #2f455e;
+  font-weight: 700;
+}
+
+.portal-landing-footer nav a:hover {
+  color: #0d4d78;
+}
+
+@media (max-width: 980px) {
+  .portal-landing-hero,
+  .portal-landing-stats,
+  .portal-landing-feature-row,
+  .portal-landing-counties,
+  .portal-landing-footer {
+    width: min(100% - 1rem, 1880px);
+  }
+
+  .portal-landing-nav {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .portal-landing-actions {
+    justify-content: flex-start;
+  }
+
+  .portal-landing-hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .portal-landing-feature-row {
+    padding: 1rem 0 0.7rem;
+  }
+
+  .portal-landing-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

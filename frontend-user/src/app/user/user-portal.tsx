@@ -496,12 +496,6 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
             </span>
             <span className="portal-brand-tagline">Verified rentals across Kenya, Uganda &amp; Tanzania</span>
           </Link>
-          <nav className="portal-landing-links">
-            <Link href="/about">About</Link>
-            <Link href="/blog">Blog</Link>
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/contact">Contact</Link>
-          </nav>
           <div className="portal-landing-actions">
             <button type="button" className="portal-landing-action-muted" onClick={() => setAuthView("login")}>Sign in</button>
             <button type="button" className="portal-landing-action-strong" onClick={() => setAuthView("register")}>Get started</button>
@@ -622,6 +616,16 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
             ))}
           </div>
         </section>
+
+        <footer className="portal-landing-footer">
+          <span>tstplotconnect</span>
+          <nav>
+            <Link href="/about">About</Link>
+            <Link href="/blog">Blog</Link>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/contact">Contact</Link>
+          </nav>
+        </footer>
       </main>
     );
   }
