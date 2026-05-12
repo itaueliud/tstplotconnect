@@ -96,6 +96,15 @@ function listingImage(plot: Plot): string {
   return Array.isArray(plot.images) && plot.images[0] ? plot.images[0] : "";
 }
 
+function sanitizePhone(raw?: string): string {
+  const value = String(raw || "").trim();
+  if (!value) return "";
+  const startsWithPlus = value.startsWith("+");
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "";
+  return startsWithPlus ? `+${digits}` : digits;
+}
+
 function fmtDateTime(value?: string): string {
   if (!value) return "-";
   const date = new Date(value);
@@ -252,6 +261,34 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     const key = listingKey(plot);
     const inquiries = loadIds("tst_inquiry_listings");
     saveIds("tst_inquiry_listings", [...inquiries, key]);
+  }
+
+  function openLocation(plot: Plot) {
+    markViewed(plot);
+    const query = [plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ");
+    const href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || "Kenya")}`;
+    window.open(href, "_blank", "noopener,noreferrer");
+  }
+
+  function openCall(plot: Plot) {
+    markInquiry(plot);
+    const phone = sanitizePhone(plot.phone || plot.contact);
+    if (!phone) {
+      showError("This listing has no phone contact yet.");
+      return;
+    }
+    window.location.href = `tel:${phone}`;
+  }
+
+  function openWhatsApp(plot: Plot) {
+    markInquiry(plot);
+    const phone = sanitizePhone(plot.phone || plot.contact).replace(/^\+/, "");
+    if (!phone) {
+      showError("This listing has no WhatsApp number yet.");
+      return;
+    }
+    const href = `https://wa.me/${phone}`;
+    window.open(href, "_blank", "noopener,noreferrer");
   }
 
   async function loadPlots(nextFilters?: FilterState) {
@@ -925,9 +962,9 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     </div>
                     <div className="listing-actions">
                       <button type="button" className="listing-action" onClick={() => markSaved(plot)}>Save</button>
-                      <button type="button" className="listing-action" onClick={() => markInquiry(plot)}>Call</button>
-                      <button type="button" className="listing-action" onClick={() => markInquiry(plot)}>WhatsApp</button>
-                      <button type="button" className="listing-action" onClick={() => markViewed(plot)}>Location</button>
+                      <button type="button" className="listing-action" onClick={() => openCall(plot)}>Call</button>
+                      <button type="button" className="listing-action" onClick={() => openWhatsApp(plot)}>WhatsApp</button>
+                      <button type="button" className="listing-action" onClick={() => openLocation(plot)}>Location</button>
                     </div>
                   </div>
                 </article>
@@ -1004,6 +1041,11 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                         <p className="listing-location">
                           {[plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ") || "Location not specified"}
                         </p>
+                        <div className="listing-actions">
+                          <button type="button" className="listing-action" onClick={() => openCall(plot)}>Call</button>
+                          <button type="button" className="listing-action" onClick={() => openWhatsApp(plot)}>WhatsApp</button>
+                          <button type="button" className="listing-action" onClick={() => openLocation(plot)}>Location</button>
+                        </div>
                       </div>
                     </article>
                   );
