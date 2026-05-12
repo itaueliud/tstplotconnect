@@ -20,6 +20,12 @@ const COUNTRY_ALIASES: Record<string, CountrySlug> = {
   tz: "tanzania"
 };
 
+const SEO_COUNTY_SCOPE: Record<CountrySlug, string[]> = {
+  kenya: ["Machakos", "Nairobi", "Kitui", "Kajiado", "Kakamega", "Makueni", "Mombasa"],
+  uganda: ["Kampala", "Wakiso", "Mukono", "Jinja", "Mbarara"],
+  tanzania: ["Dar es Salaam", "Arusha", "Mwanza", "Dodoma", "Mbeya"]
+};
+
 export function slugify(input: string): string {
   return String(input || "")
     .normalize("NFKD")
@@ -85,19 +91,7 @@ async function fetchPlots(): Promise<Plot[]> {
 }
 
 export async function getCountiesForCountry(country: CountrySlug): Promise<string[]> {
-  const plots = await fetchPlots();
-  const fromPlots = new Set<string>();
-
-  for (const plot of plots) {
-    const resolvedCountry = resolveCountrySlug(String(plot.country || ""));
-    if (resolvedCountry !== country) continue;
-    const county = String(plot.county || plot.town || "").trim();
-    if (!county) continue;
-    fromPlots.add(titleCase(county));
-  }
-
-  const merged = new Set<string>([...countrySeeds[country], ...fromPlots]);
-  return [...merged].sort((a, b) => a.localeCompare(b));
+  return [...SEO_COUNTY_SCOPE[country]];
 }
 
 export async function getTownsForCounty(country: CountrySlug, county: string): Promise<string[]> {

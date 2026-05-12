@@ -17,15 +17,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!isCountry(country)) return {};
 
   const name = countryDisplayNames[country];
+  const seoCountyMap: Record<CountrySlug, string[]> = {
+    kenya: ["Machakos", "Nairobi", "Kitui", "Kajiado", "Kakamega", "Makueni", "Mombasa"],
+    uganda: ["Kampala", "Wakiso", "Mukono", "Jinja", "Mbarara"],
+    tanzania: ["Dar es Salaam", "Arusha", "Mwanza", "Dodoma", "Mbeya"]
+  };
+  const countyList = seoCountyMap[country];
+  const countySummary = countyList.join(", ");
 
   return {
     title: `${name} Counties | tstplotconnect`,
-    description: `Browse SEO-optimized county landing pages for ${name} and open filtered listings instantly on tstplotconnect.`,
+    description: `Browse SEO-optimized county landing pages for ${name}: ${countySummary}. Open filtered listings instantly on tstplotconnect.`,
     alternates: { canonical: `/main/${country}` },
-    keywords: [`${name} counties`, `${name} rentals`, `${name} plots`, `tstplotconnect ${name}`],
+    keywords: [
+      `${name} counties`,
+      `${name} rentals`,
+      `${name} plots`,
+      `tstplotconnect ${name}`,
+      ...countyList.map((countyName) => `${countyName} ${name} listings`),
+      ...countyList.map((countyName) => `${countyName} rentals`)
+    ],
     openGraph: {
       title: `${name} Counties | tstplotconnect`,
-      description: `Explore county-level listings in ${name}.`,
+      description: `Explore county-level listings in ${name}: ${countySummary}.`,
       url: `/main/${country}`
     }
   };
