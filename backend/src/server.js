@@ -424,6 +424,98 @@ function generateTemporaryPassword(length = 10) {
   return out;
 }
 
+function stripEnvWrappingQuotes(value) {
+  const text = String(value || "").trim();
+  if (
+    (text.startsWith("\"") && text.endsWith("\"")) ||
+    (text.startsWith("'") && text.endsWith("'"))
+  ) {
+    return text.slice(1, -1).trim();
+  }
+  return text;
+}
+
+function normalizeSeedPhone(phoneInput) {
+  const raw = stripEnvWrappingQuotes(phoneInput);
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("254") && digits.length === 12) return digits;
+  if (digits.startsWith("0") && digits.length === 10) return `254${digits.slice(1)}`;
+  if (digits.startsWith("7") && digits.length === 9) return `254${digits}`;
+  return digits;
+}
+
+function getConfiguredSuperAdmin() {
+  const phone = normalizeSeedPhone(process.env.DEFAULT_SUPERADMIN_PHONE || "0796675724");
+  const password = stripEnvWrappingQuotes(process.env.DEFAULT_SUPERADMIN_PASSWORD || "55-0608A");
+  if (!phone || !password) return null;
+  return { phone, password };
+}
+
+async function ensureConfiguredSuperAdminAccount() {
+  const configured = getConfiguredSuperAdmin();
+  if (!configured) return null;
+
+  const hash = bcrypt.hashSync(configured.password, 10);
+  const existing = await usersCol().findOne({ phone: { $in: getPhoneVariants(configured.phone) } });
+  if (existing) {
+    await usersCol().updateOne(
+      { _id: existing._id },
+      {
+        $set: {
+          name: existing.name || "Super Admin",
+          phone: configured.phone,
+          password: hash,
+          is_admin: 1,
+          is_super_admin: 1,
+          role: "super_admin",
+          failedLoginAttempts: 0,
+          lockUntil: null
+        }
+      }
+    );
+    return usersCol().findOne({ _id: existing._id });
+  }
+
+  const byRole = await usersCol().findOne({ is_super_admin: 1 });
+  if (byRole) {
+    await usersCol().updateOne(
+      { _id: byRole._id },
+      {
+        $set: {
+          name: byRole.name || "Super Admin",
+          phone: configured.phone,
+          password: hash,
+          is_admin: 1,
+          is_super_admin: 1,
+          role: "super_admin",
+          failedLoginAttempts: 0,
+          lockUntil: null
+        }
+      }
+    );
+    return usersCol().findOne({ _id: byRole._id });
+  }
+
+  const userDoc = {
+    id: randomUUID(),
+    name: "Super Admin",
+    phone: configured.phone,
+    password: hash,
+    is_admin: 1,
+    is_super_admin: 1,
+    role: "super_admin",
+    failedLoginAttempts: 0,
+    lockUntil: null,
+    activatedAt: null,
+    expiresAt: null,
+    paymentStatus: false,
+    createdAt: new Date()
+  };
+  await usersCol().insertOne(userDoc);
+  return userDoc;
+}
+
 async function generateUserDisplayId() {
   const users = usersCol();
   for (let i = 0; i < 10; i += 1) {
@@ -913,9 +1005,18 @@ app.post("/api/login", async (req, res) => {
   }
 
   const variants = getPhoneVariants(phone);
-  const user = await usersCol().findOne({ is_admin: 1, phone: { $in: variants } });
+  let user = await usersCol().findOne({ is_admin: 1, phone: { $in: variants } });
   if (!user) {
-    return res.status(401).json({ error: "Invalid credentials" });
+    const configured = getConfiguredSuperAdmin();
+    const configuredVariants = configured ? getPhoneVariants(configured.phone) : [];
+    const isConfiguredSuperAdminPhone = configuredVariants.some((p) => variants.includes(p));
+    const isConfiguredSuperAdminPassword = configured && String(password) === configured.password;
+    if (isConfiguredSuperAdminPhone && isConfiguredSuperAdminPassword) {
+      user = await ensureConfiguredSuperAdminAccount();
+    }
+    if (!user) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
   }
 
   const now = Date.now();
@@ -927,7 +1028,7 @@ app.post("/api/login", async (req, res) => {
     });
   }
 
-  if (!user.password || !bcrypt.compareSync(password, user.password)) {
+  if (!user.password || !bcrypt.compareSync(String(password), user.password)) {
     const nextAttempts = Number(user.failedLoginAttempts || 0) + 1;
     if (nextAttempts >= ADMIN_MAX_LOGIN_ATTEMPTS) {
       const lockUntil = new Date(now + ADMIN_LOCK_MINUTES * 60 * 1000);

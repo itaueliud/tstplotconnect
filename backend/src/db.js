@@ -61,6 +61,44 @@ function toDate(value, fallback = null) {
   return Number.isNaN(parsed.getTime()) ? fallback : parsed;
 }
 
+function stripEnvWrappingQuotes(value) {
+  const text = String(value || "").trim();
+  if (
+    (text.startsWith("\"") && text.endsWith("\"")) ||
+    (text.startsWith("'") && text.endsWith("'"))
+  ) {
+    return text.slice(1, -1).trim();
+  }
+  return text;
+}
+
+function normalizeSeedPhone(phoneInput) {
+  const raw = stripEnvWrappingQuotes(phoneInput);
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("254") && digits.length === 12) return digits;
+  if (digits.startsWith("0") && digits.length === 10) return `254${digits.slice(1)}`;
+  if (digits.startsWith("7") && digits.length === 9) return `254${digits}`;
+  return digits;
+}
+
+function getPhoneVariants(phoneInput) {
+  const raw = String(phoneInput || "").trim();
+  const digits = raw.replace(/\D/g, "");
+  const variants = new Set();
+  if (raw) variants.add(raw);
+  if (digits) variants.add(digits);
+  if (digits.startsWith("0") && digits.length === 10) {
+    variants.add(`254${digits.slice(1)}`);
+  } else if (digits.startsWith("254") && digits.length === 12) {
+    variants.add(`0${digits.slice(3)}`);
+  } else if (digits.startsWith("7") && digits.length === 9) {
+    variants.add(`0${digits}`);
+    variants.add(`254${digits}`);
+  }
+  return Array.from(variants);
+}
+
 async function initDb() {
   if (db) {
     return db;
@@ -342,16 +380,21 @@ async function syncUsersFromPayments() {
 }
 
 async function seedAdminUser() {
-  const adminPhone = "0796675724";
-  const adminPassword = "55-0608A";
+  const adminPhone = normalizeSeedPhone(process.env.DEFAULT_SUPERADMIN_PHONE || "0796675724");
+  const adminPassword = stripEnvWrappingQuotes(process.env.DEFAULT_SUPERADMIN_PASSWORD || "55-0608A");
   const hash = bcrypt.hashSync(adminPassword, 10);
 
-  const exists = await db.collection("users").findOne({ phone: adminPhone });
+  if (!adminPhone || !adminPassword) {
+    return;
+  }
+
+  const exists = await db.collection("users").findOne({ phone: { $in: getPhoneVariants(adminPhone) } });
   if (exists) {
     await db.collection("users").updateOne(
       { _id: exists._id },
       {
         $set: {
+          name: exists.name || "Super Admin",
           phone: adminPhone,
           password: hash,
           is_admin: 1,
@@ -371,6 +414,7 @@ async function seedAdminUser() {
       { _id: existingSuper._id },
       {
         $set: {
+          name: existingSuper.name || "Super Admin",
           phone: adminPhone,
           password: hash,
           is_admin: 1,
@@ -386,6 +430,7 @@ async function seedAdminUser() {
 
   await db.collection("users").insertOne({
     id: randomUUID(),
+    name: "Super Admin",
     phone: adminPhone,
     password: hash,
     is_admin: 1,
