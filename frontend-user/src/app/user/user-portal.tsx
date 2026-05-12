@@ -69,6 +69,7 @@ const CATEGORIES = [
 ] as const;
 
 const QUICK_CATEGORY_CHIPS = ["Hostels", "Bedsitters", "Lodges", "Apartments", "Plots for Sale"] as const;
+const COUNTY_HIGHLIGHTS = ["Nairobi", "Machakos", "Mombasa", "Kiambu", "Thika", "Makueni", "Kajiado", "Embu", "Kitui", "Uasin Gishu"] as const;
 
 function sameValue(left: string, right: string): boolean {
   return left.trim().toLowerCase() === right.trim().toLowerCase();
@@ -479,113 +480,60 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
 
   if (!isLoggedIn) {
     return (
-      <main className="container portal-auth-shell">
+      <main className="portal-landing-shell">
         {(message || error) && (
           <div className={`portal-toast ${error ? "is-error" : "is-success"}`}>
             {error || message}
           </div>
         )}
-        <section className="portal-auth-landing reveal-card">
-          <div className="portal-auth-stage">
-            <div className="portal-auth-glow portal-auth-glow-left" />
-            <div className="portal-auth-glow portal-auth-glow-right" />
-            <div className="portal-auth-story">
-              <span className="pill">tstplotconnect</span>
-              <h1>Welcome back to your trusted student housing space.</h1>
-              <p>
-                Discover verified stays near campuses, compare options quickly, and manage your profile from one secure workspace.
-              </p>
-              <div className="portal-auth-hero-media" aria-hidden="true">
-                <div className="portal-auth-hero-main">
-                  <img src="/favicon.svg" alt="" />
-                </div>
-                <div className="portal-auth-hero-bubble portal-auth-hero-bubble-one" />
-                <div className="portal-auth-hero-bubble portal-auth-hero-bubble-two" />
-              </div>
-              <div className="portal-auth-story-grid">
-                <div className="portal-auth-story-card">
-                  <strong>Verified places</strong>
-                  <span>Trusted listings with clear location and price details.</span>
-                </div>
-                <div className="portal-auth-story-card">
-                  <strong>Fast onboarding</strong>
-                  <span>Login or sign up in under a minute with your core details.</span>
-                </div>
-              </div>
-              <div className="portal-auth-why">
-                <article className="portal-auth-why-card">
-                  <h3>Why Choose TSTPlotConnect</h3>
-                  <p>
-                    We reduce housing stress by giving students and customers one verified place to discover, compare,
-                    and contact listings with confidence.
-                  </p>
-                </article>
-                <article className="portal-auth-why-card">
-                  <h3>Our Purpose</h3>
-                  <p>
-                    To make housing discovery clearer, safer, and faster through trusted data, transparent pricing,
-                    and practical filters that match real needs.
-                  </p>
-                </article>
-                <article className="portal-auth-why-card">
-                  <h3>Our Mission</h3>
-                  <p>
-                    Connect every user to the right room, bedsitter, hostel, or apartment while improving trust between
-                    renters and property providers.
-                  </p>
-                </article>
-              </div>
+        <header className="portal-landing-nav">
+          <a href="/" className="portal-landing-brand">tstplotconnect</a>
+          <nav className="portal-landing-links">
+            <a href="/about">About</a>
+            <a href="/blog">Blog</a>
+            <a href="/contact">Contact</a>
+          </nav>
+          <div className="portal-landing-actions">
+            <button type="button" className="portal-landing-action-muted" onClick={() => setAuthView("login")}>Sign in</button>
+            <button type="button" className="portal-landing-action-strong" onClick={() => setAuthView("register")}>Get started</button>
+          </div>
+        </header>
+
+        <section className="portal-landing-hero">
+          <div className="portal-landing-left">
+            <span className="portal-landing-kicker">KE Kenya - Uganda - Tanzania</span>
+            <h1>Browse verified rentals, hostels &amp; plots - fast.</h1>
+            <p>
+              Create a free account and unlock full access to caretaker contacts, WhatsApp details, and property images with one small KES 50 activation via M-Pesa.
+            </p>
+            <ul>
+              <li><strong>Register free</strong> - takes under a minute, just a phone number and password.</li>
+              <li><strong>Activate for KES 50</strong> - one M-Pesa STK push unlocks 24 hours of full access.</li>
+              <li><strong>View contacts &amp; images</strong> - caretaker phone, WhatsApp, and all listing photos revealed.</li>
+              <li><strong>Filter by county &amp; category</strong> - Nairobi, Machakos, Mombasa and more.</li>
+            </ul>
+          </div>
+
+          <div className="portal-landing-right">
+            <div className="portal-landing-tabs">
+              <button type="button" className={authView === "login" ? "is-active" : ""} onClick={() => setAuthView("login")}>Sign in</button>
+              <button type="button" className={authView === "register" ? "is-active" : ""} onClick={() => setAuthView("register")}>Register</button>
             </div>
-
-            <div className="card portal-auth-panel">
-              <div className="portal-auth-panel-top">
-                <div>
-                  <span className="pill">Welcome</span>
-                  <h2>
-                    {authView === "login"
-                      ? "Login to continue"
-                      : authView === "register"
-                        ? "Create your account"
-                        : "Reset your password"}
-                  </h2>
-                  <p className="meta">
-                    {authView === "login"
-                      ? "Access your private dashboard and continue where you left off."
-                      : authView === "register"
-                        ? "Sign up in seconds and unlock your personalized dashboard."
-                        : "Request an OTP, verify it, and get back into your account quickly."}
-                  </p>
-                </div>
-
-                <div className="portal-auth-switcher" aria-label="Authentication views">
-                  <button
-                    type="button"
-                    className={`portal-auth-tab ${authView === "login" ? "is-active" : ""}`}
-                    onClick={() => setAuthView("login")}
-                  >
-                    Login
-                  </button>
-                  <button
-                    type="button"
-                    className={`portal-auth-tab ${authView === "register" ? "is-active" : ""}`}
-                    onClick={() => setAuthView("register")}
-                  >
-                    Sign up
-                  </button>
-                </div>
-              </div>
+            <div className="portal-landing-auth-card">
+              <h2>{authView === "register" ? "Create account" : authView === "recover" ? "Reset password" : "Welcome back"}</h2>
+              <p>{authView === "register" ? "Register to continue to your dashboard and listings." : "Sign in to continue to your dashboard and listings."}</p>
 
               {authView === "login" && (
                 <div className="portal-auth-form">
                   <div className="grid" style={{ gridTemplateColumns: "1fr", gap: "0.9rem" }}>
-                    <input className="portal-input" placeholder="Phone number" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} />
-                    <PasswordField placeholder="Password" value={loginPassword} onChange={setLoginPassword} />
+                    <input className="portal-input" placeholder="e.g. 0712 345 678" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} />
+                    <PasswordField placeholder="Your password" value={loginPassword} onChange={setLoginPassword} />
                   </div>
-                  <button className="btn btn-primary portal-auth-submit" onClick={loginUser} disabled={busy}>
-                    {busy ? "Signing you in..." : "Login"}
+                  <button className="btn portal-landing-submit" onClick={loginUser} disabled={busy}>
+                    {busy ? "Signing in..." : "Sign in"}
                   </button>
                   <button type="button" className="portal-inline-link" onClick={() => setAuthView("recover")}>
-                    Forgot your password?
+                    Forgot password? Request OTP
                   </button>
                 </div>
               )}
@@ -604,10 +552,9 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     <PasswordField placeholder="Create password" value={registerPassword} onChange={setRegisterPassword} />
                     <PasswordField placeholder="Confirm password" value={registerConfirmPassword} onChange={setRegisterConfirmPassword} />
                   </div>
-                  <button className="btn btn-primary portal-auth-submit" onClick={registerUser} disabled={busy}>
-                    {busy ? "Creating your account..." : "Sign up"}
+                  <button className="btn portal-landing-submit" onClick={registerUser} disabled={busy}>
+                    {busy ? "Creating account..." : "Register"}
                   </button>
-                  <p className="meta portal-auth-footnote">You can activate access right after signing in.</p>
                 </div>
               )}
 
@@ -619,16 +566,10 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     <PasswordField placeholder="New password" value={otpNewPassword} onChange={setOtpNewPassword} />
                   </div>
                   <div className="portal-auth-action-row">
-                    <button className="btn btn-secondary" onClick={requestCode} disabled={busy}>
-                      Request OTP
-                    </button>
-                    <button className="btn btn-primary" onClick={verifyCodeAndReset} disabled={busy}>
-                      {busy ? "Updating..." : "Reset password"}
-                    </button>
+                    <button className="btn btn-secondary" onClick={requestCode} disabled={busy}>Request OTP</button>
+                    <button className="btn portal-landing-submit" onClick={verifyCodeAndReset} disabled={busy}>{busy ? "Updating..." : "Reset password"}</button>
                   </div>
-                  <button type="button" className="portal-inline-link" onClick={() => setAuthView("login")}>
-                    Back to login
-                  </button>
+                  <button type="button" className="portal-inline-link" onClick={() => setAuthView("login")}>Back to login</button>
                 </div>
               )}
 
@@ -638,6 +579,38 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                 </section>
               )}
             </div>
+          </div>
+        </section>
+
+        <section className="portal-landing-stats">
+          <div><strong>1,200+</strong><span>Listings</span></div>
+          <div><strong>30+</strong><span>Counties</span></div>
+          <div><strong>3</strong><span>Countries</span></div>
+          <div><strong>KES 50</strong><span>Full access</span></div>
+          <p>"Find your next home without the hassle."</p>
+        </section>
+
+        <section className="portal-landing-feature-row">
+          <article className="portal-landing-feature-card">
+            <h3>Contacts unlocked on activation</h3>
+            <p>After your KES 50 M-Pesa payment, caretaker name, phone number, and WhatsApp link are fully visible on every listing.</p>
+          </article>
+          <article className="portal-landing-feature-card">
+            <h3>Real property photos</h3>
+            <p>All listing images are shown to activated users. Non-activated accounts see a placeholder - no more guessing what a property looks like.</p>
+          </article>
+          <article className="portal-landing-feature-card">
+            <h3>Filter by county &amp; category</h3>
+            <p>Narrow down by country, county, area, category, and price range to find the exact type of rental you need, fast.</p>
+          </article>
+        </section>
+
+        <section className="portal-landing-counties">
+          <h4>Browse by county</h4>
+          <div>
+            {COUNTY_HIGHLIGHTS.map((county) => (
+              <button key={county} type="button" onClick={() => setFilters((f) => ({ ...f, county }))}>{county}</button>
+            ))}
           </div>
         </section>
       </main>

@@ -2986,3 +2986,291 @@ body {
     background: rgba(37, 99, 235, 0.1);
   }
 }
+/* Screenshot-style public user landing */
+.portal-landing-shell {
+  min-height: 100vh;
+  background: #f3f2ef;
+  color: #0f172a;
+}
+
+.portal-landing-nav {
+  height: 42px;
+  background: #ffffff;
+  border-bottom: 1px solid #d9dedb;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 28px;
+}
+
+.portal-landing-brand {
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: #0c5b35;
+}
+
+.portal-landing-links {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.portal-landing-actions {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.portal-landing-action-muted,
+.portal-landing-action-strong {
+  border-radius: 10px;
+  min-height: 34px;
+  padding: 0 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.portal-landing-action-muted {
+  border: 1px solid #0d5f3a;
+  background: #fff;
+  color: #0d5f3a;
+}
+
+.portal-landing-action-strong {
+  border: 1px solid #0d5f3a;
+  background: #0d5f3a;
+  color: #fff;
+}
+
+.portal-landing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 430px);
+  background: #0f5f39;
+  min-height: 470px;
+}
+
+.portal-landing-left {
+  padding: 50px 36px 24px;
+  color: #e6f7ed;
+}
+
+.portal-landing-kicker {
+  display: inline-flex;
+  border: 1px solid rgba(193, 236, 211, 0.5);
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.portal-landing-left h1 {
+  margin: 1.1rem 0 0.85rem;
+  color: #ffffff;
+  font-size: clamp(2.05rem, 4vw, 3.25rem);
+  line-height: 1.03;
+  max-width: 12ch;
+}
+
+.portal-landing-left p {
+  margin: 0;
+  font-size: 1.04rem;
+  line-height: 1.6;
+  max-width: 55ch;
+}
+
+.portal-landing-left ul {
+  margin: 1.7rem 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.72rem;
+}
+
+.portal-landing-left li {
+  color: #d7f5e5;
+  line-height: 1.55;
+}
+
+.portal-landing-left li strong {
+  color: #ffffff;
+}
+
+.portal-landing-right {
+  background: #efefef;
+  border-left: 1px solid #d2d6d2;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.portal-landing-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+.portal-landing-tabs button {
+  min-height: 45px;
+  border: 0;
+  background: transparent;
+  color: #667085;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.portal-landing-tabs button.is-active {
+  color: #0f5f39;
+  box-shadow: inset 0 -2px 0 #0f5f39;
+}
+
+.portal-landing-auth-card {
+  padding: 22px 28px;
+}
+
+.portal-landing-auth-card h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+}
+
+.portal-landing-auth-card p {
+  margin: 0.4rem 0 1.2rem;
+  color: #64748b;
+}
+
+.portal-landing-submit {
+  width: 100%;
+  border: 0;
+  background: #0f5f39;
+  color: #fff;
+  min-height: 40px;
+  margin-top: 0.8rem;
+}
+
+.portal-landing-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(280px, 1fr);
+  align-items: center;
+  gap: 1rem;
+  background: #171717;
+  color: #fff;
+  padding: 16px 36px;
+}
+
+.portal-landing-stats > div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.portal-landing-stats strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.portal-landing-stats span {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.portal-landing-stats p {
+  margin: 0;
+  color: #d1d5db;
+  text-align: right;
+  font-style: italic;
+}
+
+.portal-landing-feature-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1.2rem 2rem;
+}
+
+.portal-landing-feature-card {
+  background: #efeeea;
+  border: 1px solid #d9d5cf;
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+}
+
+.portal-landing-feature-card h3 {
+  margin: 0 0 0.5rem;
+  color: #0f172a;
+}
+
+.portal-landing-feature-card p {
+  margin: 0;
+  color: #5b6574;
+  line-height: 1.6;
+}
+
+.portal-landing-counties {
+  border-top: 1px solid #d6dbd7;
+  padding: 1.2rem 2rem 2rem;
+}
+
+.portal-landing-counties h4 {
+  margin: 0 0 0.8rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+}
+
+.portal-landing-counties div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.portal-landing-counties button {
+  border: 1px solid #c9cfcc;
+  background: #fff;
+  color: #334155;
+  border-radius: 999px;
+  min-height: 36px;
+  padding: 0 0.95rem;
+  cursor: pointer;
+}
+
+@media (max-width: 980px) {
+  .portal-landing-nav {
+    grid-template-columns: 1fr;
+    height: auto;
+    gap: 0.6rem;
+    padding: 0.7rem 1rem;
+  }
+
+  .portal-landing-links {
+    justify-content: flex-start;
+  }
+
+  .portal-landing-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .portal-landing-right {
+    border-left: 0;
+    border-top: 1px solid #d2d6d2;
+  }
+
+  .portal-landing-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .portal-landing-stats p {
+    text-align: left;
+    grid-column: 1 / -1;
+  }
+
+  .portal-landing-feature-row {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .portal-landing-counties {
+    padding: 1rem;
+  }
+}
