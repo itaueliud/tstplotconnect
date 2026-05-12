@@ -488,10 +488,18 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           </div>
         )}
         <header className="portal-landing-nav">
-          <Link href="/" className="portal-landing-brand">tstplotconnect</Link>
+          <Link href="/" className="portal-landing-brand" aria-label="tstplotconnect home">
+            <span className="portal-brand-wordmark">
+              <span className="tst">tst</span>
+              <span className="plot">plot</span>
+              <span className="connect">connect</span>
+            </span>
+            <span className="portal-brand-tagline">Verified rentals across Kenya, Uganda &amp; Tanzania</span>
+          </Link>
           <nav className="portal-landing-links">
             <Link href="/about">About</Link>
             <Link href="/blog">Blog</Link>
+            <Link href="/privacy">Privacy</Link>
             <Link href="/contact">Contact</Link>
           </nav>
           <div className="portal-landing-actions">
