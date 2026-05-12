@@ -6,7 +6,7 @@ import { apiRequest } from "@/lib/api";
 import { clearUserSession, readUserSession, type StoredUser } from "./user-session";
 
 type Props = {
-  active: "dashboard" | "listings" | "payments" | "profile" | "about" | "contact";
+  active: "dashboard" | "search" | "map" | "saved" | "payments" | "profile" | "about" | "contact";
   children: ReactNode;
 };
 
@@ -146,7 +146,9 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
           </div>
           <nav className="portal-side-links" aria-label="Dashboard side navigation">
             <NavLink href="/user" label="Overview" navKey="overview" active={active === "dashboard"} onNavigate={() => setMenuOpen(false)} />
-            <NavLink href="/user#listings" label="My Listings" navKey="listings" active={active === "listings"} onNavigate={() => setMenuOpen(false)} />
+            <NavLink href="/user#search" label="Search" navKey="listings" active={active === "search"} onNavigate={() => setMenuOpen(false)} />
+            <NavLink href="/user#map" label="Map" navKey="overview" active={active === "map"} onNavigate={() => setMenuOpen(false)} />
+            <NavLink href="/user#saved" label="Saved" navKey="profile" active={active === "saved"} onNavigate={() => setMenuOpen(false)} />
             <NavLink href="/payments" label="Payments" navKey="payments" active={active === "payments"} onNavigate={() => setMenuOpen(false)} />
             <NavLink href="/profile" label="Profile" navKey="profile" active={active === "profile"} onNavigate={() => setMenuOpen(false)} />
             <NavLink href="/about" label="About" navKey="about" active={active === "about"} onNavigate={() => setMenuOpen(false)} />
@@ -186,25 +188,23 @@ export default function AuthenticatedUserShell({ active, children }: Props) {
             </div>
           </header>
           {children}
-          {!menuOpen && (
           <nav className="portal-mobile-bottom-nav" aria-label="Mobile quick navigation">
             <Link href="/user" className={active === "dashboard" ? "is-active" : ""}>
               <span>Home</span>
             </Link>
-            <Link href="/user#listings" className={active === "listings" ? "is-active" : ""}>
+            <Link href="/user#search" className={active === "search" ? "is-active" : ""}>
               <span>Search</span>
             </Link>
-            <Link href="/main">
+            <Link href="/user#map" className={active === "map" ? "is-active" : ""}>
               <span>Map</span>
             </Link>
-            <Link href="/user#saved">
+            <Link href="/user#saved" className={active === "saved" ? "is-active" : ""}>
               <span>Saved</span>
             </Link>
             <Link href="/profile" className={active === "profile" ? "is-active" : ""}>
               <span>Profile</span>
             </Link>
           </nav>
-          )}
         </div>
       </div>
     </main>

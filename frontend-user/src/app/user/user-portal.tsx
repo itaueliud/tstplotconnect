@@ -131,7 +131,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   const [status, setStatus] = useState<UserStatus | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
   const [authView, setAuthView] = useState<"login" | "register" | "recover">("login");
-  const [activeSection, setActiveSection] = useState<"dashboard" | "listings">("dashboard");
+  const [activeSection, setActiveSection] = useState<"dashboard" | "search" | "map" | "saved">("dashboard");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [registerName, setRegisterName] = useState("");
@@ -208,6 +208,16 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     if (savedIds.size === 0) return [];
     return plots.filter((plot) => savedIds.has(listingKey(plot)));
   }, [plots]);
+
+  const mapQuery = useMemo(() => {
+    const value = [filters.county, filters.country].filter(Boolean).join(", ");
+    return value || "Kenya";
+  }, [filters.county, filters.country]);
+
+  const mapEmbedUrl = useMemo(() => {
+    const query = encodeURIComponent(mapQuery);
+    return `https://www.openstreetmap.org/export/embed.html?layer=mapnik&marker=0.3476%2C32.5825&q=${query}`;
+  }, [mapQuery]);
 
   function showSuccess(text: string) {
     setMessage(text);
@@ -431,7 +441,20 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
 
   useEffect(() => {
     const applyHash = () => {
-      setActiveSection(window.location.hash === "#listings" ? "listings" : "dashboard");
+      const hash = window.location.hash.toLowerCase();
+      if (hash === "#search" || hash === "#listings") {
+        setActiveSection("search");
+        return;
+      }
+      if (hash === "#map") {
+        setActiveSection("map");
+        return;
+      }
+      if (hash === "#saved") {
+        setActiveSection("saved");
+        return;
+      }
+      setActiveSection("dashboard");
     };
     applyHash();
     window.addEventListener("hashchange", applyHash);
@@ -637,7 +660,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           {error || message}
         </div>
       )}
-        {activeSection !== "listings" && (
+        {activeSection === "dashboard" && (
           <section className="portal-hero portal-hero-surface reveal-card" id="dashboard">
             <div className="portal-hero-copy">
               <span className="pill" style={{ width: "fit-content", marginBottom: "0.7rem" }}>User dashboard</span>
@@ -667,7 +690,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           </section>
         )}
 
-        {activeSection !== "listings" && (
+        {activeSection === "dashboard" && (
           <section className="portal-dashboard-grid">
         <article className="card portal-status-card reveal-card">
           <div className="portal-status-header">
@@ -745,7 +768,8 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           </section>
         )}
 
-          <section className="card portal-filter-card reveal-card" id="listings">
+          {(activeSection === "dashboard" || activeSection === "search") && (
+          <section className="card portal-filter-card reveal-card" id="search">
         <div className="portal-filter-header">
           <div>
             <span className="pill">Filters</span>
@@ -814,6 +838,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           <input className="portal-input" placeholder="Max price" value={filters.maxPrice} onChange={(e) => setFilters((f) => ({ ...f, maxPrice: e.target.value }))} />
         </div>
           </section>
+          )}
 
           {filtersOpen && (
             <div className="portal-filter-overlay" onClick={() => setFiltersOpen(false)}>
@@ -862,6 +887,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
             </div>
           )}
 
+          {(activeSection === "dashboard" || activeSection === "search") && (
           <section className="card portal-listings-card reveal-card">
         <div className="portal-filter-header">
           <div>
@@ -910,7 +936,44 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
           </div>
         )}
           </section>
+          )}
 
+          {(activeSection === "dashboard" || activeSection === "map") && (
+            <section className="card portal-listings-card reveal-card" id="map">
+              <div className="portal-filter-header">
+                <div>
+                  <span className="pill">Map</span>
+                  <h2 style={{ margin: "0.55rem 0 0.25rem" }}>Listings map</h2>
+                  <p className="meta" style={{ margin: 0 }}>
+                    View the current area on map and open directions for each listing location.
+                  </p>
+                </div>
+                <span className="portal-results-count">{mapQuery}</span>
+              </div>
+              <div style={{ borderRadius: "14px", overflow: "hidden", border: "1px solid rgba(148, 163, 184, 0.28)" }}>
+                <iframe
+                  title="Listings map"
+                  src={mapEmbedUrl}
+                  style={{ width: "100%", height: "360px", border: 0 }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+              <div className="portal-chip-row" style={{ marginTop: "0.9rem" }}>
+                {filtered.slice(0, 12).map((plot) => {
+                  const q = encodeURIComponent([plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", "));
+                  const href = `https://www.google.com/maps/search/?api=1&query=${q}`;
+                  return (
+                    <a key={`map-${listingKey(plot)}`} className="portal-chip" href={href} target="_blank" rel="noreferrer">
+                      {plot.title || "Listing"} - Open map
+                    </a>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {(activeSection === "dashboard" || activeSection === "saved") && (
           <section className="card portal-listings-card reveal-card" id="saved">
             <div className="portal-filter-header">
               <div>
@@ -948,6 +1011,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
               </div>
             )}
           </section>
+          )}
     </AuthenticatedUserShell>
   );
 }
