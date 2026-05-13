@@ -123,6 +123,16 @@ function timeRemainingLabel(status: UserStatus | null): string {
   return `${hours}h ${minutes}m remaining`;
 }
 
+function isLockedContactValue(value?: string): boolean {
+  return sameValue(String(value || ""), "locked");
+}
+
+function normalizeDisplayContact(value?: string): string {
+  const text = String(value || "").trim();
+  if (!text || isLockedContactValue(text)) return "";
+  return text;
+}
+
 function loadIds(key: string): string[] {
   if (typeof window === "undefined") return [];
   try {
@@ -251,6 +261,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   const [otpNewPassword, setOtpNewPassword] = useState("");
 
   const isLoggedIn = Boolean(token && user);
+  const isAccountActive = Boolean(status?.active);
 
   const availableCategories = useMemo(() => {
     const dynamic = plots.map((plot) => String(plot.category || "").trim()).filter(Boolean);
@@ -325,8 +336,10 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       const rawMapLink = String(plot.mapLink || "").trim();
       if (rawMapLink) {
-        window.open(rawMapLink, "_blank", "noopener,noreferrer");
-        showSuccess(`Opened map link for ${plot.title || "selected listing"}.`);
+        const query = [plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ") || rawMapLink;
+        const searchQuery = encodeURIComponent(query);
+        window.open(`https://www.openstreetmap.org/search?query=${searchQuery}`, "_blank", "noopener,noreferrer");
+        showSuccess(`Opened mapped location for ${plot.title || "selected listing"}.`);
         return;
       }
       const query = [plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ");
@@ -405,20 +418,28 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   }
 
   function openCall(plot: Plot) {
+    if (!isAccountActive) {
+      showError("Your account is inactive. Activate your account to unlock call and contact details.");
+      return;
+    }
     markInquiry(plot);
-    const phone = sanitizePhone(plot.caretaker || plot.whatsapp || plot.phone || plot.contact);
+    const phone = sanitizePhone(plot.caretaker);
     if (!phone) {
-      showError("This listing has no phone contact yet.");
+      showError("Caretaker phone is not set for this listing.");
       return;
     }
     window.location.href = `tel:${phone}`;
   }
 
   function openWhatsApp(plot: Plot) {
+    if (!isAccountActive) {
+      showError("Your account is inactive. Activate your account to unlock WhatsApp and contact details.");
+      return;
+    }
     markInquiry(plot);
-    const phone = sanitizePhone(plot.whatsapp || plot.caretaker || plot.phone || plot.contact).replace(/^\+/, "");
+    const phone = sanitizePhone(plot.whatsapp).replace(/^\+/, "");
     if (!phone) {
-      showError("This listing has no WhatsApp number yet.");
+      showError("WhatsApp number is not set for this listing.");
       return;
     }
     const href = `https://wa.me/${phone}`;
@@ -1118,12 +1139,15 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     </p>
                     <p className="listing-description">{plot.description || "Verified listing on tstplotconnect."}</p>
                     <div className="listing-contact" style={{ marginTop: "0.5rem", fontSize: "0.97em", color: "#0f766e" }}>
-                      <strong>Contact:</strong> {plot.caretaker || plot.whatsapp || plot.phone || plot.contact || "Not provided"}
+                      <strong>Caretaker:</strong> {normalizeDisplayContact(plot.caretaker) || (isAccountActive ? "Not provided" : "Locked")}
+                    </div>
+                    <div className="listing-contact" style={{ marginTop: "0.3rem", fontSize: "0.97em", color: "#0f766e" }}>
+                      <strong>WhatsApp:</strong> {normalizeDisplayContact(plot.whatsapp) || (isAccountActive ? "Not provided" : "Locked")}
                     </div>
                     <div className="listing-actions">
                       <button type="button" className="listing-action" onClick={() => markSaved(plot)}>Save</button>
-                      <button type="button" className="listing-action" onClick={() => openCall(plot)}>Call</button>
-                      <button type="button" className="listing-action" onClick={() => openWhatsApp(plot)}>WhatsApp</button>
+                      <button type="button" className="listing-action" onClick={() => openCall(plot)} disabled={!isAccountActive}>Call</button>
+                      <button type="button" className="listing-action" onClick={() => openWhatsApp(plot)} disabled={!isAccountActive}>WhatsApp</button>
                       <button type="button" className="listing-action" onClick={() => openLocation(plot)}>Location</button>
                     </div>
                   </div>
@@ -1230,9 +1254,15 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                         <p className="listing-location">
                           {[plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ") || "Location not specified"}
                         </p>
+                        <div className="listing-contact" style={{ marginTop: "0.5rem", fontSize: "0.97em", color: "#0f766e" }}>
+                          <strong>Caretaker:</strong> {normalizeDisplayContact(plot.caretaker) || (isAccountActive ? "Not provided" : "Locked")}
+                        </div>
+                        <div className="listing-contact" style={{ marginTop: "0.3rem", fontSize: "0.97em", color: "#0f766e" }}>
+                          <strong>WhatsApp:</strong> {normalizeDisplayContact(plot.whatsapp) || (isAccountActive ? "Not provided" : "Locked")}
+                        </div>
                         <div className="listing-actions">
-                          <button type="button" className="listing-action" onClick={() => openCall(plot)}>Call</button>
-                          <button type="button" className="listing-action" onClick={() => openWhatsApp(plot)}>WhatsApp</button>
+                          <button type="button" className="listing-action" onClick={() => openCall(plot)} disabled={!isAccountActive}>Call</button>
+                          <button type="button" className="listing-action" onClick={() => openWhatsApp(plot)} disabled={!isAccountActive}>WhatsApp</button>
                           <button type="button" className="listing-action" onClick={() => openLocation(plot)}>Location</button>
                         </div>
                       </div>
