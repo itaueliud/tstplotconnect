@@ -391,10 +391,14 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     });
   }
 
-  function markSaved(plot: Plot) {
+  function toggleSaved(plot: Plot) {
     const key = listingKey(plot);
     const saved = loadIds("tst_saved_listings");
-    if (saved.includes(key)) return;
+    if (saved.includes(key)) {
+      saveIds("tst_saved_listings", saved.filter((id) => id !== key));
+      showSuccess("Listing removed from saved.");
+      return;
+    }
     saveIds("tst_saved_listings", [...saved, key]);
     showSuccess("Listing saved to your profile.");
   }
@@ -1076,6 +1080,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
               const images = listingImages(plot);
               const imageCount = images.length;
               const index = imageCount > 0 ? ((imageIndexByListing[listingKey(plot)] || 0) % imageCount + imageCount) % imageCount : 0;
+              const plotSaved = isSaved(plot);
               return (
                 <article key={plot.id || `${plot.title}-${plot.area}`} className="listing-card">
                   <div
@@ -1085,12 +1090,12 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     <span className="listing-badge">{plot.category || "Property"}</span>
                     <button
                       type="button"
-                      className="listing-save-icon"
-                      onClick={() => markSaved(plot)}
-                      aria-label={isSaved(plot) ? "Saved listing" : "Save listing"}
-                      title={isSaved(plot) ? "Saved" : "Save"}
+                      className={`listing-save-icon ${plotSaved ? "is-saved" : "is-unsaved"}`}
+                      onClick={() => toggleSaved(plot)}
+                      aria-label={plotSaved ? "Unsave listing" : "Save listing"}
+                      title={plotSaved ? "Unsave" : "Save"}
                     >
-                      {isSaved(plot) ? "♥" : "♡"}
+                      {plotSaved ? "\u2665" : "\u2661"}
                     </button>
                     <div className="listing-price">{formatPrice(plot.price)}</div>
                     {imageCount > 1 && (
@@ -1111,16 +1116,6 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                         >
                           →
                         </button>
-                        <button
-                          type="button"
-                          className="listing-image-back"
-                          style={{ position: "absolute", bottom: 8, left: 8 }}
-                          onClick={() => shiftListingImage(plot, -1)}
-                          aria-label="Previous image"
-                          title="Previous image"
-                        >
-                          ←
-                        </button>
                       </>
                     )}
                   </div>
@@ -1139,7 +1134,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     <div className="listing-actions">
                       <button type="button" className="listing-action listing-action-call" onClick={() => openCall(plot)} disabled={!isAccountActive}>Call</button>
                       <button type="button" className="listing-action listing-action-whatsapp" onClick={() => openWhatsApp(plot)} disabled={!isAccountActive}>WhatsApp</button>
-                      <button type="button" className="listing-action" onClick={() => openLocation(plot)}>Location</button>
+                      <button type="button" className="listing-action listing-action-location" onClick={() => openLocation(plot)}>Location</button>
                     </div>
                   </div>
                 </article>
@@ -1208,6 +1203,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                   const images = listingImages(plot);
                   const imageCount = images.length;
                   const index = imageCount > 0 ? ((imageIndexByListing[listingKey(plot)] || 0) % imageCount + imageCount) % imageCount : 0;
+                  const plotSaved = isSaved(plot);
                   return (
                     <article key={`saved-${listingKey(plot)}`} className="listing-card">
                       <div
@@ -1217,11 +1213,12 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                         <span className="listing-badge">{plot.category || "Property"}</span>
                         <button
                           type="button"
-                          className="listing-save-icon"
-                          aria-label="Saved listing"
-                          title="Saved"
+                          className={`listing-save-icon ${plotSaved ? "is-saved" : "is-unsaved"}`}
+                          onClick={() => toggleSaved(plot)}
+                          aria-label={plotSaved ? "Unsave listing" : "Save listing"}
+                          title={plotSaved ? "Unsave" : "Save"}
                         >
-                          ♥
+                          {plotSaved ? "\u2665" : "\u2661"}
                         </button>
                         <div className="listing-price">{formatPrice(plot.price)}</div>
                         {imageCount > 1 && (
@@ -1242,16 +1239,6 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                             >
                               →
                             </button>
-                            <button
-                              type="button"
-                              className="listing-image-back"
-                              style={{ position: "absolute", bottom: 8, left: 8 }}
-                              onClick={() => shiftListingImage(plot, -1)}
-                              aria-label="Previous image"
-                              title="Previous image"
-                            >
-                              ←
-                            </button>
                           </>
                         )}
                       </div>
@@ -1269,7 +1256,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                         <div className="listing-actions">
                           <button type="button" className="listing-action listing-action-call" onClick={() => openCall(plot)} disabled={!isAccountActive}>Call</button>
                           <button type="button" className="listing-action listing-action-whatsapp" onClick={() => openWhatsApp(plot)} disabled={!isAccountActive}>WhatsApp</button>
-                          <button type="button" className="listing-action" onClick={() => openLocation(plot)}>Location</button>
+                          <button type="button" className="listing-action listing-action-location" onClick={() => openLocation(plot)}>Location</button>
                         </div>
                       </div>
                     </article>

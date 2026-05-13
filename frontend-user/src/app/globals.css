@@ -1964,6 +1964,23 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: transform 140ms ease, background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.listing-save-icon:hover {
+  transform: translateY(-1px);
+}
+
+.listing-save-icon.is-saved {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #fff;
+}
+
+.listing-save-icon.is-unsaved {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(148, 163, 184, 0.28);
+  color: #475569;
 }
 
 .listing-image-back {
@@ -2030,6 +2047,18 @@ body {
   background: #15803d;
   border-color: #15803d;
   color: #fff;
+}
+
+.listing-action-location {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.listing-action-location:hover {
+  background: #eef2ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
 }
 
 .listing-body h3 {

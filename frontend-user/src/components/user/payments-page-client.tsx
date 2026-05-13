@@ -175,24 +175,6 @@ export default function PaymentsPageClient() {
             </div>
           )}
         </div>
-        <div className="portal-hero-overview">
-          <article className="portal-overview-card">
-            <span>Total payments</span>
-            <strong>{payments.length}</strong>
-          </article>
-          <article className="portal-overview-card">
-            <span>Successful</span>
-            <strong>{successful.length}</strong>
-          </article>
-          <article className="portal-overview-card">
-            <span>Unsuccessful</span>
-            <strong>{unsuccessful.length}</strong>
-          </article>
-          <article className="portal-overview-card">
-            <span>Activation</span>
-            <strong>{countdown(status)}</strong>
-          </article>
-        </div>
       </section>
 
       {sessionReady && token && (
