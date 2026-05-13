@@ -112,6 +112,22 @@ function timeRemainingLabel(status: UserStatus | null): string {
   return `${hours}h ${minutes}m remaining`;
 }
 
+function formatPhoneForTel(phone?: string): string {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("254")) return `+${digits}`;
+  if (digits.startsWith("0")) return `+254${digits.slice(1)}`;
+  return `+${digits}`;
+}
+
+function formatPhoneForWhatsApp(phone?: string): string {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("254")) return digits;
+  if (digits.startsWith("0")) return `254${digits.slice(1)}`;
+  return digits;
+}
+
 export default function UserPortal({ initialCountry, initialCounty, initialTown, initialCategory }: Props) {
   const [token, setToken] = useState("");
   const [user, setUser] = useState<User | null>(null);
@@ -831,7 +847,37 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
                     </p>
                     <p className="listing-description">{plot.description || "Verified listing on tstplotconnect."}</p>
                     <div className="listing-contact" style={{ marginTop: "0.5rem", fontSize: "0.97em", color: "#0f766e" }}>
-                      <strong>Contact:</strong> {plot.caretaker || plot.whatsapp || plot.phone || plot.contact || "Not provided"}
+                      {status?.active ? (
+                        <>
+                          <strong>Contact:</strong> {plot.caretaker || plot.whatsapp || plot.phone || plot.contact || "Not provided"}
+                          <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
+                            {formatPhoneForTel(plot.phone || plot.contact) ? (
+                              <a
+                                className="btn btn-secondary"
+                                href={`tel:${formatPhoneForTel(plot.phone || plot.contact)}`}
+                                style={{ padding: "0.5rem 0.75rem", fontSize: "0.86rem" }}
+                              >
+                                Call
+                              </a>
+                            ) : null}
+                            {formatPhoneForWhatsApp(plot.whatsapp || plot.phone || plot.contact) ? (
+                              <a
+                                className="btn btn-primary"
+                                href={`https://wa.me/${formatPhoneForWhatsApp(plot.whatsapp || plot.phone || plot.contact)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ padding: "0.5rem 0.75rem", fontSize: "0.86rem" }}
+                              >
+                                WhatsApp
+                              </a>
+                            ) : null}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <strong>Contact:</strong> Activate account to view contact details.
+                        </>
+                      )}
                     </div>
                   </div>
                 </article>

@@ -28,6 +28,7 @@ type Plot = {
 type Payment = {
   id?: string;
   userId?: string;
+  phone?: string;
   amount?: number;
   status?: string;
   timestamp?: string;
@@ -543,7 +544,7 @@ export default function DashboardPortalClient({ mode }: Props) {
                 <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", alignItems: "end" }}>
                   <div>
                     <p className="section-kicker" style={{ color: "#0f766e" }}>Payments</p>
-                    <h2 style={{ marginTop: 0 }}>Recent payments</h2>
+                    <h2 style={{ marginTop: 0 }}>All payment requests</h2>
                   </div>
                 </div>
                 <div className="table-scroll">
@@ -551,18 +552,22 @@ export default function DashboardPortalClient({ mode }: Props) {
                     <thead>
                       <tr>
                         <th>User</th>
+                        <th>Phone</th>
                         <th>Amount</th>
+                        <th>Time</th>
+                        <th>Successful</th>
                         <th>Status</th>
-                        <th>Date</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {payments.slice(0, 80).map((p) => (
+                      {payments.map((p) => (
                         <tr key={p.id || `${p.userId}-${p.timestamp}`}>
                           <td>{p.userId || "-"}</td>
+                          <td>{p.phone || "-"}</td>
                           <td>{typeof p.amount === "number" ? p.amount.toLocaleString() : "-"}</td>
-                          <td>{p.status || "-"}</td>
                           <td>{fmtDate(p.timestamp)}</td>
+                          <td>{String(p.status || "").toLowerCase() === "completed" ? "Yes" : "No"}</td>
+                          <td>{p.status || "-"}</td>
                         </tr>
                       ))}
                     </tbody>

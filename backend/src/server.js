@@ -2411,7 +2411,12 @@ app.get("/api/admin/payments", requireSecureAdmin, requireAuth, requireAdmin, as
           _id: 0,
           id: 1,
           userId: 1,
-          phone: { $let: { vars: { u: { $arrayElemAt: ["$userDoc", 0] } }, in: "$$u.phone" } },
+          phone: {
+            $ifNull: [
+              { $let: { vars: { u: { $arrayElemAt: ["$userDoc", 0] } }, in: "$$u.phone" } },
+              "$phone"
+            ]
+          },
           amount: 1,
           status: 1,
           mpesaReceipt: 1,
