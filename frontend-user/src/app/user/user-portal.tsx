@@ -469,12 +469,12 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     if (stored?.token) {
       setToken(stored.token);
       setUser(stored.user as User | null);
-      if (stored.user?.country) {
+      if (!initialCountry && stored.user?.country) {
         setFilters((prev) => ({ ...prev, country: stored.user?.country || prev.country }));
       }
     }
     setSessionReady(true);
-  }, []);
+  }, [initialCountry]);
 
   useEffect(() => {
     const applyHash = () => {
