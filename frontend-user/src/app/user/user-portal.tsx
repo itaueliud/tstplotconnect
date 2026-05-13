@@ -334,9 +334,14 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     }
 
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      const rawMapLink = String(plot.mapLink || "").trim();
       setMapFocus(null);
       setActiveSection("map");
       window.location.hash = "map";
+      if (rawMapLink) {
+        showSuccess(`Opened map section for ${plot.title || "selected listing"} using the saved map link.`);
+        return;
+      }
       const query = [plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ");
       showError(`No exact coordinates saved for this listing yet. Showing the map section instead. (${query || "Unknown location"})`);
       return;
