@@ -21,6 +21,8 @@ type Plot = {
   images?: string[];
   phone?: string;
   contact?: string;
+  caretaker?: string;
+  whatsapp?: string;
 };
 
 type User = {
@@ -829,7 +831,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown,
                     </p>
                     <p className="listing-description">{plot.description || "Verified listing on tstplotconnect."}</p>
                     <div className="listing-contact" style={{ marginTop: "0.5rem", fontSize: "0.97em", color: "#0f766e" }}>
-                      <strong>Contact:</strong> {plot.phone || plot.contact || "Not provided"}
+                      <strong>Contact:</strong> {plot.caretaker || plot.whatsapp || plot.phone || plot.contact || "Not provided"}
                     </div>
                   </div>
                 </article>
