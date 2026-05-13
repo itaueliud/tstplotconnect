@@ -137,6 +137,11 @@ function saveIds(key: string, values: string[]) {
   window.localStorage.setItem(key, JSON.stringify(values));
 }
 
+function listingImages(plot: Plot): string[] {
+  if (!Array.isArray(plot.images)) return [];
+  return plot.images.map((item) => String(item || "").trim()).filter(Boolean);
+}
+
 type MapFocus = {
   label: string;
   lat: number;
@@ -210,6 +215,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
 
   const [plots, setPlots] = useState<Plot[]>([]);
+  const [imageIndexByListing, setImageIndexByListing] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -293,7 +299,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
 
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       const query = [plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ");
-      showError(`No exact coordinates saved for this listing yet. Add lat/lng or mapLink in admin. (${query || "Unknown location"})`);
+      showError(`No exact coordinates saved for this listing yet. Add a valid mapLink in admin. (${query || "Unknown location"})`);
       return;
     }
 
@@ -319,6 +325,26 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
 
   function listingKey(plot: Plot): string {
     return String(plot.id || `${plot.title || "listing"}-${plot.area || plot.county || "unknown"}`);
+  }
+
+  function currentListingImage(plot: Plot): string {
+    const key = listingKey(plot);
+    const images = listingImages(plot);
+    if (images.length === 0) return "";
+    const idx = imageIndexByListing[key] || 0;
+    const safeIndex = ((idx % images.length) + images.length) % images.length;
+    return images[safeIndex];
+  }
+
+  function shiftListingImage(plot: Plot, direction: -1 | 1) {
+    const key = listingKey(plot);
+    const images = listingImages(plot);
+    if (images.length <= 1) return;
+    setImageIndexByListing((prev) => {
+      const current = prev[key] || 0;
+      const next = (current + direction + images.length) % images.length;
+      return { ...prev, [key]: next };
+    });
   }
 
   function markSaved(plot: Plot) {
@@ -1018,15 +1044,41 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
         {!loading && filtered.length > 0 && (
           <div className="portal-listing-grid">
             {filtered.map((plot) => {
-              const image = listingImage(plot);
+              const image = currentListingImage(plot) || listingImage(plot);
+              const images = listingImages(plot);
+              const imageCount = images.length;
+              const index = imageCount > 0 ? ((imageIndexByListing[listingKey(plot)] || 0) % imageCount + imageCount) % imageCount : 0;
               return (
                 <article key={plot.id || `${plot.title}-${plot.area}`} className="listing-card">
                   <div
                     className="listing-media"
-                    style={image ? { backgroundImage: `linear-gradient(180deg, rgba(2, 8, 23, 0.08), rgba(2, 8, 23, 0.44)), url(${image})` } : undefined}
+                    style={image ? { backgroundImage: `linear-gradient(180deg, rgba(2, 8, 23, 0.08), rgba(2, 8, 23, 0.44)), url(${image})`, position: "relative" } : undefined}
                   >
                     <span className="listing-badge">{plot.category || "Property"}</span>
                     <div className="listing-price">{formatPrice(plot.price)}</div>
+                    {imageCount > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          className="listing-action"
+                          style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", minWidth: 38, padding: "0.35rem 0.5rem" }}
+                          onClick={() => shiftListingImage(plot, -1)}
+                        >
+                          ←
+                        </button>
+                        <button
+                          type="button"
+                          className="listing-action"
+                          style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", minWidth: 38, padding: "0.35rem 0.5rem" }}
+                          onClick={() => shiftListingImage(plot, 1)}
+                        >
+                          →
+                        </button>
+                        <span className="listing-badge" style={{ position: "absolute", bottom: 8, left: 8 }}>
+                          {index + 1}/{imageCount}
+                        </span>
+                      </>
+                    )}
                   </div>
                   <div className="listing-body">
                     <h3>{plot.title || "Listing"}</h3>
@@ -1106,15 +1158,41 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
             {savedListings.length > 0 && (
               <div className="portal-listing-grid">
                 {savedListings.map((plot) => {
-                  const image = listingImage(plot);
+                  const image = currentListingImage(plot) || listingImage(plot);
+                  const images = listingImages(plot);
+                  const imageCount = images.length;
+                  const index = imageCount > 0 ? ((imageIndexByListing[listingKey(plot)] || 0) % imageCount + imageCount) % imageCount : 0;
                   return (
                     <article key={`saved-${listingKey(plot)}`} className="listing-card">
                       <div
                         className="listing-media"
-                        style={image ? { backgroundImage: `linear-gradient(180deg, rgba(2, 8, 23, 0.08), rgba(2, 8, 23, 0.44)), url(${image})` } : undefined}
+                        style={image ? { backgroundImage: `linear-gradient(180deg, rgba(2, 8, 23, 0.08), rgba(2, 8, 23, 0.44)), url(${image})`, position: "relative" } : undefined}
                       >
                         <span className="listing-badge">{plot.category || "Property"}</span>
                         <div className="listing-price">{formatPrice(plot.price)}</div>
+                        {imageCount > 1 && (
+                          <>
+                            <button
+                              type="button"
+                              className="listing-action"
+                              style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", minWidth: 38, padding: "0.35rem 0.5rem" }}
+                              onClick={() => shiftListingImage(plot, -1)}
+                            >
+                              ←
+                            </button>
+                            <button
+                              type="button"
+                              className="listing-action"
+                              style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", minWidth: 38, padding: "0.35rem 0.5rem" }}
+                              onClick={() => shiftListingImage(plot, 1)}
+                            >
+                              →
+                            </button>
+                            <span className="listing-badge" style={{ position: "absolute", bottom: 8, left: 8 }}>
+                              {index + 1}/{imageCount}
+                            </span>
+                          </>
+                        )}
                       </div>
                       <div className="listing-body">
                         <h3>{plot.title || "Listing"}</h3>

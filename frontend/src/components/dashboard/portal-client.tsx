@@ -116,6 +116,7 @@ export default function DashboardPortalClient({ mode }: Props) {
     area: "",
     caretaker: "",
     whatsapp: "",
+    mapLink: "",
     description: "",
     priority: "medium",
     images: "",
@@ -249,6 +250,7 @@ export default function DashboardPortalClient({ mode }: Props) {
         area: "",
         caretaker: "",
         whatsapp: "",
+        mapLink: "",
         description: "",
         priority: "medium",
         images: "",
@@ -479,6 +481,7 @@ export default function DashboardPortalClient({ mode }: Props) {
                     <label className="search-field"><span>Area</span><input style={inputStyle} value={plotForm.area} onChange={(e) => setPlotForm((p) => ({ ...p, area: e.target.value }))} /></label>
                     <label className="search-field"><span>Caretaker</span><input style={inputStyle} value={plotForm.caretaker} onChange={(e) => setPlotForm((p) => ({ ...p, caretaker: e.target.value }))} /></label>
                     <label className="search-field"><span>WhatsApp</span><input style={inputStyle} value={plotForm.whatsapp} onChange={(e) => setPlotForm((p) => ({ ...p, whatsapp: e.target.value }))} /></label>
+                    <label className="search-field"><span>Map link</span><input style={inputStyle} value={plotForm.mapLink} onChange={(e) => setPlotForm((p) => ({ ...p, mapLink: e.target.value }))} placeholder="https://maps.google.com/... or https://www.openstreetmap.org/..." /></label>
                     <label className="search-field"><span>Priority</span><input style={inputStyle} value={plotForm.priority} onChange={(e) => setPlotForm((p) => ({ ...p, priority: e.target.value }))} /></label>
                     <label className="search-field"><span>Images</span><input style={inputStyle} value={plotForm.images} onChange={(e) => setPlotForm((p) => ({ ...p, images: e.target.value }))} /></label>
                     <label className="search-field"><span>Videos</span><input style={inputStyle} value={plotForm.videos} onChange={(e) => setPlotForm((p) => ({ ...p, videos: e.target.value }))} /></label>
