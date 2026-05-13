@@ -85,7 +85,15 @@ const PLOT_CATEGORIES = [
   "Plots for Sale"
 ];
 
-const PLOT_PRIORITIES = ["low", "medium", "high"];
+const PLOT_PRIORITIES = ["top", "medium", "bottom"] as const;
+
+function normalizePriority(value?: string): "top" | "medium" | "bottom" {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "high") return "top";
+  if (normalized === "low") return "bottom";
+  if (normalized === "top" || normalized === "medium" || normalized === "bottom") return normalized;
+  return "medium";
+}
 
 function fmtDate(value?: string): string {
   if (!value) return "-";
@@ -255,6 +263,7 @@ export default function DashboardPortalClient({ mode }: Props) {
     try {
       const payload = {
         ...plotForm,
+        priority: normalizePriority(plotForm.priority),
         price: Number(plotForm.price) || 0,
         images: splitCsv(plotForm.images),
         videos: splitCsv(plotForm.videos)
@@ -325,7 +334,7 @@ export default function DashboardPortalClient({ mode }: Props) {
       caretaker: String(plot.caretaker || ""),
       whatsapp: String(plot.whatsapp || ""),
       description: String(plot.description || ""),
-      priority: String(plot.priority || "medium"),
+      priority: normalizePriority(plot.priority),
       images: Array.isArray(plot.images) ? plot.images.join(", ") : "",
       videos: Array.isArray(plot.videos) ? plot.videos.join(", ") : ""
     });
