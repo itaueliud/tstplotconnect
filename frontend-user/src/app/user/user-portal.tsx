@@ -142,6 +142,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   const [authView, setAuthView] = useState<"login" | "register" | "recover">("login");
   const [activeSection, setActiveSection] = useState<"dashboard" | "search" | "map" | "saved">("dashboard");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [mapFocusQuery, setMapFocusQuery] = useState("");
 
   const [registerName, setRegisterName] = useState("");
   const [registerCountry, setRegisterCountry] = useState(initialCountry || "Kenya");
@@ -224,9 +225,9 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   }, [filters.county, filters.country]);
 
   const mapEmbedUrl = useMemo(() => {
-    const query = encodeURIComponent(mapQuery);
+    const query = encodeURIComponent(mapFocusQuery || mapQuery);
     return `https://www.openstreetmap.org/export/embed.html?layer=mapnik&marker=0.3476%2C32.5825&q=${query}`;
-  }, [mapQuery]);
+  }, [mapFocusQuery, mapQuery]);
 
   function showSuccess(text: string) {
     setMessage(text);
@@ -266,8 +267,10 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   function openLocation(plot: Plot) {
     markViewed(plot);
     const query = [plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ");
-    const href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || "Kenya")}`;
-    window.open(href, "_blank", "noopener,noreferrer");
+    setMapFocusQuery(query || "Kenya");
+    setActiveSection("map");
+    window.location.hash = "map";
+    showSuccess("Map updated for selected listing.");
   }
 
   function openCall(plot: Plot) {
@@ -998,12 +1001,16 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
               </div>
               <div className="portal-chip-row" style={{ marginTop: "0.9rem" }}>
                 {filtered.slice(0, 12).map((plot) => {
-                  const q = encodeURIComponent([plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", "));
-                  const href = `https://www.google.com/maps/search/?api=1&query=${q}`;
+                  const query = [plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ") || "Kenya";
                   return (
-                    <a key={`map-${listingKey(plot)}`} className="portal-chip" href={href} target="_blank" rel="noreferrer">
+                    <button
+                      key={`map-${listingKey(plot)}`}
+                      type="button"
+                      className="portal-chip"
+                      onClick={() => setMapFocusQuery(query)}
+                    >
                       {plot.title || "Listing"} - Open map
-                    </a>
+                    </button>
                   );
                 })}
               </div>

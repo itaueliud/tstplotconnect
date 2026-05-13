@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import AuthenticatedUserShell from "./authenticated-user-shell";
-import { readUserSession } from "./user-session";
+import { clearUserSession, readUserSession } from "./user-session";
 import { apiRequest } from "@/lib/api";
 
 type PaymentRow = {
@@ -55,6 +55,18 @@ export default function PaymentsPageClient() {
     [payments]
   );
 
+  function handleInvalidToken(error: unknown): boolean {
+    const message = error instanceof Error ? error.message.toLowerCase() : "";
+    if (!message.includes("invalid token") && !message.includes("unauthorized")) return false;
+    clearUserSession();
+    setToken("");
+    setPayments([]);
+    setStatus(null);
+    setError("Your session expired. Please login again.");
+    window.location.href = "/user";
+    return true;
+  }
+
   async function loadAll(authToken: string) {
     setLoading(true);
     try {
@@ -65,6 +77,7 @@ export default function PaymentsPageClient() {
       setPayments(Array.isArray(paymentRows) ? paymentRows : []);
       setStatus(currentStatus || null);
     } catch (e) {
+      if (handleInvalidToken(e)) return;
       setError(e instanceof Error ? e.message : "Unable to load payment history.");
     } finally {
       setLoading(false);
@@ -105,6 +118,7 @@ export default function PaymentsPageClient() {
       await loadAll(token);
       void waitForActivation(token);
     } catch (e) {
+      if (handleInvalidToken(e)) return;
       setError(e instanceof Error ? e.message : "Unable to start account activation.");
     } finally {
       setActivating(false);
