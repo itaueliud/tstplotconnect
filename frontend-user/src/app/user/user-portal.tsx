@@ -21,6 +21,8 @@ type Plot = {
   images?: string[];
   phone?: string;
   contact?: string;
+  caretaker?: string;
+  whatsapp?: string;
   lat?: number | null;
   lng?: number | null;
   mapLink?: string;
@@ -404,7 +406,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
 
   function openCall(plot: Plot) {
     markInquiry(plot);
-    const phone = sanitizePhone(plot.phone || plot.contact);
+    const phone = sanitizePhone(plot.caretaker || plot.whatsapp || plot.phone || plot.contact);
     if (!phone) {
       showError("This listing has no phone contact yet.");
       return;
@@ -414,7 +416,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
 
   function openWhatsApp(plot: Plot) {
     markInquiry(plot);
-    const phone = sanitizePhone(plot.phone || plot.contact).replace(/^\+/, "");
+    const phone = sanitizePhone(plot.whatsapp || plot.caretaker || plot.phone || plot.contact).replace(/^\+/, "");
     if (!phone) {
       showError("This listing has no WhatsApp number yet.");
       return;
@@ -1116,7 +1118,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     </p>
                     <p className="listing-description">{plot.description || "Verified listing on tstplotconnect."}</p>
                     <div className="listing-contact" style={{ marginTop: "0.5rem", fontSize: "0.97em", color: "#0f766e" }}>
-                      <strong>Contact:</strong> {plot.phone || plot.contact || "Not provided"}
+                      <strong>Contact:</strong> {plot.caretaker || plot.whatsapp || plot.phone || plot.contact || "Not provided"}
                     </div>
                     <div className="listing-actions">
                       <button type="button" className="listing-action" onClick={() => markSaved(plot)}>Save</button>
