@@ -1229,6 +1229,29 @@ body {
   text-align: left;
 }
 
+.payments-hero-refresh {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-self: start;
+}
+
+.payments-hero-refresh-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+}
+
+.payments-hero-refresh-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .portal-hero-overview {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

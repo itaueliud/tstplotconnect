@@ -334,16 +334,11 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     }
 
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      const rawMapLink = String(plot.mapLink || "").trim();
-      if (rawMapLink) {
-        const query = [plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ") || rawMapLink;
-        const searchQuery = encodeURIComponent(query);
-        window.open(`https://www.openstreetmap.org/search?query=${searchQuery}`, "_blank", "noopener,noreferrer");
-        showSuccess(`Opened mapped location for ${plot.title || "selected listing"}.`);
-        return;
-      }
+      setMapFocus(null);
+      setActiveSection("map");
+      window.location.hash = "map";
       const query = [plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ");
-      showError(`No exact coordinates saved for this listing yet. Add a valid mapLink in superadmin. (${query || "Unknown location"})`);
+      showError(`No exact coordinates saved for this listing yet. Showing the map section instead. (${query || "Unknown location"})`);
       return;
     }
 

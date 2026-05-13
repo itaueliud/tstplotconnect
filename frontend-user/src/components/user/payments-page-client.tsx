@@ -167,14 +167,14 @@ export default function PaymentsPageClient() {
           <p style={{ margin: "0.7rem 0 0.5rem", color: "#334155", fontSize: "1.04rem" }}>
             Review completed and unsuccessful payments, send the KES 50 activation request to your phone, and track your account access window.
           </p>
-          {token && (
-            <div className="portal-status-actions" style={{ marginTop: "0.35rem" }}>
-              <button className="btn btn-secondary" onClick={() => loadAll(token)} disabled={loading || activating}>
-                Refresh payments
-              </button>
-            </div>
-          )}
         </div>
+        {token && (
+          <div className="payments-hero-refresh">
+            <button type="button" className="payments-hero-refresh-btn" onClick={() => loadAll(token)} disabled={loading || activating}>
+              Refresh payments
+            </button>
+          </div>
+        )}
       </section>
 
       {sessionReady && token && (
