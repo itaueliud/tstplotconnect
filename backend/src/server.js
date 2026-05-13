@@ -1005,7 +1005,7 @@ app.post("/api/login", async (req, res) => {
   }
 
   const variants = getPhoneVariants(phone);
-  let user = await usersCol().findOne({ is_admin: 1, phone: { $in: variants } });
+  let user = await usersCol().findOne({ is_super_admin: 1, phone: { $in: variants } });
   if (!user) {
     const configured = getConfiguredSuperAdmin();
     const configuredVariants = configured ? getPhoneVariants(configured.phone) : [];
@@ -1070,7 +1070,7 @@ app.post("/api/login", async (req, res) => {
       phone: user.phone,
       isAdmin: !!user.is_admin,
       isSuperAdmin: !!user.is_super_admin,
-      role: user.role || (user.is_super_admin ? "super_admin" : "admin")
+      role: "super_admin"
     }
   });
 });
@@ -1923,63 +1923,8 @@ app.post("/api/admin/users", requireSecureAdmin, requireAuth, requireAdmin, asyn
 });
 
 app.post("/api/admin/create-admin", requireSecureAdmin, requireAuth, requireAdmin, requireSuperAdmin, async (req, res) => {
-  const { phone, password } = req.body || {};
-  if (!phone || !password || String(phone).length < 10 || String(password).length < 4) {
-    return res.status(400).json({ error: "Valid phone and password are required" });
-  }
-
-  const normalizedPhone = canonicalPhone(phone);
-  const variants = getPhoneVariants(phone);
-  const hash = bcrypt.hashSync(password, 10);
-  const existing = await usersCol().findOne({ phone: { $in: variants } });
-  if (existing) {
-    await usersCol().updateOne(
-      { _id: existing._id },
-      {
-        $set: {
-          is_admin: 1,
-          is_super_admin: 0,
-          role: "admin",
-          password: hash,
-          phone: normalizedPhone,
-          failedLoginAttempts: 0,
-          lockUntil: null
-        }
-      }
-    );
-    return res.json({
-      message: "User promoted to admin.",
-      user: {
-        id: existing.id,
-        phone: normalizedPhone,
-        is_admin: 1
-      }
-    });
-  }
-
-  const adminUser = {
-    id: randomUUID(),
-    phone: normalizedPhone,
-    password: hash,
-    is_admin: 1,
-    is_super_admin: 0,
-    role: "admin",
-    failedLoginAttempts: 0,
-    lockUntil: null,
-    activatedAt: null,
-    expiresAt: null,
-    paymentStatus: false,
-    createdAt: new Date()
-  };
-  await usersCol().insertOne(adminUser);
-
-  return res.status(201).json({
-    message: "Admin account created.",
-    user: {
-      id: adminUser.id,
-      phone: adminUser.phone,
-      is_admin: adminUser.is_admin
-    }
+  return res.status(410).json({
+    error: "Admin role removed. Create superadmin accounts via /api/super-admin/create-superadmin."
   });
 });
 

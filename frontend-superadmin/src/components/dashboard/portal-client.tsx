@@ -60,7 +60,7 @@ type LocationMeta = {
 };
 
 type Props = {
-  mode: "admin" | "superadmin";
+  mode: "superadmin";
 };
 
 const inputStyle: CSSProperties = {
@@ -110,8 +110,6 @@ function Stat({ value, label }: { value: number | string; label: string }) {
 }
 
 export default function DashboardPortalClient({ mode }: Props) {
-  const needSuperAdmin = mode === "superadmin";
-
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
@@ -166,7 +164,7 @@ export default function DashboardPortalClient({ mode }: Props) {
     [locationMeta.countiesByCountry, newAreaCountry]
   );
 
-  const isLoggedIn = Boolean(token && currentUser?.isAdmin);
+  const isLoggedIn = Boolean(token && currentUser?.isSuperAdmin);
   const canManageSuperAdmin = Boolean(currentUser?.isSuperAdmin);
   const availableCountries = useMemo(
     () => (locationMeta.countries.length ? locationMeta.countries : ["Kenya", "Uganda", "Tanzania"]),
@@ -223,12 +221,8 @@ export default function DashboardPortalClient({ mode }: Props) {
       }
     );
 
-    if (needSuperAdmin) {
-      const adminRows = await apiRequest<AdminAccount[]>("/api/super-admin/admins", { token: authToken });
-      setAdmins(Array.isArray(adminRows) ? adminRows : []);
-    } else {
-      setAdmins([]);
-    }
+    const adminRows = await apiRequest<AdminAccount[]>("/api/super-admin/admins", { token: authToken });
+    setAdmins(Array.isArray(adminRows) ? adminRows : []);
   }
 
   async function login() {
@@ -239,14 +233,8 @@ export default function DashboardPortalClient({ mode }: Props) {
         body: JSON.stringify({ phone: phone.trim(), password })
       });
 
-      if (!data.user?.isAdmin) {
-        throw new Error("Wrong credentials.");
-      }
-      if (needSuperAdmin && !data.user.isSuperAdmin) {
-        throw new Error("This page requires superadmin access.");
-      }
-      if (!needSuperAdmin && data.user.isSuperAdmin) {
-        throw new Error("Use the superadmin dashboard for this account.");
+      if (!data.user?.isSuperAdmin) {
+        throw new Error("Superadmin access required.");
       }
 
       setToken(data.token);
@@ -491,7 +479,7 @@ export default function DashboardPortalClient({ mode }: Props) {
         <div className="dashboard-topbar">
           <div className="brand">
             <span className="pill" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", borderColor: "rgba(255,255,255,0.08)" }}>
-              {mode === "superadmin" ? "Superadmin" : "Admin"}
+              Superadmin
             </span>
             <strong>tstplotconnect control center</strong>
           </div>
@@ -508,7 +496,7 @@ export default function DashboardPortalClient({ mode }: Props) {
                 <span className="pill" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", borderColor: "rgba(255,255,255,0.1)" }}>
                   Operations, listings, and location control
                 </span>
-                <h1>{mode === "superadmin" ? "Premium platform control with full location governance." : "Manage listings with clarity and speed."}</h1>
+                <h1>Premium platform control with full location governance.</h1>
                 <p style={{ color: "rgba(255,255,255,0.82)", lineHeight: 1.75, maxWidth: 600, margin: 0 }}>
                   A polished workspace for overseeing plots, users, payments, and location metadata while keeping the public marketplace fast and discoverable.
                 </p>
@@ -521,7 +509,7 @@ export default function DashboardPortalClient({ mode }: Props) {
 
               <section className="login-form-card">
                 <p className="section-kicker" style={{ color: "#0f766e" }}>Secure sign in</p>
-                <h2 style={{ marginTop: 0, fontSize: "1.5rem" }}>Enter your admin credentials</h2>
+                <h2 style={{ marginTop: 0, fontSize: "1.5rem" }}>Enter your superadmin credentials</h2>
                 <div className="search-grid" style={{ gridTemplateColumns: "1fr" }}>
                   <label className="search-field">
                     <span>Phone</span>
@@ -575,7 +563,7 @@ export default function DashboardPortalClient({ mode }: Props) {
                 <span className="pill" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", borderColor: "rgba(255,255,255,0.08)" }}>
                   Marketplace operations
                 </span>
-                <h1>{mode === "superadmin" ? "Run the platform with full oversight." : "Manage the marketplace with confidence."}</h1>
+                <h1>Run the platform with full oversight.</h1>
                 <p>This dashboard is structured for speed, trust, and control, so your team can manage listings and location data without clutter.</p>
               </div>
 
@@ -752,7 +740,7 @@ export default function DashboardPortalClient({ mode }: Props) {
               {canManageSuperAdmin && (
                 <section className="dashboard-panel" id="dashboard-superadmin">
                   <p className="section-kicker" style={{ color: "#0f766e" }}>Superadmin tools</p>
-                  <h2 style={{ marginTop: 0 }}>Control location metadata and admin accounts</h2>
+                  <h2 style={{ marginTop: 0 }}>Control location metadata and superadmin accounts</h2>
                   <div className="feature-grid">
                     <article className="feature-card">
                       <h3>Create superadmin</h3>
