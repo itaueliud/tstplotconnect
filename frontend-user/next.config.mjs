@@ -22,6 +22,21 @@ const nextConfig = {
         source: "/superadmin.html",
         destination: "/superadmin",
         permanent: true
+      },
+      {
+        source: "/contacts",
+        destination: "/contact",
+        permanent: true
+      },
+      {
+        source: "/contact.html",
+        destination: "/contact",
+        permanent: true
+      },
+      {
+        source: "/about.html",
+        destination: "/about",
+        permanent: true
       }
     ];
   }
