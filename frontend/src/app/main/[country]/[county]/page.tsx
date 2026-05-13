@@ -11,6 +11,7 @@ import {
   getTownsForCounty,
   slugify
 } from "@/lib/locations";
+import { siteUrl } from "@/lib/site";
 
 type Props = { params: Promise<{ country: string; county: string }> };
 
@@ -106,7 +107,7 @@ export default async function CountyPage({ params }: Props) {
         "@type": "WebPage",
         name: `${resolvedCounty} Listings in ${displayCountry}`,
         description,
-        url: `https://tstplotconnect.vercel.app/main/${country}/${county}`,
+        url: `${siteUrl}/main/${country}/${county}`,
         inLanguage: "en"
       },
       {
@@ -120,14 +121,14 @@ export default async function CountyPage({ params }: Props) {
                 "@type": "ListItem",
                 position: index + 1,
                 name: `${town} listings in ${resolvedCounty}`,
-                url: `https://tstplotconnect.vercel.app${filteredUserUrl(displayCountry, resolvedCounty, town)}`
+                url: `${siteUrl}${filteredUserUrl(displayCountry, resolvedCounty, town)}`
               }))
             : [
                 {
                   "@type": "ListItem",
                   position: 1,
                   name: `Open ${resolvedCounty} filtered listings`,
-                  url: `https://tstplotconnect.vercel.app${targetUrl}`
+                  url: `${siteUrl}${targetUrl}`
                 }
               ]
       }
