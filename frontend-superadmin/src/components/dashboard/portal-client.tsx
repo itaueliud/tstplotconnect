@@ -23,6 +23,7 @@ type Plot = {
   area?: string;
   price?: number;
   priority?: string;
+  mapLink?: string;
   caretaker?: string;
   whatsapp?: string;
   description?: string;
@@ -134,6 +135,7 @@ export default function DashboardPortalClient({ mode }: Props) {
     country: "Kenya",
     county: "",
     area: "",
+    mapLink: "",
     caretaker: "",
     whatsapp: "",
     description: "",
@@ -283,6 +285,7 @@ export default function DashboardPortalClient({ mode }: Props) {
         country: "Kenya",
         county: "",
         area: "",
+        mapLink: "",
         caretaker: "",
         whatsapp: "",
         description: "",
@@ -330,6 +333,7 @@ export default function DashboardPortalClient({ mode }: Props) {
       country: String(plot.country || "Kenya"),
       county: String(plot.county || ""),
       area: String(plot.area || ""),
+      mapLink: String(plot.mapLink || ""),
       caretaker: String(plot.caretaker || ""),
       whatsapp: String(plot.whatsapp || ""),
       description: String(plot.description || ""),
@@ -349,6 +353,7 @@ export default function DashboardPortalClient({ mode }: Props) {
       country: "Kenya",
       county: "",
       area: "",
+      mapLink: "",
       caretaker: "",
       whatsapp: "",
       description: "",
@@ -592,6 +597,7 @@ export default function DashboardPortalClient({ mode }: Props) {
                     <label className="search-field"><span>Country</span><select style={inputStyle} value={plotForm.country} onChange={(e) => setPlotForm((p) => ({ ...p, country: e.target.value, county: "", area: "" }))}>{availableCountries.map((country) => <option key={country} value={country}>{country}</option>)}</select></label>
                     <label className="search-field"><span>County</span><select style={inputStyle} value={plotForm.county} onChange={(e) => setPlotForm((p) => ({ ...p, county: e.target.value, area: "" }))}><option value="">Select county</option>{availableCounties.map((county) => <option key={county} value={county}>{county}</option>)}</select></label>
                     <label className="search-field"><span>Area</span><select style={inputStyle} value={plotForm.area} onChange={(e) => setPlotForm((p) => ({ ...p, area: e.target.value }))}><option value="">Select area</option>{availableAreas.map((area) => <option key={area} value={area}>{area}</option>)}</select></label>
+                    <label className="search-field"><span>Map Link</span><input style={inputStyle} value={plotForm.mapLink} onChange={(e) => setPlotForm((p) => ({ ...p, mapLink: e.target.value }))} placeholder="Paste Google Maps or OpenStreetMap link" /></label>
                     <label className="search-field"><span>Caretaker</span><input style={inputStyle} value={plotForm.caretaker} onChange={(e) => setPlotForm((p) => ({ ...p, caretaker: e.target.value }))} /></label>
                     <label className="search-field"><span>WhatsApp</span><input style={inputStyle} value={plotForm.whatsapp} onChange={(e) => setPlotForm((p) => ({ ...p, whatsapp: e.target.value }))} /></label>
                     <label className="search-field"><span>Priority</span><select style={inputStyle} value={plotForm.priority} onChange={(e) => setPlotForm((p) => ({ ...p, priority: e.target.value }))}>{PLOT_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select></label>
