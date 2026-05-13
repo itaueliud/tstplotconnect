@@ -1,157 +1,63 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://tstplotconnect.vercel.app/</loc>
-    <lastmod>2026-05-12</lastmod>
+    <loc>https://www.tst-plotconnect.com/</loc>
+    <lastmod>2026-05-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://tstplotconnect.vercel.app/user</loc>
-    <lastmod>2026-05-12</lastmod>
+    <loc>https://www.tst-plotconnect.com/user</loc>
+    <lastmod>2026-05-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://tstplotconnect.vercel.app/about</loc>
-    <lastmod>2026-05-12</lastmod>
+    <loc>https://www.tst-plotconnect.com/about</loc>
+    <lastmod>2026-05-13</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tstplotconnect.vercel.app/contact</loc>
-    <lastmod>2026-05-12</lastmod>
+    <loc>https://www.tst-plotconnect.com/contact</loc>
+    <lastmod>2026-05-13</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tstplotconnect.vercel.app/privacy</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/kenya</loc>
-    <lastmod>2026-05-12</lastmod>
+    <loc>https://www.tst-plotconnect.com/main/kenya</loc>
+    <lastmod>2026-05-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://tstplotconnect.vercel.app/main/uganda</loc>
-    <lastmod>2026-05-12</lastmod>
+    <loc>https://www.tst-plotconnect.com/main/uganda</loc>
+    <lastmod>2026-05-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://tstplotconnect.vercel.app/main/tanzania</loc>
-    <lastmod>2026-05-12</lastmod>
+    <loc>https://www.tst-plotconnect.com/main/tanzania</loc>
+    <lastmod>2026-05-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/kenya/machakos</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/kenya/nairobi</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/kenya/kitui</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/kenya/kajiado</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/kenya/kakamega</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/kenya/makueni</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/kenya/mombasa</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/uganda/kampala</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/uganda/wakiso</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/uganda/mukono</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/uganda/jinja</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/uganda/mbarara</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/tanzania/dar-es-salaam</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/tanzania/arusha</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/tanzania/mwanza</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/tanzania/dodoma</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tstplotconnect.vercel.app/main/tanzania/mbeya</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/nairobi</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/mombasa</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/kiambu</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/machakos</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/kitui</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/makueni</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/kajiado</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/kakamega</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/uasin-gishu</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/embu</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/kisumu</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/nakuru</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/meru</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/nyeri</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/kilifi</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/kericho</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.tst-plotconnect.com/main/kenya/bungoma</loc><lastmod>2026-05-13</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
 </urlset>

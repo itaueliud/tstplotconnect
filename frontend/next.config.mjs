@@ -27,6 +27,71 @@ const nextConfig = {
         source: "/superadmin.html",
         destination: "/superadmin",
         permanent: true
+      },
+      {
+        source: "/contacts",
+        destination: "/contact",
+        permanent: true
+      },
+      {
+        source: "/contact.html",
+        destination: "/contact",
+        permanent: true
+      },
+      {
+        source: "/about.html",
+        destination: "/about",
+        permanent: true
+      },
+      {
+        source: "/mombasa-hostels",
+        destination: "/main/kenya/mombasa",
+        permanent: true
+      },
+      {
+        source: "/thika-hostels",
+        destination: "/main/kenya/kiambu",
+        permanent: true
+      },
+      {
+        source: "/nairobi-hostels",
+        destination: "/main/kenya/nairobi",
+        permanent: true
+      },
+      {
+        source: "/machakos-hostels",
+        destination: "/main/kenya/machakos",
+        permanent: true
+      },
+      {
+        source: "/kiambu-hostels",
+        destination: "/main/kenya/kiambu",
+        permanent: true
+      },
+      {
+        source: "/kitui-hostels",
+        destination: "/main/kenya/kitui",
+        permanent: true
+      },
+      {
+        source: "/embu-hostels",
+        destination: "/main/kenya/embu",
+        permanent: true
+      },
+      {
+        source: "/makueni-hostels",
+        destination: "/main/kenya/makueni",
+        permanent: true
+      },
+      {
+        source: "/kajiado-hostels",
+        destination: "/main/kenya/kajiado",
+        permanent: true
+      },
+      {
+        source: "/uasin-gishu-hostels",
+        destination: "/main/kenya/uasin-gishu",
+        permanent: true
       }
     ];
   }
