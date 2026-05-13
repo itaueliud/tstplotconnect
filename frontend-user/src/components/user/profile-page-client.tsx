@@ -161,7 +161,7 @@ export default function ProfilePageClient() {
         </div>
       )}
 
-      <section className="portal-hero portal-hero-surface reveal-card">
+      <section className="portal-hero-surface reveal-card">
         <div className="portal-hero-copy">
           <span className="pill">Profile</span>
           <h1 style={{ margin: 0, fontSize: "2.1rem", fontWeight: 800, color: "#0f172a" }}>Manage your account details</h1>
