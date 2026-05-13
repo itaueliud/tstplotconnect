@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { countryDisplayNames, CountrySlug } from "@/main";
-import { getCountiesForCountry, slugify } from "@/lib/locations";
 
 type Props = { params: Promise<{ country: string }> };
 
@@ -56,34 +54,7 @@ export default async function CountryPage({ params }: Props) {
     notFound();
   }
 
-  const counties = await getCountiesForCountry(country);
   const displayCountry = countryDisplayNames[country];
-
-  return (
-    <main className="container directory-shell" style={{ padding: "2rem 0 3rem" }}>
-      <section className="directory-header">
-        <span className="pill">{displayCountry}</span>
-        <h1>{displayCountry} county index</h1>
-        <p className="meta" style={{ margin: 0 }}>
-          Lightweight SEO route directory for {displayCountry}. Use any county link below, or skip directly into the live listings page.
-        </p>
-        <div className="directory-actions">
-          <Link href="/user" className="btn btn-primary">Open Listings Dashboard</Link>
-        </div>
-      </section>
-
-      <section className="directory-links">
-        {counties.map((county) => (
-          <Link
-            key={county}
-            href={`/main/${country}/${slugify(county)}`}
-            className="directory-link"
-          >
-            <strong>{county}</strong>
-            <span>Open county landing page</span>
-          </Link>
-        ))}
-      </section>
-    </main>
-  );
+  const qp = new URLSearchParams({ country: displayCountry });
+  redirect(`/user?${qp.toString()}`);
 }

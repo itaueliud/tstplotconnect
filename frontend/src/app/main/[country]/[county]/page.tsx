@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import Script from "next/script";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { countryDisplayNames, CountrySlug } from "@/main";
 import {
   countyMetaDescription,
@@ -11,7 +9,6 @@ import {
   getTownsForCounty,
   slugify
 } from "@/lib/locations";
-import { siteUrl } from "@/lib/site";
 
 type Props = { params: Promise<{ country: string; county: string }> };
 
@@ -96,98 +93,5 @@ export default async function CountyPage({ params }: Props) {
   const resolvedCounty = counties.find((item) => slugify(item) === county);
   if (!resolvedCounty) notFound();
 
-  const towns = await getTownsForCounty(country, resolvedCounty);
-  const description = countyMetaDescription(displayCountry, resolvedCounty, towns);
-  const targetUrl = filteredUserUrl(displayCountry, resolvedCounty);
-
-  const schema = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "WebPage",
-        name: `${resolvedCounty} Listings in ${displayCountry}`,
-        description,
-        url: `${siteUrl}/main/${country}/${county}`,
-        inLanguage: "en"
-      },
-      {
-        "@type": "ItemList",
-        name: `${resolvedCounty} rentals and plots by town`,
-        itemListOrder: "https://schema.org/ItemListOrderAscending",
-        numberOfItems: Math.max(towns.length, 1),
-        itemListElement:
-          towns.length > 0
-            ? towns.slice(0, 12).map((town, index) => ({
-                "@type": "ListItem",
-                position: index + 1,
-                name: `${town} listings in ${resolvedCounty}`,
-                url: `${siteUrl}${filteredUserUrl(displayCountry, resolvedCounty, town)}`
-              }))
-            : [
-                {
-                  "@type": "ListItem",
-                  position: 1,
-                  name: `Open ${resolvedCounty} filtered listings`,
-                  url: `${siteUrl}${targetUrl}`
-                }
-              ]
-      }
-    ]
-  };
-
-  return (
-    <main className="container directory-shell" style={{ padding: "2rem 0 3rem" }}>
-      <section className="directory-header">
-        <span className="pill">{displayCountry}</span>
-        <h1>{resolvedCounty} location route</h1>
-        <p className="meta" style={{ margin: 0 }}>
-          {description}
-        </p>
-        <div className="directory-actions">
-          <Link href={targetUrl} className="btn btn-primary">
-            Open listings in {resolvedCounty}
-          </Link>
-          <Link href={`/main/${country}`} className="btn btn-secondary">
-            Back to {displayCountry}
-          </Link>
-        </div>
-      </section>
-
-      <section className="card">
-        <h2 style={{ marginTop: 0 }}>Search themes</h2>
-        <div className="directory-keywords">
-          {countySeoKeywords(displayCountry, resolvedCounty, towns).map((keyword) => (
-            <div key={keyword} className="directory-keyword">
-              {keyword}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {towns.length > 0 && (
-        <section className="card" style={{ marginTop: "1rem" }}>
-          <h2 style={{ marginTop: 0 }}>Town links in {resolvedCounty}</h2>
-          <p className="meta" style={{ marginTop: 0 }}>
-            These support search indexing and deep linking, while still routing users into the main listings experience.
-          </p>
-          <div className="directory-links">
-            {towns.map((town) => (
-              <Link
-                key={town}
-                href={filteredUserUrl(displayCountry, resolvedCounty, town)}
-                className="directory-link"
-              >
-                <strong>{town}</strong>
-                <span>Open filtered listings</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <Script id="county-schema" type="application/ld+json" strategy="afterInteractive">
-        {JSON.stringify(schema)}
-      </Script>
-    </main>
-  );
+  redirect(filteredUserUrl(displayCountry, resolvedCounty));
 }
