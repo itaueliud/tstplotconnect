@@ -171,7 +171,7 @@ function parseCoordinatesFromMapLink(raw?: string): [number, number] | null {
     /[?&]q=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
     /[?&]query=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
     /[?&]ll=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
-    /\/#map=\d+\/(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)/,
+    /#map=\d+\/(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)/,
     /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
     /(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
   ];
@@ -186,6 +186,19 @@ function parseCoordinatesFromMapLink(raw?: string): [number, number] | null {
 
   try {
     const url = new URL(value);
+    const mlat = Number(url.searchParams.get("mlat"));
+    const mlon = Number(url.searchParams.get("mlon"));
+    if (Number.isFinite(mlat) && Number.isFinite(mlon)) {
+      return [mlat, mlon];
+    }
+
+    const hashMap = String(url.hash || "").match(/map=\d+\/(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)/);
+    if (hashMap) {
+      const lat = Number(hashMap[1]);
+      const lng = Number(hashMap[2]);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) return [lat, lng];
+    }
+
     const queryCandidates = [
       url.searchParams.get("q"),
       url.searchParams.get("query"),
@@ -195,7 +208,8 @@ function parseCoordinatesFromMapLink(raw?: string): [number, number] | null {
     ].filter(Boolean) as string[];
 
     for (const candidate of queryCandidates) {
-      const m = String(candidate).match(/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
+      const decodedCandidate = decodeURIComponent(String(candidate));
+      const m = decodedCandidate.match(/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
       if (!m) continue;
       const lat = Number(m[1]);
       const lng = Number(m[2]);
