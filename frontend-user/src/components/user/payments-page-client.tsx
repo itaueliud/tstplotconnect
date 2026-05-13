@@ -169,9 +169,6 @@ export default function PaymentsPageClient() {
           </p>
           {token && (
             <div className="portal-status-actions" style={{ marginTop: "0.35rem" }}>
-              <button className="btn btn-primary" onClick={activateAccount} disabled={activating}>
-                {activating ? "Sending STK..." : "Activate account - KES 50"}
-              </button>
               <button className="btn btn-secondary" onClick={() => loadAll(token)} disabled={loading || activating}>
                 Refresh payments
               </button>

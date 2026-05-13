@@ -1947,6 +1947,41 @@ body {
   color: #fff;
 }
 
+.listing-save-icon {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  z-index: 2;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(255, 255, 255, 0.94);
+  color: #475569;
+  font-size: 1rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.listing-image-back {
+  z-index: 2;
+  min-width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(255, 255, 255, 0.94);
+  color: #0f766e;
+  font-size: 1rem;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
 .listing-body {
   padding: 1rem;
 }
@@ -1971,6 +2006,30 @@ body {
 .listing-action:hover {
   border-color: #2563eb;
   color: #1d4ed8;
+}
+
+.listing-action-call {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.listing-action-call:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+.listing-action-whatsapp {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+.listing-action-whatsapp:hover {
+  background: #15803d;
+  border-color: #15803d;
+  color: #fff;
 }
 
 .listing-body h3 {
@@ -3689,4 +3748,10 @@ body {
 
 .portal-landing-footer nav a:hover {
   color: #ffffff;
+}
+/* Hide bottom-nav duplicates from mobile side drawer */
+@media (max-width: 1024px) {
+  .portal-side-links .mobile-bottom-duplicate {
+    display: none;
+  }
 }

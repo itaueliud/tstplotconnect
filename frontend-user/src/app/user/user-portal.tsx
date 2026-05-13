@@ -399,6 +399,12 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     showSuccess("Listing saved to your profile.");
   }
 
+  function isSaved(plot: Plot): boolean {
+    const key = listingKey(plot);
+    const saved = loadIds("tst_saved_listings");
+    return saved.includes(key);
+  }
+
   function markViewed(plot: Plot) {
     const key = listingKey(plot);
     const viewed = loadIds("tst_viewed_once_listings");
@@ -853,36 +859,6 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
         </div>
       )}
         {activeSection === "dashboard" && (
-          <section className="portal-hero portal-hero-surface reveal-card" id="dashboard">
-            <div className="portal-hero-copy">
-              <span className="pill" style={{ width: "fit-content", marginBottom: "0.7rem" }}>User dashboard</span>
-              <h1 style={{ color: "#0f172a" }}>Welcome back</h1>
-              <p>
-                Browse listings, check your access window, and move into profile or payments from one cleaner workspace built around your active account.
-              </p>
-            </div>
-            <div className="portal-hero-overview">
-              <article className="portal-overview-card">
-                <span>Total listings</span>
-                <strong>{plots.length}</strong>
-              </article>
-              <article className="portal-overview-card">
-                <span>Visible now</span>
-                <strong>{filtered.length}</strong>
-              </article>
-              <article className="portal-overview-card">
-                <span>Category</span>
-                <strong>{filters.category || "All"}</strong>
-              </article>
-              <article className="portal-overview-card">
-                <span>Countdown</span>
-                <strong>{timeRemainingLabel(status)}</strong>
-              </article>
-            </div>
-          </section>
-        )}
-
-        {activeSection === "dashboard" && (
           <section className="portal-dashboard-grid">
         <article className="card portal-status-card reveal-card">
           <div className="portal-status-header">
@@ -1107,6 +1083,15 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     style={image ? { backgroundImage: `linear-gradient(180deg, rgba(2, 8, 23, 0.08), rgba(2, 8, 23, 0.44)), url(${image})`, position: "relative" } : undefined}
                   >
                     <span className="listing-badge">{plot.category || "Property"}</span>
+                    <button
+                      type="button"
+                      className="listing-save-icon"
+                      onClick={() => markSaved(plot)}
+                      aria-label={isSaved(plot) ? "Saved listing" : "Save listing"}
+                      title={isSaved(plot) ? "Saved" : "Save"}
+                    >
+                      {isSaved(plot) ? "♥" : "♡"}
+                    </button>
                     <div className="listing-price">{formatPrice(plot.price)}</div>
                     {imageCount > 1 && (
                       <>
@@ -1126,9 +1111,16 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                         >
                           →
                         </button>
-                        <span className="listing-badge" style={{ position: "absolute", bottom: 8, left: 8 }}>
-                          {index + 1}/{imageCount}
-                        </span>
+                        <button
+                          type="button"
+                          className="listing-image-back"
+                          style={{ position: "absolute", bottom: 8, left: 8 }}
+                          onClick={() => shiftListingImage(plot, -1)}
+                          aria-label="Previous image"
+                          title="Previous image"
+                        >
+                          ←
+                        </button>
                       </>
                     )}
                   </div>
@@ -1145,9 +1137,8 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                       <strong>WhatsApp:</strong> {normalizeDisplayContact(plot.whatsapp) || (isAccountActive ? "Not provided" : "Locked")}
                     </div>
                     <div className="listing-actions">
-                      <button type="button" className="listing-action" onClick={() => markSaved(plot)}>Save</button>
-                      <button type="button" className="listing-action" onClick={() => openCall(plot)} disabled={!isAccountActive}>Call</button>
-                      <button type="button" className="listing-action" onClick={() => openWhatsApp(plot)} disabled={!isAccountActive}>WhatsApp</button>
+                      <button type="button" className="listing-action listing-action-call" onClick={() => openCall(plot)} disabled={!isAccountActive}>Call</button>
+                      <button type="button" className="listing-action listing-action-whatsapp" onClick={() => openWhatsApp(plot)} disabled={!isAccountActive}>WhatsApp</button>
                       <button type="button" className="listing-action" onClick={() => openLocation(plot)}>Location</button>
                     </div>
                   </div>
@@ -1224,6 +1215,14 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                         style={image ? { backgroundImage: `linear-gradient(180deg, rgba(2, 8, 23, 0.08), rgba(2, 8, 23, 0.44)), url(${image})`, position: "relative" } : undefined}
                       >
                         <span className="listing-badge">{plot.category || "Property"}</span>
+                        <button
+                          type="button"
+                          className="listing-save-icon"
+                          aria-label="Saved listing"
+                          title="Saved"
+                        >
+                          ♥
+                        </button>
                         <div className="listing-price">{formatPrice(plot.price)}</div>
                         {imageCount > 1 && (
                           <>
@@ -1243,9 +1242,16 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                             >
                               →
                             </button>
-                            <span className="listing-badge" style={{ position: "absolute", bottom: 8, left: 8 }}>
-                              {index + 1}/{imageCount}
-                            </span>
+                            <button
+                              type="button"
+                              className="listing-image-back"
+                              style={{ position: "absolute", bottom: 8, left: 8 }}
+                              onClick={() => shiftListingImage(plot, -1)}
+                              aria-label="Previous image"
+                              title="Previous image"
+                            >
+                              ←
+                            </button>
                           </>
                         )}
                       </div>
@@ -1261,8 +1267,8 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                           <strong>WhatsApp:</strong> {normalizeDisplayContact(plot.whatsapp) || (isAccountActive ? "Not provided" : "Locked")}
                         </div>
                         <div className="listing-actions">
-                          <button type="button" className="listing-action" onClick={() => openCall(plot)} disabled={!isAccountActive}>Call</button>
-                          <button type="button" className="listing-action" onClick={() => openWhatsApp(plot)} disabled={!isAccountActive}>WhatsApp</button>
+                          <button type="button" className="listing-action listing-action-call" onClick={() => openCall(plot)} disabled={!isAccountActive}>Call</button>
+                          <button type="button" className="listing-action listing-action-whatsapp" onClick={() => openWhatsApp(plot)} disabled={!isAccountActive}>WhatsApp</button>
                           <button type="button" className="listing-action" onClick={() => openLocation(plot)}>Location</button>
                         </div>
                       </div>
