@@ -159,7 +159,9 @@ function parseCoordinatesFromMapLink(raw?: string): [number, number] | null {
     /[?&]q=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
     /[?&]query=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
     /[?&]ll=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
-    /\/#map=\d+\/(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)/
+    /\/#map=\d+\/(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)/,
+    /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+    /(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
   ];
 
   for (const pattern of directPatterns) {
@@ -168,6 +170,27 @@ function parseCoordinatesFromMapLink(raw?: string): [number, number] | null {
     const lat = Number(match[1]);
     const lng = Number(match[2]);
     if (Number.isFinite(lat) && Number.isFinite(lng)) return [lat, lng];
+  }
+
+  try {
+    const url = new URL(value);
+    const queryCandidates = [
+      url.searchParams.get("q"),
+      url.searchParams.get("query"),
+      url.searchParams.get("ll"),
+      url.searchParams.get("destination"),
+      url.searchParams.get("daddr")
+    ].filter(Boolean) as string[];
+
+    for (const candidate of queryCandidates) {
+      const m = String(candidate).match(/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
+      if (!m) continue;
+      const lat = Number(m[1]);
+      const lng = Number(m[2]);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) return [lat, lng];
+    }
+  } catch {
+    // Non-URL values are handled by regex patterns above.
   }
 
   return null;
@@ -298,8 +321,14 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
     }
 
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      const rawMapLink = String(plot.mapLink || "").trim();
+      if (rawMapLink) {
+        window.open(rawMapLink, "_blank", "noopener,noreferrer");
+        showSuccess(`Opened map link for ${plot.title || "selected listing"}.`);
+        return;
+      }
       const query = [plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ");
-      showError(`No exact coordinates saved for this listing yet. Add a valid mapLink in admin. (${query || "Unknown location"})`);
+      showError(`No exact coordinates saved for this listing yet. Add a valid mapLink in superadmin. (${query || "Unknown location"})`);
       return;
     }
 
