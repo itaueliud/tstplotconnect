@@ -160,16 +160,6 @@ export default function PaymentsPageClient() {
         </div>
       )}
 
-      <section className="portal-hero portal-hero-surface reveal-card">
-        <div className="portal-hero-copy">
-          <span className="pill">Payments</span>
-          <h1 style={{ margin: 0, fontSize: "2.1rem", fontWeight: 800, color: "#0f172a" }}>Your payment history</h1>
-          <p style={{ margin: "0.7rem 0 0.5rem", color: "#334155", fontSize: "1.04rem" }}>
-            Review completed and unsuccessful payments, send the KES 50 activation request to your phone, and track your account access window.
-          </p>
-        </div>
-      </section>
-
       {sessionReady && token && (
         <section className="card portal-listings-card reveal-card">
           <div className="portal-filter-header">
