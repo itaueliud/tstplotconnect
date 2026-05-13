@@ -168,13 +168,6 @@ export default function PaymentsPageClient() {
             Review completed and unsuccessful payments, send the KES 50 activation request to your phone, and track your account access window.
           </p>
         </div>
-        {token && (
-          <div className="payments-hero-refresh">
-            <button type="button" className="payments-hero-refresh-btn" onClick={() => loadAll(token)} disabled={loading || activating}>
-              Refresh payments
-            </button>
-          </div>
-        )}
       </section>
 
       {sessionReady && token && (
