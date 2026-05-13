@@ -21,6 +21,9 @@ type Plot = {
   images?: string[];
   phone?: string;
   contact?: string;
+  lat?: number | null;
+  lng?: number | null;
+  mapLink?: string;
 };
 
 type User = {
@@ -134,6 +137,47 @@ function saveIds(key: string, values: string[]) {
   window.localStorage.setItem(key, JSON.stringify(values));
 }
 
+type MapFocus = {
+  label: string;
+  lat: number;
+  lng: number;
+};
+
+const EAST_AFRICA_BBOX = "28.5,-12.5,52.5,8.8";
+
+function parseCoordinatesFromMapLink(raw?: string): [number, number] | null {
+  const value = String(raw || "").trim();
+  if (!value) return null;
+
+  const directPatterns = [
+    /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+    /[?&]q=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+    /[?&]query=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+    /[?&]ll=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+    /\/#map=\d+\/(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)/
+  ];
+
+  for (const pattern of directPatterns) {
+    const match = value.match(pattern);
+    if (!match) continue;
+    const lat = Number(match[1]);
+    const lng = Number(match[2]);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) return [lat, lng];
+  }
+
+  return null;
+}
+
+function mapBoundsForPoint(lat: number, lng: number): string {
+  const latPad = 0.18;
+  const lngPad = 0.22;
+  const left = lng - lngPad;
+  const right = lng + lngPad;
+  const top = lat + latPad;
+  const bottom = lat - latPad;
+  return `${left},${bottom},${right},${top}`;
+}
+
 export default function UserPortal({ initialCountry, initialCounty, initialTown: _initialTown, initialCategory }: Props) {
   const [token, setToken] = useState("");
   const [user, setUser] = useState<User | null>(null);
@@ -142,7 +186,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   const [authView, setAuthView] = useState<"login" | "register" | "recover">("login");
   const [activeSection, setActiveSection] = useState<"dashboard" | "search" | "map" | "saved">("dashboard");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [mapFocusQuery, setMapFocusQuery] = useState("");
+  const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
 
   const [registerName, setRegisterName] = useState("");
   const [registerCountry, setRegisterCountry] = useState(initialCountry || "Kenya");
@@ -225,9 +269,43 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
   }, [filters.county, filters.country]);
 
   const mapEmbedUrl = useMemo(() => {
-    const query = encodeURIComponent(mapFocusQuery || mapQuery);
-    return `https://www.openstreetmap.org/export/embed.html?layer=mapnik&marker=0.3476%2C32.5825&q=${query}`;
-  }, [mapFocusQuery, mapQuery]);
+    if (mapFocus) {
+      const bbox = mapBoundsForPoint(mapFocus.lat, mapFocus.lng);
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${mapFocus.lat}%2C${mapFocus.lng}`;
+    }
+
+    return `https://www.openstreetmap.org/export/embed.html?bbox=${EAST_AFRICA_BBOX}&layer=mapnik`;
+  }, [mapFocus]);
+
+  function focusListingOnMap(plot: Plot) {
+    const directLat = typeof plot.lat === "number" ? plot.lat : NaN;
+    const directLng = typeof plot.lng === "number" ? plot.lng : NaN;
+    let lat = directLat;
+    let lng = directLng;
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      const parsed = parseCoordinatesFromMapLink(plot.mapLink);
+      if (parsed) {
+        lat = parsed[0];
+        lng = parsed[1];
+      }
+    }
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      const query = [plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ");
+      showError(`No exact coordinates saved for this listing yet. Add lat/lng or mapLink in admin. (${query || "Unknown location"})`);
+      return;
+    }
+
+    setMapFocus({
+      label: plot.title || "Listing location",
+      lat,
+      lng
+    });
+    setActiveSection("map");
+    window.location.hash = "map";
+    showSuccess(`Map focused on ${plot.title || "selected listing"}.`);
+  }
 
   function showSuccess(text: string) {
     setMessage(text);
@@ -266,11 +344,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
 
   function openLocation(plot: Plot) {
     markViewed(plot);
-    const query = [plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ");
-    setMapFocusQuery(query || "Kenya");
-    setActiveSection("map");
-    window.location.hash = "map";
-    showSuccess("Map updated for selected listing.");
+    focusListingOnMap(plot);
   }
 
   function openCall(plot: Plot) {
@@ -988,7 +1062,7 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
                     View the current area on map and open directions for each listing location.
                   </p>
                 </div>
-                <span className="portal-results-count">{mapQuery}</span>
+                <span className="portal-results-count">{mapFocus?.label || mapQuery}</span>
               </div>
               <div style={{ borderRadius: "14px", overflow: "hidden", border: "1px solid rgba(148, 163, 184, 0.28)" }}>
                 <iframe
@@ -1001,13 +1075,12 @@ export default function UserPortal({ initialCountry, initialCounty, initialTown:
               </div>
               <div className="portal-chip-row" style={{ marginTop: "0.9rem" }}>
                 {filtered.slice(0, 12).map((plot) => {
-                  const query = [plot.title, plot.area, plot.town || plot.county, plot.country].filter(Boolean).join(", ") || "Kenya";
                   return (
                     <button
                       key={`map-${listingKey(plot)}`}
                       type="button"
                       className="portal-chip"
-                      onClick={() => setMapFocusQuery(query)}
+                      onClick={() => focusListingOnMap(plot)}
                     >
                       {plot.title || "Listing"} - Open map
                     </button>
